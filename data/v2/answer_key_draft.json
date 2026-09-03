@@ -1,0 +1,844 @@
+[
+  {
+    "user_id": "fcf18a73-184b-4ddd-9338-3dc666662e03",
+    "acceptable_challenges": [],
+    "acceptable_target_categories": [],
+    "acceptable_mechanics": [],
+    "forbidden_categories": [
+      "алкоголь",
+      "детское питание"
+    ],
+    "max_reward_rub": 0.0,
+    "relevance_reason": "Уже высокая частота покупок (baseline_visits_28d=40.0, frequency_headroom=0.026) — доп. челлендж экономически не оправдан.",
+    "abstain_is_correct": true,
+    "draft": true
+  },
+  {
+    "user_id": "e29473b0-c4b1-4d26-918a-2a3edf464515",
+    "acceptable_challenges": [
+      "скидка на смешанную группу привычных категорий",
+      "промо-купон на одну из привычных категорий"
+    ],
+    "acceptable_target_categories": [
+      "молочные продукты и яйца",
+      "хлеб и выпечка",
+      "консервация",
+      "личная гигиена",
+      "товары для дома"
+    ],
+    "acceptable_mechanics": [
+      "персональная скидка",
+      "купон",
+      "бонусные баллы"
+    ],
+    "forbidden_categories": [
+      "алкоголь",
+      "детское питание"
+    ],
+    "max_reward_rub": 511.17,
+    "relevance_reason": "Смешанный паттерн — несколько правдоподобных гипотез, широкий диапазон приемлемых ответов.",
+    "abstain_is_correct": false,
+    "draft": true
+  },
+  {
+    "user_id": "dc680de0-78ad-41e8-8a90-eb1ba6603b06",
+    "acceptable_challenges": [
+      "скидка/бонус на бакалею и выпечку в выходные",
+      "напоминание докупить недостающий ингредиент для выпечки"
+    ],
+    "acceptable_target_categories": [
+      "хлеб и выпечка",
+      "молочные продукты и яйца",
+      "бакалея"
+    ],
+    "acceptable_mechanics": [
+      "персональная скидка",
+      "достижение/бейдж"
+    ],
+    "forbidden_categories": [
+      "алкоголь",
+      "детское питание"
+    ],
+    "max_reward_rub": 124.6,
+    "relevance_reason": "Регулярная выпечка по выходным — устойчивый паттерн в категориях бакалеи/хлеба/молочки.",
+    "abstain_is_correct": false,
+    "draft": true
+  },
+  {
+    "user_id": "7f7e70d8-178b-421b-80a3-d9cec8b73ad9",
+    "acceptable_challenges": [
+      "кэшбэк/бонус за регулярные покупки по акции",
+      "персональный купон на привычную категорию"
+    ],
+    "acceptable_target_categories": [
+      "рыба и морепродукты",
+      "сладости и снеки",
+      "хлеб и выпечка",
+      "орехи и сухофрукты"
+    ],
+    "acceptable_mechanics": [
+      "кэшбек",
+      "бонусные баллы",
+      "купон"
+    ],
+    "forbidden_categories": [
+      "алкоголь",
+      "детское питание"
+    ],
+    "max_reward_rub": 862.52,
+    "relevance_reason": "Высокая доля покупок по акции — челлендж вокруг промо-механик релевантен.",
+    "abstain_is_correct": false,
+    "draft": true
+  },
+  {
+    "user_id": "d6d15731-fb31-4627-b51f-090a1e01be7b",
+    "acceptable_challenges": [
+      "скидка/бонус на бакалею и выпечку в выходные",
+      "напоминание докупить недостающий ингредиент для выпечки"
+    ],
+    "acceptable_target_categories": [
+      "хлеб и выпечка",
+      "молочные продукты и яйца",
+      "бакалея"
+    ],
+    "acceptable_mechanics": [
+      "персональная скидка",
+      "достижение/бейдж"
+    ],
+    "forbidden_categories": [
+      "алкоголь",
+      "детское питание"
+    ],
+    "max_reward_rub": 271.89,
+    "relevance_reason": "Регулярная выпечка по выходным — устойчивый паттерн в категориях бакалеи/хлеба/молочки.",
+    "abstain_is_correct": false,
+    "draft": true
+  },
+  {
+    "user_id": "c8311f98-5476-4495-a1f7-5952ec026c56",
+    "acceptable_challenges": [],
+    "acceptable_target_categories": [],
+    "acceptable_mechanics": [],
+    "forbidden_categories": [
+      "алкоголь",
+      "детское питание"
+    ],
+    "max_reward_rub": 0.0,
+    "relevance_reason": "Уже высокая частота покупок (baseline_visits_28d=40.0, frequency_headroom=0.032) — доп. челлендж экономически не оправдан.",
+    "abstain_is_correct": true,
+    "draft": true
+  },
+  {
+    "user_id": "58f9091a-5e6a-4473-ac17-5b1bcda6e65b",
+    "acceptable_challenges": [
+      "скидка/бонус на бакалею и выпечку в выходные",
+      "напоминание докупить недостающий ингредиент для выпечки"
+    ],
+    "acceptable_target_categories": [
+      "хлеб и выпечка",
+      "бакалея",
+      "молочные продукты и яйца"
+    ],
+    "acceptable_mechanics": [
+      "персональная скидка",
+      "достижение/бейдж"
+    ],
+    "forbidden_categories": [
+      "алкоголь",
+      "детское питание"
+    ],
+    "max_reward_rub": 333.49,
+    "relevance_reason": "Регулярная выпечка по выходным — устойчивый паттерн в категориях бакалеи/хлеба/молочки.",
+    "abstain_is_correct": false,
+    "draft": true
+  },
+  {
+    "user_id": "42cc0ea1-a7cd-4157-87ab-02660cebe09f",
+    "acceptable_challenges": [
+      "кэшбэк/бонус за регулярные покупки по акции",
+      "персональный купон на привычную категорию"
+    ],
+    "acceptable_target_categories": [
+      "фрукты",
+      "личная гигиена",
+      "масла и жиры",
+      "консервация",
+      "овощи"
+    ],
+    "acceptable_mechanics": [
+      "кэшбек",
+      "бонусные баллы",
+      "купон"
+    ],
+    "forbidden_categories": [
+      "алкоголь",
+      "детское питание"
+    ],
+    "max_reward_rub": 569.18,
+    "relevance_reason": "Высокая доля покупок по акции — челлендж вокруг промо-механик релевантен.",
+    "abstain_is_correct": false,
+    "draft": true
+  },
+  {
+    "user_id": "e4039782-67e5-43c9-ae73-35a01662e2ce",
+    "acceptable_challenges": [],
+    "acceptable_target_categories": [],
+    "acceptable_mechanics": [],
+    "forbidden_categories": [
+      "алкоголь",
+      "детское питание"
+    ],
+    "max_reward_rub": 0.0,
+    "relevance_reason": "Уже высокая частота покупок (baseline_visits_28d=40.0, frequency_headroom=0.006) — доп. челлендж экономически не оправдан.",
+    "abstain_is_correct": true,
+    "draft": true
+  },
+  {
+    "user_id": "c9f51e79-b5e1-4236-9d58-dbc84998a999",
+    "acceptable_challenges": [],
+    "acceptable_target_categories": [],
+    "acceptable_mechanics": [],
+    "forbidden_categories": [
+      "алкоголь",
+      "детское питание"
+    ],
+    "max_reward_rub": 0.0,
+    "relevance_reason": "Слабый/непоследовательный паттерн покупок — специфичный челлендж рискует быть нерелевантным.",
+    "abstain_is_correct": true,
+    "draft": true
+  },
+  {
+    "user_id": "5d4fb5e2-c807-4d78-ac51-675e06be7099",
+    "acceptable_challenges": [
+      "кэшбэк/бонус за регулярные покупки по акции",
+      "персональный купон на привычную категорию"
+    ],
+    "acceptable_target_categories": [
+      "товары для животных",
+      "консервация",
+      "заморозка"
+    ],
+    "acceptable_mechanics": [
+      "кэшбек",
+      "бонусные баллы",
+      "купон"
+    ],
+    "forbidden_categories": [
+      "алкоголь",
+      "детское питание"
+    ],
+    "max_reward_rub": 457.24,
+    "relevance_reason": "Высокая доля покупок по акции — челлендж вокруг промо-механик релевантен.",
+    "abstain_is_correct": false,
+    "draft": true
+  },
+  {
+    "user_id": "87ec70d8-0d38-495e-992d-f6c6414194a7",
+    "acceptable_challenges": [
+      "скидка на смешанную группу привычных категорий",
+      "промо-купон на одну из привычных категорий"
+    ],
+    "acceptable_target_categories": [
+      "молочные продукты и яйца",
+      "бакалея",
+      "заморозка",
+      "сладости и снеки"
+    ],
+    "acceptable_mechanics": [
+      "персональная скидка",
+      "купон",
+      "бонусные баллы"
+    ],
+    "forbidden_categories": [
+      "алкоголь",
+      "детское питание"
+    ],
+    "max_reward_rub": 133.61,
+    "relevance_reason": "Смешанный паттерн — несколько правдоподобных гипотез, широкий диапазон приемлемых ответов.",
+    "abstain_is_correct": false,
+    "draft": true
+  },
+  {
+    "user_id": "65f40d54-c757-4410-bb07-f3d761d9699b",
+    "acceptable_challenges": [
+      "скидка на смешанную группу привычных категорий",
+      "промо-купон на одну из привычных категорий"
+    ],
+    "acceptable_target_categories": [
+      "бакалея",
+      "молочные продукты и яйца",
+      "овощи",
+      "товары для дома",
+      "бытовая химия"
+    ],
+    "acceptable_mechanics": [
+      "персональная скидка",
+      "купон",
+      "бонусные баллы"
+    ],
+    "forbidden_categories": [
+      "алкоголь",
+      "детское питание"
+    ],
+    "max_reward_rub": 419.5,
+    "relevance_reason": "Смешанный паттерн — несколько правдоподобных гипотез, широкий диапазон приемлемых ответов.",
+    "abstain_is_correct": false,
+    "draft": true
+  },
+  {
+    "user_id": "4f23835c-0363-48bd-89ae-39704f13b86d",
+    "acceptable_challenges": [
+      "скидка на смешанную группу привычных категорий",
+      "промо-купон на одну из привычных категорий"
+    ],
+    "acceptable_target_categories": [
+      "бакалея",
+      "соусы и приправы",
+      "молочные продукты и яйца",
+      "консервация",
+      "личная гигиена"
+    ],
+    "acceptable_mechanics": [
+      "персональная скидка",
+      "купон",
+      "бонусные баллы"
+    ],
+    "forbidden_categories": [
+      "алкоголь",
+      "детское питание"
+    ],
+    "max_reward_rub": 313.24,
+    "relevance_reason": "Смешанный паттерн — несколько правдоподобных гипотез, широкий диапазон приемлемых ответов.",
+    "abstain_is_correct": false,
+    "draft": true
+  },
+  {
+    "user_id": "ab870179-a80a-464d-9f0f-0133575d110d",
+    "acceptable_challenges": [],
+    "acceptable_target_categories": [],
+    "acceptable_mechanics": [],
+    "forbidden_categories": [
+      "алкоголь",
+      "детское питание"
+    ],
+    "max_reward_rub": 0.0,
+    "relevance_reason": "Слабый/непоследовательный паттерн покупок — специфичный челлендж рискует быть нерелевантным.",
+    "abstain_is_correct": true,
+    "draft": true
+  },
+  {
+    "user_id": "7b46c9ce-c1a9-4388-b911-5be54c589997",
+    "acceptable_challenges": [],
+    "acceptable_target_categories": [],
+    "acceptable_mechanics": [],
+    "forbidden_categories": [
+      "алкоголь",
+      "детское питание"
+    ],
+    "max_reward_rub": 0.0,
+    "relevance_reason": "Уже высокая частота покупок (baseline_visits_28d=40.0, frequency_headroom=0.01) — доп. челлендж экономически не оправдан.",
+    "abstain_is_correct": true,
+    "draft": true
+  },
+  {
+    "user_id": "0ef123aa-6178-4a4a-b477-bb5ffee5d914",
+    "acceptable_challenges": [
+      "скидка/бонус на бакалею и выпечку в выходные",
+      "напоминание докупить недостающий ингредиент для выпечки"
+    ],
+    "acceptable_target_categories": [
+      "хлеб и выпечка",
+      "молочные продукты и яйца",
+      "бакалея"
+    ],
+    "acceptable_mechanics": [
+      "персональная скидка",
+      "достижение/бейдж"
+    ],
+    "forbidden_categories": [
+      "алкоголь",
+      "детское питание"
+    ],
+    "max_reward_rub": 112.65,
+    "relevance_reason": "Регулярная выпечка по выходным — устойчивый паттерн в категориях бакалеи/хлеба/молочки.",
+    "abstain_is_correct": false,
+    "draft": true
+  },
+  {
+    "user_id": "4686fd9b-97a0-4271-af96-00667f7a2172",
+    "acceptable_challenges": [
+      "кэшбэк/бонус за регулярные покупки по акции",
+      "персональный купон на привычную категорию"
+    ],
+    "acceptable_target_categories": [
+      "бакалея",
+      "овощи",
+      "орехи и сухофрукты",
+      "кондитерка",
+      "бытовая химия"
+    ],
+    "acceptable_mechanics": [
+      "кэшбек",
+      "бонусные баллы",
+      "купон"
+    ],
+    "forbidden_categories": [
+      "алкоголь",
+      "детское питание"
+    ],
+    "max_reward_rub": 130.39,
+    "relevance_reason": "Высокая доля покупок по акции — челлендж вокруг промо-механик релевантен.",
+    "abstain_is_correct": false,
+    "draft": true
+  },
+  {
+    "user_id": "5316f87f-7176-4d85-a832-8fdc926839a9",
+    "acceptable_challenges": [
+      "скидка на смешанную группу привычных категорий",
+      "промо-купон на одну из привычных категорий"
+    ],
+    "acceptable_target_categories": [
+      "соусы и приправы",
+      "бакалея",
+      "мясо и птица",
+      "молочные продукты и яйца"
+    ],
+    "acceptable_mechanics": [
+      "персональная скидка",
+      "купон",
+      "бонусные баллы"
+    ],
+    "forbidden_categories": [
+      "алкоголь",
+      "детское питание"
+    ],
+    "max_reward_rub": 118.61,
+    "relevance_reason": "Смешанный паттерн — несколько правдоподобных гипотез, широкий диапазон приемлемых ответов.",
+    "abstain_is_correct": false,
+    "draft": true
+  },
+  {
+    "user_id": "1ad63d0b-c93d-49a8-9d9b-2ac5ce376f82",
+    "acceptable_challenges": [],
+    "acceptable_target_categories": [],
+    "acceptable_mechanics": [],
+    "forbidden_categories": [
+      "алкоголь",
+      "детское питание"
+    ],
+    "max_reward_rub": 0.0,
+    "relevance_reason": "Слабый/непоследовательный паттерн покупок — специфичный челлендж рискует быть нерелевантным.",
+    "abstain_is_correct": true,
+    "draft": true
+  },
+  {
+    "user_id": "86d704d2-f310-4e05-b62b-b111cc1e50f8",
+    "acceptable_challenges": [
+      "скидка/бонус на бакалею и выпечку в выходные",
+      "напоминание докупить недостающий ингредиент для выпечки"
+    ],
+    "acceptable_target_categories": [
+      "хлеб и выпечка",
+      "молочные продукты и яйца",
+      "бакалея"
+    ],
+    "acceptable_mechanics": [
+      "персональная скидка",
+      "достижение/бейдж"
+    ],
+    "forbidden_categories": [
+      "алкоголь",
+      "детское питание"
+    ],
+    "max_reward_rub": 329.22,
+    "relevance_reason": "Регулярная выпечка по выходным — устойчивый паттерн в категориях бакалеи/хлеба/молочки.",
+    "abstain_is_correct": false,
+    "draft": true
+  },
+  {
+    "user_id": "6b69c2db-a9e4-45cf-894b-de718ab4fc9a",
+    "acceptable_challenges": [
+      "кэшбэк/бонус за регулярные покупки по акции",
+      "персональный купон на привычную категорию"
+    ],
+    "acceptable_target_categories": [
+      "бакалея",
+      "мясо и птица",
+      "заморозка",
+      "рыба и морепродукты",
+      "сладости и снеки"
+    ],
+    "acceptable_mechanics": [
+      "кэшбек",
+      "бонусные баллы",
+      "купон"
+    ],
+    "forbidden_categories": [
+      "алкоголь",
+      "детское питание"
+    ],
+    "max_reward_rub": 94.16,
+    "relevance_reason": "Высокая доля покупок по акции — челлендж вокруг промо-механик релевантен.",
+    "abstain_is_correct": false,
+    "draft": true
+  },
+  {
+    "user_id": "3cf1de8b-d996-43c4-bb7c-d3a2d09d64e1",
+    "acceptable_challenges": [],
+    "acceptable_target_categories": [],
+    "acceptable_mechanics": [],
+    "forbidden_categories": [
+      "алкоголь",
+      "детское питание"
+    ],
+    "max_reward_rub": 0.0,
+    "relevance_reason": "Слабый/непоследовательный паттерн покупок — специфичный челлендж рискует быть нерелевантным.",
+    "abstain_is_correct": true,
+    "draft": true
+  },
+  {
+    "user_id": "93d59af9-02d3-4f1a-b724-1b3039ada9f0",
+    "acceptable_challenges": [],
+    "acceptable_target_categories": [],
+    "acceptable_mechanics": [],
+    "forbidden_categories": [
+      "алкоголь",
+      "детское питание"
+    ],
+    "max_reward_rub": 0.0,
+    "relevance_reason": "Уже высокая частота покупок (baseline_visits_28d=40.0, frequency_headroom=0.049) — доп. челлендж экономически не оправдан.",
+    "abstain_is_correct": true,
+    "draft": true
+  },
+  {
+    "user_id": "25995851-9e3b-4283-a7ed-bcea35ada712",
+    "acceptable_challenges": [],
+    "acceptable_target_categories": [],
+    "acceptable_mechanics": [],
+    "forbidden_categories": [
+      "алкоголь",
+      "детское питание"
+    ],
+    "max_reward_rub": 0.0,
+    "relevance_reason": "Уже высокая частота покупок (baseline_visits_28d=40.0, frequency_headroom=0.051) — доп. челлендж экономически не оправдан.",
+    "abstain_is_correct": true,
+    "draft": true
+  },
+  {
+    "user_id": "5f15103b-ab27-4449-9f4b-5fe29cf80430",
+    "acceptable_challenges": [
+      "кэшбэк/бонус за регулярные покупки по акции",
+      "персональный купон на привычную категорию"
+    ],
+    "acceptable_target_categories": [
+      "бакалея",
+      "масла и жиры",
+      "молочные продукты и яйца",
+      "личная гигиена",
+      "рыба и морепродукты"
+    ],
+    "acceptable_mechanics": [
+      "кэшбек",
+      "бонусные баллы",
+      "купон"
+    ],
+    "forbidden_categories": [
+      "алкоголь",
+      "детское питание"
+    ],
+    "max_reward_rub": 115.73,
+    "relevance_reason": "Высокая доля покупок по акции — челлендж вокруг промо-механик релевантен.",
+    "abstain_is_correct": false,
+    "draft": true
+  },
+  {
+    "user_id": "08c72d3e-cc7c-4354-88a6-6160f4673674",
+    "acceptable_challenges": [],
+    "acceptable_target_categories": [],
+    "acceptable_mechanics": [],
+    "forbidden_categories": [
+      "алкоголь",
+      "детское питание"
+    ],
+    "max_reward_rub": 0.0,
+    "relevance_reason": "Уже высокая частота покупок (baseline_visits_28d=40.0, frequency_headroom=0.021) — доп. челлендж экономически не оправдан.",
+    "abstain_is_correct": true,
+    "draft": true
+  },
+  {
+    "user_id": "ffa53faa-301d-4935-b907-dda4b05aba98",
+    "acceptable_challenges": [
+      "скидка на смешанную группу привычных категорий",
+      "промо-купон на одну из привычных категорий"
+    ],
+    "acceptable_target_categories": [
+      "молочные продукты и яйца",
+      "готовая еда",
+      "товары для дома",
+      "мясо и птица",
+      "сладости и снеки"
+    ],
+    "acceptable_mechanics": [
+      "персональная скидка",
+      "купон",
+      "бонусные баллы"
+    ],
+    "forbidden_categories": [
+      "алкоголь",
+      "детское питание"
+    ],
+    "max_reward_rub": 388.64,
+    "relevance_reason": "Смешанный паттерн — несколько правдоподобных гипотез, широкий диапазон приемлемых ответов.",
+    "abstain_is_correct": false,
+    "draft": true
+  },
+  {
+    "user_id": "b387a5ff-326e-4df0-8a94-3676ed2040fb",
+    "acceptable_challenges": [],
+    "acceptable_target_categories": [],
+    "acceptable_mechanics": [],
+    "forbidden_categories": [
+      "алкоголь",
+      "детское питание"
+    ],
+    "max_reward_rub": 0.0,
+    "relevance_reason": "Слабый/непоследовательный паттерн покупок — специфичный челлендж рискует быть нерелевантным.",
+    "abstain_is_correct": true,
+    "draft": true
+  },
+  {
+    "user_id": "eac031a6-65ab-40b7-b698-8916f1f18fe4",
+    "acceptable_challenges": [
+      "скидка/бонус на бакалею и выпечку в выходные",
+      "напоминание докупить недостающий ингредиент для выпечки"
+    ],
+    "acceptable_target_categories": [
+      "молочные продукты и яйца",
+      "хлеб и выпечка",
+      "бакалея"
+    ],
+    "acceptable_mechanics": [
+      "персональная скидка",
+      "достижение/бейдж"
+    ],
+    "forbidden_categories": [
+      "алкоголь",
+      "детское питание"
+    ],
+    "max_reward_rub": 606.01,
+    "relevance_reason": "Регулярная выпечка по выходным — устойчивый паттерн в категориях бакалеи/хлеба/молочки.",
+    "abstain_is_correct": false,
+    "draft": true
+  },
+  {
+    "user_id": "f4290dac-4b65-4c04-8446-750d860faf24",
+    "acceptable_challenges": [
+      "скидка на смешанную группу привычных категорий",
+      "промо-купон на одну из привычных категорий"
+    ],
+    "acceptable_target_categories": [
+      "молочные продукты и яйца",
+      "бытовая химия",
+      "консервация",
+      "бакалея",
+      "мясо и птица"
+    ],
+    "acceptable_mechanics": [
+      "персональная скидка",
+      "купон",
+      "бонусные баллы"
+    ],
+    "forbidden_categories": [
+      "алкоголь",
+      "детское питание"
+    ],
+    "max_reward_rub": 567.96,
+    "relevance_reason": "Смешанный паттерн — несколько правдоподобных гипотез, широкий диапазон приемлемых ответов.",
+    "abstain_is_correct": false,
+    "draft": true
+  },
+  {
+    "user_id": "d5a1c8f0-e9e1-43b9-a571-3f2cb9a6a957",
+    "acceptable_challenges": [],
+    "acceptable_target_categories": [],
+    "acceptable_mechanics": [],
+    "forbidden_categories": [
+      "алкоголь",
+      "детское питание"
+    ],
+    "max_reward_rub": 0.0,
+    "relevance_reason": "Слабый/непоследовательный паттерн покупок — специфичный челлендж рискует быть нерелевантным.",
+    "abstain_is_correct": true,
+    "draft": true
+  },
+  {
+    "user_id": "2cb8a690-ed7d-4fff-a6f5-6009677e4829",
+    "acceptable_challenges": [
+      "скидка/бонус на бакалею и выпечку в выходные",
+      "напоминание докупить недостающий ингредиент для выпечки"
+    ],
+    "acceptable_target_categories": [
+      "молочные продукты и яйца",
+      "бакалея",
+      "хлеб и выпечка"
+    ],
+    "acceptable_mechanics": [
+      "персональная скидка",
+      "достижение/бейдж"
+    ],
+    "forbidden_categories": [
+      "алкоголь",
+      "детское питание"
+    ],
+    "max_reward_rub": 98.42,
+    "relevance_reason": "Регулярная выпечка по выходным — устойчивый паттерн в категориях бакалеи/хлеба/молочки.",
+    "abstain_is_correct": false,
+    "draft": true
+  },
+  {
+    "user_id": "6281b7e8-e94e-4ae7-b3ee-e3b910698a62",
+    "acceptable_challenges": [
+      "кэшбэк/бонус за регулярные покупки по акции",
+      "персональный купон на привычную категорию"
+    ],
+    "acceptable_target_categories": [
+      "готовая еда",
+      "бытовая химия",
+      "овощи",
+      "хлеб и выпечка"
+    ],
+    "acceptable_mechanics": [
+      "кэшбек",
+      "бонусные баллы",
+      "купон"
+    ],
+    "forbidden_categories": [
+      "алкоголь",
+      "детское питание"
+    ],
+    "max_reward_rub": 770.85,
+    "relevance_reason": "Высокая доля покупок по акции — челлендж вокруг промо-механик релевантен.",
+    "abstain_is_correct": false,
+    "draft": true
+  },
+  {
+    "user_id": "36b60365-39a1-498c-98e0-849ed34c9b68",
+    "acceptable_challenges": [
+      "скидка на смешанную группу привычных категорий",
+      "промо-купон на одну из привычных категорий"
+    ],
+    "acceptable_target_categories": [
+      "овощи",
+      "товары для животных",
+      "бакалея",
+      "молочные продукты и яйца",
+      "кондитерка"
+    ],
+    "acceptable_mechanics": [
+      "персональная скидка",
+      "купон",
+      "бонусные баллы"
+    ],
+    "forbidden_categories": [
+      "алкоголь",
+      "детское питание"
+    ],
+    "max_reward_rub": 129.5,
+    "relevance_reason": "Смешанный паттерн — несколько правдоподобных гипотез, широкий диапазон приемлемых ответов.",
+    "abstain_is_correct": false,
+    "draft": true
+  },
+  {
+    "user_id": "780241c2-81f4-4997-af41-ebac3931bab3",
+    "acceptable_challenges": [],
+    "acceptable_target_categories": [],
+    "acceptable_mechanics": [],
+    "forbidden_categories": [
+      "алкоголь",
+      "детское питание"
+    ],
+    "max_reward_rub": 0.0,
+    "relevance_reason": "Уже высокая частота покупок (baseline_visits_28d=40.0, frequency_headroom=0.043) — доп. челлендж экономически не оправдан.",
+    "abstain_is_correct": true,
+    "draft": true
+  },
+  {
+    "user_id": "8cbf5995-17dd-4e22-a5bc-5079e0c2936a",
+    "acceptable_challenges": [
+      "скидка/бонус на бакалею и выпечку в выходные",
+      "напоминание докупить недостающий ингредиент для выпечки"
+    ],
+    "acceptable_target_categories": [
+      "молочные продукты и яйца",
+      "бакалея",
+      "хлеб и выпечка"
+    ],
+    "acceptable_mechanics": [
+      "персональная скидка",
+      "достижение/бейдж"
+    ],
+    "forbidden_categories": [
+      "алкоголь",
+      "детское питание"
+    ],
+    "max_reward_rub": 472.23,
+    "relevance_reason": "Регулярная выпечка по выходным — устойчивый паттерн в категориях бакалеи/хлеба/молочки.",
+    "abstain_is_correct": false,
+    "draft": true
+  },
+  {
+    "user_id": "cf0758ef-e3f8-4c34-abf7-bb843326190b",
+    "acceptable_challenges": [],
+    "acceptable_target_categories": [],
+    "acceptable_mechanics": [],
+    "forbidden_categories": [
+      "алкоголь",
+      "детское питание"
+    ],
+    "max_reward_rub": 0.0,
+    "relevance_reason": "Слабый/непоследовательный паттерн покупок — специфичный челлендж рискует быть нерелевантным.",
+    "abstain_is_correct": true,
+    "draft": true
+  },
+  {
+    "user_id": "e40508d1-6e66-400b-9116-33567c50b1c1",
+    "acceptable_challenges": [
+      "кэшбэк/бонус за регулярные покупки по акции",
+      "персональный купон на привычную категорию"
+    ],
+    "acceptable_target_categories": [
+      "мясо и птица",
+      "орехи и сухофрукты",
+      "бытовая химия",
+      "рыба и морепродукты",
+      "напитки"
+    ],
+    "acceptable_mechanics": [
+      "кэшбек",
+      "бонусные баллы",
+      "купон"
+    ],
+    "forbidden_categories": [
+      "алкоголь",
+      "детское питание"
+    ],
+    "max_reward_rub": 176.88,
+    "relevance_reason": "Высокая доля покупок по акции — челлендж вокруг промо-механик релевантен.",
+    "abstain_is_correct": false,
+    "draft": true
+  },
+  {
+    "user_id": "d2753a18-9427-4547-8677-6fc124d51840",
+    "acceptable_challenges": [],
+    "acceptable_target_categories": [],
+    "acceptable_mechanics": [],
+    "forbidden_categories": [
+      "алкоголь",
+      "детское питание"
+    ],
+    "max_reward_rub": 0.0,
+    "relevance_reason": "Слабый/непоследовательный паттерн покупок — специфичный челлендж рискует быть нерелевантным.",
+    "abstain_is_correct": true,
+    "draft": true
+  }
+]
