@@ -8,7 +8,7 @@
   "main_hypothesis": "H-MAIN-01",
   "current_choice": "placement P-1/P-2/P-3, pain-proximity mode G-1/G-2/G-3, concept C-1/C-2/C-3/C-4",
   "file_count": 75,
-  "total_bytes": 8746019,
+  "total_bytes": 8747690,
   "files": [
     {
       "path": ".gitignore",
@@ -17,8 +17,8 @@
     },
     {
       "path": "CONTEXT.md",
-      "size": 25773,
-      "sha256": "3b1e6619dca61e8425ba40f64dd78cf745e59f27538eb56b008b85dad475d4b3"
+      "size": 26588,
+      "sha256": "9dfd5b61604470738c1022b5ddd46ce8dbc31405f831f08f509c90d81b40efb7"
     },
     {
       "path": "PRODUCT_RESEARCH_INDEX.md",
@@ -27,8 +27,8 @@
     },
     {
       "path": "README.md",
-      "size": 4166,
-      "sha256": "04db882de3e7d7730bed600cfda355f964681acfde7e98ec719469b91be0fa7c"
+      "size": 4428,
+      "sha256": "63ed342196ea1f4921660eb145732df8c308be8d2dfbe71d53a23c09bbdd6db7"
     },
     {
       "path": "context/BRIEF.md",
@@ -37,8 +37,8 @@
     },
     {
       "path": "context/DECISIONS.md",
-      "size": 25240,
-      "sha256": "8cf90f645c930d87ef6691aa8960ece5601a8a6950b03dec0992e3a1a89cdaf4"
+      "size": 25834,
+      "sha256": "f6f2b220c08d5495c62d82bbf167bf57e2206ed35efa9bdd6cb133a2077b8826"
     },
     {
       "path": "context/IDEAS.md",
