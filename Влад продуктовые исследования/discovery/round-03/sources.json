@@ -1,0 +1,97 @@
+{
+  "round": "round-03",
+  "accessed_at": "2026-09-03",
+  "scope": "Новые аналоги для персональных миссий, AI-помощника, household-прогресса и offline-to-online механик X5",
+  "sources": [
+    {
+      "id": "R3-S01",
+      "title": "Target Circle Bonus",
+      "publisher": "Target",
+      "url": "https://www.target.com/help/articles/target-circle/target-circle-bonus",
+      "type": "official_help",
+      "read_status": "read",
+      "supports": ["Персональные условия бонуса могут включать порог покупки и размер награды"],
+      "limitations": "Не раскрывает причинный эффект или экономику конкретного бонуса"
+    },
+    {
+      "id": "R3-S02",
+      "title": "Contextual Offer Recommendations Engine",
+      "publisher": "Target Tech",
+      "url": "https://tech.target.com/blog/contextual-offer-recommendation-engine",
+      "type": "official_technical_blog",
+      "read_status": "read",
+      "supports": ["Пример multi-trip offer", "Контекстный выбор предложения на уровне участника"],
+      "limitations": "Архитектурное описание компании; переносимость uplift на X5 не доказана"
+    },
+    {
+      "id": "R3-S03",
+      "title": "Helping our customers find the joy of good food this January",
+      "publisher": "Sainsbury's",
+      "url": "https://corporate.sainsburys.co.uk/purpose-in-action/helping-our-customers-find-the-joy-of-good-food-this-january/",
+      "type": "official_company_page",
+      "read_status": "read",
+      "supports": ["Пять персональных Healthy Choice заданий на основе истории покупок", "Награда Nectar points за завершение"],
+      "limitations": "Заявление об uplift принадлежит компании; дизайн и величина эффекта не опубликованы"
+    },
+    {
+      "id": "R3-S04",
+      "title": "REWE Bonus-Booster",
+      "publisher": "REWE",
+      "url": "https://www.rewe.de/bonus/bonus-booster",
+      "type": "official_product_page",
+      "read_status": "read",
+      "supports": ["Месячный прогресс по сумме покупок", "Online и offline покупки учитываются вместе"],
+      "limitations": "Фиксированные пороги и экономика программы не переносимы напрямую"
+    },
+    {
+      "id": "R3-S05",
+      "title": "REWE Bonus",
+      "publisher": "REWE",
+      "url": "https://www.rewe.de/bonus",
+      "type": "official_product_page",
+      "read_status": "read",
+      "supports": ["Совместный household-прогресс", "Распределение общего бонуса", "Купоны по покупательским привычкам при согласии"],
+      "limitations": "Не доказывает инкрементальность общей суммы покупок"
+    },
+    {
+      "id": "R3-S06",
+      "title": "Everyday Rewards: How it works",
+      "publisher": "Woolworths Everyday Rewards",
+      "url": "https://www.everyday.com.au/rewards/how-it-works.html",
+      "type": "official_product_page",
+      "read_status": "partial_redirect",
+      "supports": ["Активация Boosts", "Предложения на любимые и потенциально интересные товары", "Выбор формы награды"],
+      "limitations": "Страница после открытия возвращала ограниченный текст; алгоритм и эффект предложений не раскрыты"
+    },
+    {
+      "id": "R3-S07",
+      "title": "OptUP Nutrition",
+      "publisher": "Kroger",
+      "url": "https://www.kroger.com/health/nutrition/optup",
+      "type": "official_product_page",
+      "read_status": "read",
+      "supports": ["Показатель по недавним household-покупкам", "Изменение во времени", "Альтернативы привычным товарам"],
+      "limitations": "Nutrition score не подтверждает валидность предполагаемого X5 savings score"
+    },
+    {
+      "id": "R3-S08",
+      "title": "Instacart launches AI-powered Smart Shop",
+      "publisher": "Instacart",
+      "url": "https://company.instacart.com/pressreleases/instacart-launches-ai-powered-smart-shop-and-new-features-that-make-healthy-choices-easy",
+      "type": "official_press_release",
+      "read_status": "search_extract_then_redirect",
+      "supports": ["Сочетание поведения с явными предпочтениями", "Динамическое обновление профиля", "Уточнение при низкой уверенности"],
+      "limitations": "После прямого открытия возник редирект; технические заявления принадлежат поставщику, независимая точность не установлена"
+    },
+    {
+      "id": "R3-S09",
+      "title": "MONOPOLY returns with more chances to win",
+      "publisher": "McDonald's",
+      "url": "https://corporate.mcdonalds.com/corpmcd/our-stories/article/monopoly-returns-more-chances-towin.html",
+      "type": "official_company_page",
+      "read_status": "read",
+      "supports": ["Сканирование физической игровой детали в приложении", "Продолжение коллекции и игры в digital"],
+      "limitations": "Массовая неперсональная акция не подтверждает ценность аватара на чеке X5"
+    }
+  ]
+}

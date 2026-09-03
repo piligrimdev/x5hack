@@ -1,0 +1,51 @@
+[
+  {
+    "source": "/Users/shervonemes/Downloads/AI_Product_Discovery.pdf",
+    "copy": "inputs/2026-09-03/AI_Product_Discovery.pdf",
+    "sha256": "8b6ba80c052ebf0fbad5479c04262498dcf7cdc25829f7cce98b29bd94bd4839",
+    "bytes": 3185708,
+    "pages": 28,
+    "initial_text_layer_chars": 1081,
+    "ocr_path": "context/extracted/AI_Product_Discovery.md",
+    "ocr_chars": 12315
+  },
+  {
+    "source": "/Users/shervonemes/Downloads/Постановка_и_проверка_продуктовых_гипотез.pdf",
+    "copy": "inputs/2026-09-03/Постановка_и_проверка_продуктовых_гипотез.pdf",
+    "sha256": "9bf392cdee4ae133ebfa3fb78f1903faad744e6ad7e4f440c92bc864b562b504",
+    "bytes": 3101463,
+    "pages": 24,
+    "initial_text_layer_chars": 925,
+    "ocr_path": "context/extracted/Постановка_и_проверка_продуктовых_гипотез.md",
+    "ocr_chars": 8585
+  },
+  {
+    "source": "/Users/shervonemes/Downloads/CONTEXT_PACK.md",
+    "copy": "inputs/2026-09-03/CONTEXT_PACK.md",
+    "sha256": "f076a65556e2f9f80e4e09bced4e37ff0112d41ea9480b9e3f6233587cd4cee8",
+    "bytes": 29106
+  },
+  {
+    "source": "/Users/shervonemes/Documents/context_pack_qwen.md",
+    "copy": "inputs/2026-09-03/context_pack_qwen.md",
+    "sha256": "6889fa6fa817165841521df4f24b0b42b041398528118541ef5d5554643f5cd5",
+    "bytes": 51380
+  },
+  {
+    "source": "/Users/shervonemes/.codex/attachments/fc536d82-6c8c-4192-9e86-0fc7d1f7a3b4/pasted-text.txt",
+    "copy": "inputs/2026-09-03/case-description.txt",
+    "sha256": "40903541c9478cab432ac2f5d17478e3075f1cf45879488fe79d30fc4d90c8f4",
+    "bytes": 10772
+  },
+  {
+    "source": "/Users/shervonemes/Downloads/Воркшоп_Ян Анисимов.pdf",
+    "copy": "inputs/2026-09-03/Воркшоп_Ян Анисимов.pdf",
+    "sha256": "e9ddda0d06f7c29a250d574fadfc50c16ea34b7a7fc99dba3d16cb21b6da9b72",
+    "bytes": 167940,
+    "pages": 26,
+    "extracted_path": "context/extracted/Воркшоп_Ян_Анисимов.md",
+    "visual_review": "all 26 pages",
+    "text_layer_chars": 7786,
+    "extracted_chars": 8334
+  }
+]

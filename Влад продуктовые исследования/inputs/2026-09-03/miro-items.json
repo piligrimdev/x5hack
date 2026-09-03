@@ -1,0 +1,2174 @@
+{
+  "data": [
+    {
+      "id": "3458764682437582349",
+      "type": "text",
+      "data": {
+        "content": "<p>главная цель - вырасти в выручке благодаря системе лоялности</p>"
+      },
+      "style": {
+        "fillColor": "#ffffff",
+        "fillOpacity": "0.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "18",
+        "textAlign": "left",
+        "color": "#1a1a1a"
+      },
+      "geometry": {
+        "width": 567
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -970.298665734326,
+        "y": -1005.9780587677412
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682437582349"
+    },
+    {
+      "id": "3458764682437796290",
+      "type": "text",
+      "data": {
+        "content": "<p><em style=\"background-color:rgb(254,159,77);color:rgb(26,26,26)\">&#34;рост частоты покупок вовлечённого сегмента на 1–2 п. п. в масштабе X5 означает заметный дополнительный оборот.&#34;</em></p>"
+      },
+      "style": {
+        "fillColor": "#ffffff",
+        "fillOpacity": "0.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "14",
+        "textAlign": "left",
+        "color": "#1a1a1a"
+      },
+      "geometry": {
+        "width": 395.06561302
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -933.0241411533704,
+        "y": -931.1209159105983
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682437796290"
+    },
+    {
+      "id": "3458764682437796581",
+      "type": "image",
+      "data": {
+        "imageUrl": "https://api.miro.com/v2/boards/uXjVHrrRqss%3D/resources/images/3458764518173294181?format=preview&redirect=false"
+      },
+      "style": null,
+      "geometry": {
+        "height": 161.86096786180522,
+        "width": 395.06561301807
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -427.76499159319826,
+        "y": -924.338276368152
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682437796581"
+    },
+    {
+      "id": "3458764682437952199",
+      "type": "image",
+      "data": {
+        "imageUrl": "https://api.miro.com/v2/boards/uXjVHrrRqss%3D/resources/images/3458764518173242417?format=preview&redirect=false"
+      },
+      "style": null,
+      "geometry": {
+        "height": 207.58408778151983,
+        "width": 311.5125206918471
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -1858.2666504585427,
+        "y": -1282.783847793173
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682437952199"
+    },
+    {
+      "id": "3458764682437952301",
+      "type": "text",
+      "data": {
+        "content": "<p><strong style=\"background-color:transparent\">Аналоги?</strong></p>"
+      },
+      "style": {
+        "fillColor": "#ffffff",
+        "fillOpacity": "0.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "20",
+        "textAlign": "left",
+        "color": "#1a1a1a"
+      },
+      "geometry": {
+        "width": 467.74688075714283
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -1720.202053745249,
+        "y": -1545.5980736388105
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682437952301"
+    },
+    {
+      "id": "3458764682438097259",
+      "type": "image",
+      "data": {
+        "imageUrl": "https://api.miro.com/v2/boards/uXjVHrrRqss%3D/resources/images/3458764518173296238?format=preview&redirect=false"
+      },
+      "style": null,
+      "geometry": {
+        "height": 174.6512967230084,
+        "width": 377.2301277668797
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -427.76499159319826,
+        "y": -729.3522580222578
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682438097259"
+    },
+    {
+      "id": "3458764682438279016",
+      "type": "text",
+      "data": {
+        "content": "<p><span style=\"color:rgb(250,84,22);background-color:transparent\">погрузиться в контекст кейсодателя → проверить самое рискованное → показать работающее → обобщить до продукта.</span></p><p><br /><br /><br /></p>"
+      },
+      "style": {
+        "fillColor": "#ffffff",
+        "fillOpacity": "0.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "14",
+        "textAlign": "left",
+        "color": "#fa5416"
+      },
+      "geometry": {
+        "width": 601
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -814.867670060887,
+        "y": -1545.5980736388105
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682438279016"
+    },
+    {
+      "id": "3458764682438779748",
+      "type": "image",
+      "data": {
+        "imageUrl": "https://api.miro.com/v2/boards/uXjVHrrRqss%3D/resources/images/3458764518173245658?format=preview&redirect=false"
+      },
+      "style": null,
+      "geometry": {
+        "height": 197.51285668286587,
+        "width": 351.133967436206
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -1501.348160976715,
+        "y": -1287.8194633425
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682438779748"
+    },
+    {
+      "id": "3458764682438779890",
+      "type": "text",
+      "data": {
+        "content": "<ol><li data-list=\"bullet\"><span class=\"ql-ui\"></span><strong style=\"background-color:transparent\">Лудка</strong></li><li data-list=\"bullet\"><span class=\"ql-ui\"></span>Бонусы на лудку за задания</li><li data-list=\"bullet\"><span class=\"ql-ui\"></span>Задания - покупка товаров из категорий</li><li data-list=\"bullet\"><span class=\"ql-ui\"></span>Лудка дает другие бонусы? скидки, может быть приз</li></ol>"
+      },
+      "style": {
+        "fillColor": "#ffffff",
+        "fillOpacity": "0.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "20",
+        "textAlign": "left",
+        "color": "#1a1a1a"
+      },
+      "geometry": {
+        "width": 311.5125206857144
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -1858.2666504585427,
+        "y": -1060.0771112670461
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682438779890"
+    },
+    {
+      "id": "3458764682438968750",
+      "type": "text",
+      "data": {
+        "content": "<ol><li data-list=\"bullet\"><span class=\"ql-ui\"></span><strong style=\"background-color:transparent\">Лудка</strong></li><li data-list=\"bullet\"><span class=\"ql-ui\"></span>Бонусы за клики, за покупки</li><li data-list=\"bullet\"><span class=\"ql-ui\"></span>В лудке призы - скидки, подписки от партнеров</li><li data-list=\"bullet\"><span class=\"ql-ui\"></span>Лото</li></ol>"
+      },
+      "style": {
+        "fillColor": "#ffffff",
+        "fillOpacity": "0.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "20",
+        "textAlign": "left",
+        "color": "#1a1a1a"
+      },
+      "geometry": {
+        "width": 311.5125206857144
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -1501.348160976715,
+        "y": -1074.3628255527608
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682438968750"
+    },
+    {
+      "id": "3458764682439164675",
+      "type": "data_table_format",
+      "data": {},
+      "style": null,
+      "geometry": null,
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": 494.22762301775356,
+        "y": -1788.6656377159825
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682439164675"
+    },
+    {
+      "id": "3458764682439740896",
+      "type": "text",
+      "data": {
+        "content": "<p><em style=\"color:rgb(26,26,26);background-color:rgb(254,159,77)\">персональный челлендж экономии,</em></p>"
+      },
+      "style": {
+        "fillColor": "#ffffff",
+        "fillOpacity": "0.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "14",
+        "textAlign": "left",
+        "color": "#1a1a1a"
+      },
+      "geometry": {
+        "width": 235
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -1013.0569476624054,
+        "y": -859.1220781515351
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682439740896"
+    },
+    {
+      "id": "3458764682439901382",
+      "type": "text",
+      "data": {
+        "content": "<p><em style=\"background-color:rgb(254,159,77)\">Сэкнономь X рублей за неделю. </em></p><p><br /></p><p>Экономия - за счет персонализированных скидок? <br /><br />Скидки получаем за выполнение заданий?<br />(покупка товара из категории Y)</p><p><br /></p><p><br /></p>"
+      },
+      "style": {
+        "fillColor": "#ffffff",
+        "fillOpacity": "0.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "13",
+        "textAlign": "left",
+        "color": "#1a1a1a"
+      },
+      "geometry": {
+        "width": 249.41309494192157
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -782.8844102178225,
+        "y": -427.5221684275784
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682439901382"
+    },
+    {
+      "id": "3458764682440584034",
+      "type": "text",
+      "data": {
+        "content": "<p><span style=\"background-color:transparent;color:rgb(26,26,26)\">В перекрестке уже есть два игровых слоя:</span></p><ol><li data-list=\"bullet\"><span class=\"ql-ui\"></span><span style=\"background-color:transparent;color:rgb(26,26,26)\">космокафе перекрестов - задания </span></li><li data-list=\"bullet\"><span class=\"ql-ui\"></span><span style=\"background-color:transparent;color:rgb(26,26,26)\">холодильник выгоды - челленджы (задания)  - поиграть в игры внутри прилы  / сходить купить в магаз - купить сыры радость вкуса от двух штук в одном чеке (даты фиксированы - выяснить  xsell /  рекомендации</span></li></ol>"
+      },
+      "style": {
+        "fillColor": "#ffffff",
+        "fillOpacity": "0.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "14",
+        "textAlign": "left",
+        "color": "#1a1a1a"
+      },
+      "geometry": {
+        "width": 267
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -665.1836129174947,
+        "y": -2920.7373031349557
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682440584034"
+    },
+    {
+      "id": "3458764682440788589",
+      "type": "text",
+      "data": {
+        "content": "<p><span style=\"color:rgb(26,26,26)\">Что есть у  x5 сейчас</span></p>"
+      },
+      "style": {
+        "fillColor": "#ffffff",
+        "fillOpacity": "0.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "24",
+        "textAlign": "left",
+        "color": "#1a1a1a"
+      },
+      "geometry": {
+        "width": 241.7142857142857
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -699.5433053423665,
+        "y": -3064.951792336504
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682440788589"
+    },
+    {
+      "id": "3458764682441483957",
+      "type": "image",
+      "data": {
+        "imageUrl": "https://api.miro.com/v2/boards/uXjVHrrRqss%3D/resources/images/3458764518173335157?format=preview&redirect=false"
+      },
+      "style": null,
+      "geometry": {
+        "height": 394.1399407794685,
+        "width": 181.40332002402315
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -2150.748145187572,
+        "y": -1376.0617742921472
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682441483957"
+    },
+    {
+      "id": "3458764682441484234",
+      "type": "text",
+      "data": {
+        "content": "<ol><li data-list=\"bullet\"><span class=\"ql-ui\"></span>Монетки открывают корзины</li><li data-list=\"bullet\"><span class=\"ql-ui\"></span>Корзины дают шанс выиграть приз(ноут телефон итд)</li><li data-list=\"bullet\"><span class=\"ql-ui\"></span>Задания - от партнеров, от игр(змейка, смешарики), от покупок (сыр от бренда 2шт в чеке)</li><li data-list=\"bullet\"><span class=\"ql-ui\"></span>есть достижения(есть ли бонусы за них?)</li><li data-list=\"bullet\"><span class=\"ql-ui\"></span>нет </li></ol>"
+      },
+      "style": {
+        "fillColor": "#ffffff",
+        "fillOpacity": "0.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "18",
+        "textAlign": "left",
+        "color": "#1a1a1a"
+      },
+      "geometry": {
+        "width": 261.44322712714285
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -2150.748145187572,
+        "y": -992.9342541241888
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682441484234"
+    },
+    {
+      "id": "3458764682441824102",
+      "type": "text",
+      "data": {
+        "content": "<ol><li data-list=\"bullet\"><span class=\"ql-ui\"></span>Не образуют цикл купил-выполнил-купил еще (возможно дешевле)?</li><li data-list=\"bullet\"><span class=\"ql-ui\"></span>Нет челленджа экономии</li><li data-list=\"bullet\"><span class=\"ql-ui\"></span>Цель - продажа товаров из категорий, не повышение ретенш?</li><li data-list=\"bullet\"><span class=\"ql-ui\"></span>озон - ток доставка, зя - в том числе доставка, магазины только в 3х городах</li></ol>"
+      },
+      "style": {
+        "fillColor": "#ffffff",
+        "fillOpacity": "0.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "18",
+        "textAlign": "left",
+        "color": "#1a1a1a"
+      },
+      "geometry": {
+        "width": 353.2788073028572
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -1869.5755365357115,
+        "y": -635.9270222920554
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682441824102"
+    },
+    {
+      "id": "3458764682441938504",
+      "type": "image",
+      "data": {
+        "imageUrl": "https://api.miro.com/v2/boards/uXjVHrrRqss%3D/resources/images/3458764518173327279?format=preview&redirect=false"
+      },
+      "style": null,
+      "geometry": {
+        "height": 62.144869552852924,
+        "width": 467.7468807565877
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -625.7419756425293,
+        "y": -3275.5145562188527
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682441938504"
+    },
+    {
+      "id": "3458764682442236913",
+      "type": "image",
+      "data": {
+        "imageUrl": "https://api.miro.com/v2/boards/uXjVHrrRqss%3D/resources/images/3458764518173314453?format=preview&redirect=false"
+      },
+      "style": null,
+      "geometry": {
+        "height": 579.2542372881355,
+        "width": 267
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -353.20346883363186,
+        "y": -2492.9074400515196
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682442236913"
+    },
+    {
+      "id": "3458764682442419261",
+      "type": "text",
+      "data": {
+        "content": "<ol><li data-list=\"bullet\"><span class=\"ql-ui\"></span>везде есть онбоардинги и экскурсии по отдельному слою</li><li data-list=\"bullet\"><span class=\"ql-ui\"></span>есть нотификация изменений (задания поменялись и теперь их надо активировать - пример) и важные апдйеты при заходе на экран</li><li data-list=\"bullet\"><span class=\"ql-ui\"></span>грузятся по времени 3-7 секунд слой</li><li data-list=\"bullet\"><span class=\"ql-ui\"></span>задание и тд - местами дублируются между двумя слоями</li></ol>"
+      },
+      "style": {
+        "fillColor": "#ffffff",
+        "fillOpacity": "0.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "14",
+        "textAlign": "left",
+        "color": "#1a1a1a"
+      },
+      "geometry": {
+        "width": 338
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -665.1836129174947,
+        "y": -2703.7373031349557
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682442419261"
+    },
+    {
+      "id": "3458764682442419510",
+      "type": "image",
+      "data": {
+        "imageUrl": "https://api.miro.com/v2/boards/uXjVHrrRqss%3D/resources/images/3458764518173365155?format=preview&redirect=false"
+      },
+      "style": null,
+      "geometry": {
+        "height": 524.3970944309926,
+        "width": 241.7142857142857
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": 0.015177438064982507,
+        "y": -2247.9713386353988
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682442419510"
+    },
+    {
+      "id": "3458764682442548990",
+      "type": "image",
+      "data": {
+        "imageUrl": "https://api.miro.com/v2/boards/uXjVHrrRqss%3D/resources/images/3458764518173355196?format=preview&redirect=false"
+      },
+      "style": null,
+      "geometry": {
+        "height": 524.3970944309928,
+        "width": 241.71428571428572
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": 278.06409725754446,
+        "y": -2247.9713386353988
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682442548990"
+    },
+    {
+      "id": "3458764682442549272",
+      "type": "image",
+      "data": {
+        "imageUrl": "https://api.miro.com/v2/boards/uXjVHrrRqss%3D/resources/images/3458764518173344274?format=preview&redirect=false"
+      },
+      "style": null,
+      "geometry": {
+        "height": 524.3970944309929,
+        "width": 241.71428571428575
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": 545.4687835034722,
+        "y": -2247.971338635399
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682442549272"
+    },
+    {
+      "id": "3458764682442549427",
+      "type": "text",
+      "data": {
+        "content": "<p><span style=\"color:rgb(26,26,26)\">флоу с главной перека</span></p>"
+      },
+      "style": {
+        "fillColor": "#ffffff",
+        "fillOpacity": "0.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "24",
+        "textAlign": "left",
+        "color": "#1a1a1a"
+      },
+      "geometry": {
+        "width": 265.7142857142857
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -363.32647006035177,
+        "y": -3064.951792336504
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682442549427"
+    },
+    {
+      "id": "3458764682442912733",
+      "type": "text",
+      "data": {
+        "content": "<p><span style=\"color:rgb(26,26,26)\">Система лояльности x5 затрагивает</span></p>"
+      },
+      "style": {
+        "fillColor": "#ffffff",
+        "fillOpacity": "0.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "24",
+        "textAlign": "left",
+        "color": "#1a1a1a"
+      },
+      "geometry": {
+        "width": 421.71428571428567
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -648.7582731636802,
+        "y": -3339.5438722499366
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682442912733"
+    },
+    {
+      "id": "3458764682443044110",
+      "type": "image",
+      "data": {
+        "imageUrl": "https://api.miro.com/v2/boards/uXjVHrrRqss%3D/resources/images/3458764518173387178?format=preview&redirect=false"
+      },
+      "style": null,
+      "geometry": {
+        "height": 524.3970944309928,
+        "width": 241.71428571428572
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": 0.015177438064995386,
+        "y": -2808.313773232194
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682443044110"
+    },
+    {
+      "id": "3458764682443235580",
+      "type": "image",
+      "data": {
+        "imageUrl": "https://api.miro.com/v2/boards/uXjVHrrRqss%3D/resources/images/3458764518173359363?format=preview&redirect=false"
+      },
+      "style": null,
+      "geometry": {
+        "height": 294.4181836884056,
+        "width": 332.182036228011
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -2501.0670691606047,
+        "y": -1328.6638694858993
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682443235580"
+    },
+    {
+      "id": "3458764682443337097",
+      "type": "image",
+      "data": {
+        "imageUrl": "https://api.miro.com/v2/boards/uXjVHrrRqss%3D/resources/images/3458764518173315632?format=preview&redirect=false"
+      },
+      "style": null,
+      "geometry": {
+        "height": 524.3970944309929,
+        "width": 241.71428571428575
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": 278.0640972575444,
+        "y": -2808.313773232194
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682443337097"
+    },
+    {
+      "id": "3458764682443337379",
+      "type": "text",
+      "data": {
+        "content": "<ol><li data-list=\"bullet\"><span class=\"ql-ui\"></span>Додо хвостики - аватар</li></ol>"
+      },
+      "style": {
+        "fillColor": "#ffffff",
+        "fillOpacity": "0.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "18",
+        "textAlign": "left",
+        "color": "#1a1a1a"
+      },
+      "geometry": {
+        "width": 340.56176815285716
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -2496.877203199426,
+        "y": -1147.2199684099032
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682443337379"
+    },
+    {
+      "id": "3458764682443337381",
+      "type": "image",
+      "data": {
+        "imageUrl": "https://api.miro.com/v2/boards/uXjVHrrRqss%3D/resources/images/3458764518173379289?format=preview&redirect=false"
+      },
+      "style": null,
+      "geometry": {
+        "height": 381.350492415748,
+        "width": 175.77874259788388
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -841.5137556989564,
+        "y": -2281.689332913797
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682443337381"
+    },
+    {
+      "id": "3458764682443474128",
+      "type": "image",
+      "data": {
+        "imageUrl": "https://api.miro.com/v2/boards/uXjVHrrRqss%3D/resources/images/3458764518173390268?format=preview&redirect=false"
+      },
+      "style": null,
+      "geometry": {
+        "height": 444.889224827243,
+        "width": 261.44322712668543
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -2840.0548738958023,
+        "y": -1403.8993900553178
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682443474128"
+    },
+    {
+      "id": "3458764682443474131",
+      "type": "image",
+      "data": {
+        "imageUrl": "https://api.miro.com/v2/boards/uXjVHrrRqss%3D/resources/images/3458764518173313611?format=preview&redirect=false"
+      },
+      "style": null,
+      "geometry": {
+        "height": 524.3970944309929,
+        "width": 241.71428571428578
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": 545.4687835034722,
+        "y": -2808.313773232194
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682443474131"
+    },
+    {
+      "id": "3458764682443474207",
+      "type": "image",
+      "data": {
+        "imageUrl": "https://api.miro.com/v2/boards/uXjVHrrRqss%3D/resources/images/3458764518173364401?format=preview&redirect=false"
+      },
+      "style": null,
+      "geometry": {
+        "height": 381.35049241574825,
+        "width": 175.77874259788396
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -1052.293231350135,
+        "y": -2281.689332913797
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682443474207"
+    },
+    {
+      "id": "3458764682443474349",
+      "type": "text",
+      "data": {
+        "content": "<ol><li data-list=\"bullet\"><span class=\"ql-ui\"></span>Бьюти-тамагочи - аватар</li></ol><p><br /></p>"
+      },
+      "style": {
+        "fillColor": "#ffffff",
+        "fillOpacity": "0.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "18",
+        "textAlign": "left",
+        "color": "#1a1a1a"
+      },
+      "geometry": {
+        "width": 340.56176815285716
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -2800.4956033839608,
+        "y": -1147.2199684099032
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682443474349"
+    },
+    {
+      "id": "3458764682443474545",
+      "type": "image",
+      "data": {
+        "imageUrl": "https://api.miro.com/v2/boards/uXjVHrrRqss%3D/resources/images/3458764518173347466?format=preview&redirect=false"
+      },
+      "style": null,
+      "geometry": {
+        "height": 524.397094430993,
+        "width": 241.7142857142858
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": 813.183069217758,
+        "y": -2808.313773232194
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682443474545"
+    },
+    {
+      "id": "3458764682444857816",
+      "type": "embed",
+      "data": {
+        "contentType": "link",
+        "description": "В своем мобильном приложении Додо запустили игру-тамагочи Хвостики. В ней игрок заводит виртуального друга и копит виртуальную валюту, на которую возможно порадовать питомца новенькой игрушкой. Каждое воскресенье за заботу о себе питомец дарит своему хозяину подарок от Додо или партнеров. А самые активные пользователи игры получат супер-призы.",
+        "html": "<iframe src=\"https://www.gamification-now.ru/cases/dodo-picca-hvostiki-mobilnaya-igra-tamagochi-i-sbor-sredstv-dlya-zhivotnyh-iz-priyuta-kotodetki\" width=\"100%\" height=\"100%\" frameborder=\"0\"></iframe>",
+        "previewUrl": "https://api.miro.com/v2/boards/uXjVHrrRqss%3D/resources/images/3458764518173332865?format=preview&redirect=false",
+        "providerName": "Gamification-now",
+        "providerUrl": "",
+        "title": "Додо Пицца &#34;Хвостики&#34;: мобильная игра-тамагочи и сбор средств для животных из приюта &#34;Котодетки&#34;",
+        "url": "https://www.gamification-now.ru/cases/dodo-picca-hvostiki-mobilnaya-igra-tamagochi-i-sbor-sredstv-dlya-zhivotnyh-iz-priyuta-kotodetki"
+      },
+      "style": null,
+      "geometry": {
+        "height": 168.211306822395,
+        "width": 209.28616081391004
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -2510.249451605884,
+        "y": -1580.9786147412997
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682444857816"
+    },
+    {
+      "id": "3458764682445231151",
+      "type": "text",
+      "data": {
+        "content": "<ol><li data-list=\"bullet\"><span class=\"ql-ui\"></span><em style=\"color:rgb(109,109,109);background-color:transparent\">Заведите питомца – котика или собачку </em></li><li data-list=\"bullet\"><span class=\"ql-ui\"></span><em style=\"color:rgb(109,109,109);background-color:transparent\">Ухаживайте за ним и играйте с ним, чтобы он был счастлив и копил монеты</em></li><li data-list=\"bullet\"><span class=\"ql-ui\"></span><em style=\"color:rgb(109,109,109);background-color:transparent\">Тратьте монеты на улучшение комнаты, в которой живёт питомец </em></li><li data-list=\"bullet\"><span class=\"ql-ui\"></span><em style=\"color:rgb(109,109,109);background-color:transparent\">Получайте подарки каждое воскресенье от Додо и партнёров и участвуйте в итоговом розыгрыше призов</em></li></ol>"
+      },
+      "style": {
+        "fillColor": "#ffffff",
+        "fillOpacity": "0.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "18",
+        "textAlign": "left",
+        "color": "#6d6d6d"
+      },
+      "geometry": {
+        "width": 338.2005043683771
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -2498.057835087544,
+        "y": -953.9145238146172
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682445231151"
+    },
+    {
+      "id": "3458764682445436010",
+      "type": "text",
+      "data": {
+        "content": "<p>Q and A</p>"
+      },
+      "style": {
+        "fillColor": "#ffffff",
+        "fillOpacity": "0.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "48",
+        "textAlign": "left",
+        "color": "#1a1a1a"
+      },
+      "geometry": {
+        "width": 181.7142857142857
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -2705.7496748699823,
+        "y": -3903.152585756571
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682445436010"
+    },
+    {
+      "id": "3458764682445436197",
+      "type": "text",
+      "data": {
+        "content": "<ol><li data-list=\"ordered\"><span class=\"ql-ui\"></span>Как мы поняли контекст и задачу (6-8 предложений)</li><li data-list=\"ordered\"><span class=\"ql-ui\"></span>Где мы не правы (дописать вопросы по разделам где мы можем быть неправы)</li></ol><p><br /></p><p><span style=\"background-color:rgb(255,255,255);color:rgb(24,24,27)\">Основная метрика — рост доли пользователей с не менее чем N покупками за период или рост частоты покупок в тестовой группе относительно контрольной без снижения маржи на участника.  - согласен - поговорить про валидацию</span></p><p><br /></p><p>Блок вопросов - 1</p><p>Хотим понять что хочет кейсодатель, кто он, как мыслит про этот продукт, в чем боль его в этом продукте</p><p><span style=\"color:rgb(24,24,27);background-color:rgb(255,255,255)\">Второй пользователь — продакт-менеджер или маркетолог программы лояльности. Он анализирует, какая механика предлагается конкретному покупателю, сколько стоит награда и не выглядит ли активность мошеннической. - непонятно нахуя</span></p><p>Важны ли ему метрики и способ оценки проекта.</p><p><br /></p><p>Блок вопросов - 2</p><p>ЦА для сервиса в котором разные продукты</p><p><span style=\"background-color:rgb(255,255,255);color:rgb(24,24,27)\">По грубой оценке кейсодателя, даже рост частоты покупок вовлечённого сегмента на 1–2 п. п. в масштабе X5 означает заметный дополнительный оборот. - это сколько в процентах - про сегмент</span></p><p><br /></p><p>Блок вопросов - 3</p><p>Синтетические данные</p><p><br /></p><p><br /></p><p><br /></p>"
+      },
+      "style": {
+        "fillColor": "#ffffff",
+        "fillOpacity": "0.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "48",
+        "textAlign": "left",
+        "color": "#1a1a1a"
+      },
+      "geometry": {
+        "width": 1330.2857142857142
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -2131.4639605842676,
+        "y": -2664.8837879245248
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682445436197"
+    },
+    {
+      "id": "3458764682445623198",
+      "type": "doc_format",
+      "data": {
+        "contentType": "html",
+        "contentVersion": 9,
+        "html": "<h1>Мысли</h1><p>Сегодня продукт (приложение лояльности) выполняет одну базовую задачу (Core Job): «я хочу автоматически получать скидку/баллы, когда покупаю продукты рядом с домом» — механическая, привычная, без эмоций. Задача, которую продукт выполняет ради этого (Big Job) — что-то вроде «я хочу вести хозяйство экономно, не тратя на это лишнего внимания».</p><p></p><p>Ключевое наблюдение из самого кейса: рядом с этой Core Job уже существует соседняя задача (Small Job), которую приложение сейчас не выполняет: «<strong>я хочу видеть и чувствовать, что я — умный, эффективный покупател</strong>ь» (статус, компетентность, признание). Именно её пользователь сейчас выполняет вручную и плохо: «слабо видит экономию», «не сравнивает с соседями». Это ровно та точка роста, которую канон называет самой частой: уникальная ценность обычно лежит не в улучшении текущей Core Job, а в соседней Small Job — и задача хакатона по сути формулирует «поднимите эту Small Job до Core Job игрового слоя».</p><p></p><p>Второй тревожный сигнал в тексте кейса — классический эффект Красной Королевы (Red Queen): «скидки быстро теряют привлекательность» — потому что вчерашний вау-эффект стал сегодняшней нормой, а планка ожиданий у пользователя всё время растёт. Чистое снижение цены (скидка) — не тот рычаг, который тут работает долгосрочно; нужен рычаг из другой категории.</p>",
+        "content": "<h1>Мысли</h1><p>Сегодня продукт (приложение лояльности) выполняет одну базовую задачу (Core Job): «я хочу автоматически получать скидку/баллы, когда покупаю продукты рядом с домом» — механическая, привычная, без эмоций. Задача, которую продукт выполняет ради этого (Big Job) — что-то вроде «я хочу вести хозяйство экономно, не тратя на это лишнего внимания».</p><p></p><p>Ключевое наблюдение из самого кейса: рядом с этой Core Job уже существует соседняя задача (Small Job), которую приложение сейчас не выполняет: «<strong>я хочу видеть и чувствовать, что я — умный, эффективный покупател</strong>ь» (статус, компетентность, признание). Именно её пользователь сейчас выполняет вручную и плохо: «слабо видит экономию», «не сравнивает с соседями». Это ровно та точка роста, которую канон называет самой частой: уникальная ценность обычно лежит не в улучшении текущей Core Job, а в соседней Small Job — и задача хакатона по сути формулирует «поднимите эту Small Job до Core Job игрового слоя».</p><p></p><p>Второй тревожный сигнал в тексте кейса — классический эффект Красной Королевы (Red Queen): «скидки быстро теряют привлекательность» — потому что вчерашний вау-эффект стал сегодняшней нормой, а планка ожиданий у пользователя всё время растёт. Чистое снижение цены (скидка) — не тот рычаг, который тут работает долгосрочно; нужен рычаг из другой категории.</p>"
+      },
+      "style": null,
+      "geometry": null,
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -1049.4581121744109,
+        "y": -301.81609394888267
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682445623198"
+    },
+    {
+      "id": "3458764682445799948",
+      "type": "text",
+      "data": {
+        "content": "<p><span style=\"color:rgb(17,17,17);background-color:transparent\">Как это происходит сейчас — шаг за шагом? Кто участвует? Где ломается?</span></p><p><br /><span style=\"color:rgb(17,17,17);background-color:transparent\">Что вы уже пробовали, включая ChatGPT, и почему не прижилось?</span></p><p><br /><span style=\"color:rgb(17,17,17);background-color:transparent\">Как вы поймёте, что решение сработало — в каких цифрах? Что считаете сейчас?</span></p><p><br /><span style=\"color:rgb(17,17,17);background-color:transparent\">Какие данные реально доступны и в каком виде? Что нельзя?</span></p><p><br /><span style=\"color:rgb(17,17,17);background-color:transparent\">Что для вас обязательно, а где вы открыты к другой постановке?</span></p><p><br /><span style=\"color:rgb(17,17,17);background-color:transparent\">Если бы это работало идеально — что изменилось бы в вашем дне или неделе?</span></p><p><br /><span style=\"color:rgb(17,17,17);background-color:transparent\">Кто ещё в компании или отрасли страдает от того же?</span></p><p><br /><br /><br /></p>"
+      },
+      "style": {
+        "fillColor": "#ffffff",
+        "fillOpacity": "0.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "18",
+        "textAlign": "left",
+        "color": "#111111"
+      },
+      "geometry": {
+        "width": 728.8332300846303
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -3315.7485767025164,
+        "y": -2525.599726493911
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682445799948"
+    },
+    {
+      "id": "3458764682445800205",
+      "type": "embed",
+      "data": {
+        "contentType": "link",
+        "description": "Золотое Яблоко создали для своих клиентов бьюти-тамагочи с Эльфом из Золотого Яблока. В игре нужно выполнять задания, зарабатывать игровую валюту и энергию, ухаживать за Эльфом, менять ему одежду и интерьер, прокачивать его уровень, растить рейтинг, играть в мини-игры, проходить бьюти-тесты и за это получать подарки.",
+        "html": "<iframe src=\"https://www.gamification-now.ru/cases/zolotoe-yabloko-byuti-tamagochi-prokachivay-svoego-personazha-vypolnyay-zadaniya-i-poluchay-podarki\" width=\"100%\" height=\"100%\" frameborder=\"0\"></iframe>",
+        "previewUrl": "https://api.miro.com/v2/boards/uXjVHrrRqss%3D/resources/images/3458764518173435988?format=preview&redirect=false",
+        "providerName": "Gamification-now",
+        "providerUrl": "",
+        "title": "Золотое яблоко &#34;Бьюти-тамагочи&#34;: прокачивай своего персонажа, выполняй задания и получай подарки",
+        "url": "https://www.gamification-now.ru/cases/zolotoe-yabloko-byuti-tamagochi-prokachivay-svoego-personazha-vypolnyay-zadaniya-i-poluchay-podarki"
+      },
+      "style": null,
+      "geometry": {
+        "height": 257.1033672040034,
+        "width": 170.86993969458612
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -2927.093175980679,
+        "y": -1775.8956860709409
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682445800205"
+    },
+    {
+      "id": "3458764682445800563",
+      "type": "text",
+      "data": {
+        "content": "<p>Идеи</p>"
+      },
+      "style": {
+        "fillColor": "#ffffff",
+        "fillOpacity": "0.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "48",
+        "textAlign": "left",
+        "color": "#1a1a1a"
+      },
+      "geometry": {
+        "width": 126.85714285714285
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": 1840.481847380968,
+        "y": -3278.7278357281402
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682445800563"
+    },
+    {
+      "id": "3458764682445800656",
+      "type": "text",
+      "data": {
+        "content": "<ol><li data-list=\"bullet\"><span class=\"ql-ui\"></span>Лиги экономии (как в дуалинго лиги по знани/ю язхыка и челленджам)</li><li data-list=\"bullet\"><span class=\"ql-ui\"></span>Скидки за выполнение заданий на покупку, задания персонализированны</li><li data-list=\"bullet\"><span class=\"ql-ui\"></span><br /></li></ol>"
+      },
+      "style": {
+        "fillColor": "#ffffff",
+        "fillOpacity": "0.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "48",
+        "textAlign": "left",
+        "color": "#1a1a1a"
+      },
+      "geometry": {
+        "width": 2196.9400682399996
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": 2895.6746120267508,
+        "y": -3103.1643225748876
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682445800656"
+    },
+    {
+      "id": "3458764682446812577",
+      "type": "text",
+      "data": {
+        "content": "<p>Вкусвилл - челленджи</p>"
+      },
+      "style": {
+        "fillColor": "#ffffff",
+        "fillOpacity": "0.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "14",
+        "textAlign": "left",
+        "color": "#1a1a1a"
+      },
+      "geometry": {
+        "width": 152
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -2424.735419775717,
+        "y": -604.3270988186329
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682446812577"
+    },
+    {
+      "id": "3458764682446812878",
+      "type": "image",
+      "data": {
+        "imageUrl": "https://api.miro.com/v2/boards/uXjVHrrRqss%3D/resources/images/3458764518173404355?format=preview&redirect=false"
+      },
+      "style": null,
+      "geometry": {
+        "height": 294.41818368840563,
+        "width": 132.48818265978252
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -2525.558497863781,
+        "y": -427.5221684275783
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682446812878"
+    },
+    {
+      "id": "3458764682447036162",
+      "type": "image",
+      "data": {
+        "imageUrl": "https://api.miro.com/v2/boards/uXjVHrrRqss%3D/resources/images/3458764518173463099?format=preview&redirect=false"
+      },
+      "style": null,
+      "geometry": {
+        "height": 180.00000000000003,
+        "width": 319.21182266009856
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -2299.7084952038404,
+        "y": -391.81609394888267
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682447036162"
+    },
+    {
+      "id": "3458764682448495708",
+      "type": "text",
+      "data": {
+        "content": "<p><span style=\"background-color:rgb(254,159,77);color:rgb(26,26,26)\">Основная метрика — рост доли пользователей с не менее чем N покупками за период или рост частоты покупок в тестовой группе относительно контрольной без снижения маржи на участника.</span></p>"
+      },
+      "style": {
+        "fillColor": "#ffffff",
+        "fillOpacity": "0.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "14",
+        "textAlign": "left",
+        "color": "#1a1a1a"
+      },
+      "geometry": {
+        "width": 378.0340100200003
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -1167.0402012713996,
+        "y": -747.3983078028975
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682448495708"
+    },
+    {
+      "id": "3458764682448970263",
+      "type": "text",
+      "data": {
+        "content": "<ol><li data-list=\"bullet\"><span class=\"ql-ui\"></span>у вас уже есть игры - почему они не решают боль? какую боль решают, если не ретеншн? почему они разные для разных магазинов?</li><li data-list=\"bullet\"><span class=\"ql-ui\"></span>челлендж экономии может быть разный в зависимости от магазина - в пятерочке покупки не такие, как в перекрестке. Программа с челленджем должна работать персонализированно на каждый из магазинов в x5, быть общей вне зависимости от них? или для какого-то конкретного магазина (пятерочка)</li><li data-list=\"bullet\"><span class=\"ql-ui\"></span>уточнить про рефералки и что из них считается фродом(на основе того, как они работают у них) - фрод отмена заказа (накрутка чека при рефералке) - <span style=\"background-color:rgb(255,246,182)\">думать про абуз - делать например фриз на 72 начисление награды &#43; про оплату с одной  - Сейчас рефок нет, но будет до конца года</span></li></ol><p><br /></p><p>точно - моделинг и условия. Паралельные истории - аксимомы от них и сами.  </p>"
+      },
+      "style": {
+        "fillColor": "#ffffff",
+        "fillOpacity": "0.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "24",
+        "textAlign": "left",
+        "color": "#1a1a1a"
+      },
+      "geometry": {
+        "width": 1121.897794782857
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -3686.579788657047,
+        "y": -3057.2600173983255
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682448970263"
+    },
+    {
+      "id": "3458764682449661989",
+      "type": "text",
+      "data": {
+        "content": "<p>Паша</p>"
+      },
+      "style": {
+        "fillColor": "#ffffff",
+        "fillOpacity": "0.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "36",
+        "textAlign": "left",
+        "color": "#1a1a1a"
+      },
+      "geometry": {
+        "width": 275.14285714285717
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -3633.9632626352386,
+        "y": -3288.6885888268976
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682449661989"
+    },
+    {
+      "id": "3458764682450934424",
+      "type": "image",
+      "data": {
+        "imageUrl": "https://api.miro.com/v2/boards/uXjVHrrRqss%3D/resources/images/3458764518173514036?format=preview&redirect=false"
+      },
+      "style": null,
+      "geometry": {
+        "height": 1162,
+        "width": 2066
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -3214.5286860458327,
+        "y": -4598.586458600209
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682450934424"
+    },
+    {
+      "id": "3458764682450934587",
+      "type": "text",
+      "data": {
+        "content": "<p><span style=\"background-color:transparent\">Понимание проекта:</span></p><p><br /></p><p><span style=\"background-color:transparent\">В сущности пользователь: «я хочу вести хозяйство экономно и понимать что веду его эконом на цифрах, не тратя на это слишком много лишнего внимания и времени»</span></p><p><br /></p><p><span style=\"background-color:transparent\">Нынешние игровые слои не дают:</span></p><ol><li data-list=\"bullet\"><span class=\"ql-ui\"></span><span style=\"background-color:transparent\">легко измеримую личную экономию</span></li><li data-list=\"bullet\"><span class=\"ql-ui\"></span><span style=\"background-color:transparent\">требуют глубокого погружения в механики и из-за их количества (разные игры, ускорители игр, колеса, достижения, задания, челленджы и тд)</span></li></ol><p><br /></p><p><span style=\"background-color:transparent\">Поэтому активность акций, промо, колсе и реферадлок и тд дает лишь слабый эффекта привыкания, не усиливает ретеншен (или слабо ослабляет чарн рейт), то есть эти истории с низкой эффективности - мы должны повысить их эффективность</span></p><p><br /></p><p><span style=\"background-color:transparent\">Ограничивающий фактором - является различный  фрод, которого может быть больше в персонализхированных штуках</span></p><p><br /></p><p><br /></p>"
+      },
+      "style": {
+        "fillColor": "#c6dcff",
+        "fillOpacity": "1.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "24",
+        "textAlign": "left",
+        "color": "#1a1a1a"
+      },
+      "geometry": {
+        "width": 805.0825527942857
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -1606.735469272075,
+        "y": -4819.586458600214
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682450934587"
+    },
+    {
+      "id": "3458764682451637340",
+      "type": "text",
+      "data": {
+        "content": "<p>Как сделать синтетические данные 1-10 тыс. пользователей достоверными? и Нужно ли это в кейсе?</p><p>Как сейчас реализован антифрод на игровых слоях / в реферальное программе?</p><p>Как лучше сгенерировать 30-50 профилей для личных челленджей?</p><p><br /></p>"
+      },
+      "style": {
+        "fillColor": "#ffffff",
+        "fillOpacity": "0.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "18",
+        "textAlign": "left",
+        "color": "#1a1a1a"
+      },
+      "geometry": {
+        "width": 524.0335185716085
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -3137.0331970052252,
+        "y": -2223.2350203544893
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682451637340"
+    },
+    {
+      "id": "3458764682454391418",
+      "type": "text",
+      "data": {
+        "content": "<p>Можно ли выходить в слой реального мира? Печать на чеках</p>"
+      },
+      "style": {
+        "fillColor": "#ffffff",
+        "fillOpacity": "0.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "19",
+        "textAlign": "left",
+        "color": "#1a1a1a"
+      },
+      "geometry": {
+        "width": 568.6428571428572
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -3147.08842285891,
+        "y": -2001.4589943876915
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682454391418"
+    },
+    {
+      "id": "3458764682457112308",
+      "type": "text",
+      "data": {
+        "content": "<ol><li data-list=\"ordered\"><span class=\"ql-ui\"></span>EG - росстат как ца</li><li data-list=\"ordered\"><span class=\"ql-ui\"></span>не знает какое решение нужно по сегментам - не сегменнтировать</li><li data-list=\"ordered\"><span class=\"ql-ui\"></span><br /></li></ol>"
+      },
+      "style": {
+        "fillColor": "#ffffff",
+        "fillOpacity": "0.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "48",
+        "textAlign": "left",
+        "color": "#1a1a1a"
+      },
+      "geometry": {
+        "width": 555.4285714285714
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -930.6935355476123,
+        "y": -3611.9922101546254
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682457112308"
+    },
+    {
+      "id": "3458764682462480458",
+      "type": "text",
+      "data": {
+        "content": "<p>Что хочет / ждет  по вайбу,</p><p><span style=\"background-color:transparent\">финально в прмоет от гпт - вбил ограничения и он тебе выдал корзину и тд - вот что-то такое </span></p>"
+      },
+      "style": {
+        "fillColor": "#c6dcff",
+        "fillOpacity": "1.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "24",
+        "textAlign": "left",
+        "color": "#1a1a1a"
+      },
+      "geometry": {
+        "width": 805.0825527942857
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -1037.656985814641,
+        "y": -4356.235132367922
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682462480458"
+    },
+    {
+      "id": "3458764682463126374",
+      "type": "text",
+      "data": {
+        "content": "<p>Прогнать на ретро данныъ - бизнес модель - ебидта / прибыль</p><p>&#43; side-effect </p><p>важен порядок цифр на уровне - 10-20 млн плюсом в месяц инкрементально</p>"
+      },
+      "style": {
+        "fillColor": "#c6dcff",
+        "fillOpacity": "1.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "24",
+        "textAlign": "left",
+        "color": "#1a1a1a"
+      },
+      "geometry": {
+        "width": 805.0825527942857
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -1037.656985814641,
+        "y": -4195.603861834059
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682463126374"
+    },
+    {
+      "id": "3458764682463493268",
+      "type": "text",
+      "data": {
+        "content": "<p>Прогнать на ретро данныъ - бизнес модель - ебидта / прибыль</p><p>&#43; side-effect / икс 5 - чекнуть фин отчетность</p><p>маржинальность икс5 итого пары процентов</p><p>важен порядок цифр на уровне - 10-20 млн плюсом в месяц инкрементально</p>"
+      },
+      "style": {
+        "fillColor": "#c6dcff",
+        "fillOpacity": "1.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "24",
+        "textAlign": "left",
+        "color": "#1a1a1a"
+      },
+      "geometry": {
+        "width": 805.0825527942857
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -1037.656985814641,
+        "y": -4004.889576119773
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682463493268"
+    },
+    {
+      "id": "3458764682463849285",
+      "type": "text",
+      "data": {
+        "content": "<p>маржа на чек -в переке  30 рублей</p><p>маржв в пятере - 20</p><p>марэа в чирике 18</p><p><br /></p><p>в переке </p>"
+      },
+      "style": {
+        "fillColor": "#c6dcff",
+        "fillOpacity": "1.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "24",
+        "textAlign": "left",
+        "color": "#1a1a1a"
+      },
+      "geometry": {
+        "width": 805.0825527942857
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -93.64233652275152,
+        "y": -4004.8895761197728
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682463849285"
+    },
+    {
+      "id": "3458764682464020679",
+      "type": "text",
+      "data": {
+        "content": "<p>У нынешних игровых слоев в холодильнике:</p><ol><li data-list=\"bullet\"><span class=\"ql-ui\"></span>MAU почти нулевой</li><li data-list=\"bullet\"><span class=\"ql-ui\"></span>Retention почти нулевой</li></ol><p><br /></p><p>его самого бесит  отстутсвие персональных реконадци и  кросс сейл &#43; сложность с фигней типо ускрорители / жизни / морковки</p><p><br /></p>"
+      },
+      "style": {
+        "fillColor": "#c6dcff",
+        "fillOpacity": "1.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "24",
+        "textAlign": "left",
+        "color": "#1a1a1a"
+      },
+      "geometry": {
+        "width": 522.8571428571428
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -3986.1001146172607,
+        "y": -3775.6572927255806
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682464020679"
+    },
+    {
+      "id": "3458764682469593008",
+      "type": "text",
+      "data": {
+        "content": "<p>Больше хотим в офланй из-за большего доли выручки</p><p>ретенщен растим тоже в офлайн</p><p><br /></p>"
+      },
+      "style": {
+        "fillColor": "#c6dcff",
+        "fillOpacity": "1.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "24",
+        "textAlign": "left",
+        "color": "#1a1a1a"
+      },
+      "geometry": {
+        "width": 805.0825527942857
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -236.5214807415838,
+        "y": -5091.527289767685
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682469593008"
+    },
+    {
+      "id": "3458764682470856925",
+      "type": "text",
+      "data": {
+        "content": "<p>Список покупок работать с историех и их шеринг</p><p>единица не юзер а дмохозяйство</p><p>печати в питере на невском - типо как доп часть маркетинговом</p><p><br /></p>"
+      },
+      "style": {
+        "fillColor": "#c6dcff",
+        "fillOpacity": "1.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "24",
+        "textAlign": "left",
+        "color": "#1a1a1a"
+      },
+      "geometry": {
+        "width": 805.0825527942857
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": -602.7432476158083,
+        "y": -4829.385847615505
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682470856925"
+    },
+    {
+      "id": "3458764682473071798",
+      "type": "text",
+      "data": {
+        "content": "<p><span style=\"color:rgb(24,24,27)\">Рабочий proof of concept, включающий:</span></p><ol><li data-list=\"bullet\"><span class=\"ql-ui\"></span><span style=\"color:rgb(24,24,27)\">кликабельный прототип из 3–4 экранов;</span></li><li data-list=\"bullet\"><span class=\"ql-ui\"></span><span style=\"color:rgb(24,24,27)\">ИИ-модуль, который по синтетической истории покупок создаёт персональный челлендж;</span></li><li data-list=\"bullet\"><span class=\"ql-ui\"></span><span style=\"color:rgb(24,24,27)\">обновление прогресса аватара и места в рейтинге;</span></li><li data-list=\"bullet\"><span class=\"ql-ui\"></span><span style=\"color:rgb(24,24,27)\">расчёт реферальной награды;</span></li><li data-list=\"bullet\"><span class=\"ql-ui\"></span><span style=\"color:rgb(24,24,27)\">объяснение выбора механики для конкретного пользователя;</span></li><li data-list=\"bullet\"><span class=\"ql-ui\"></span><span style=\"color:rgb(24,24,27)\">краткую симуляцию эффекта на 1–10 тыс. синтетических пользователей;</span></li><li data-list=\"bullet\"><span class=\"ql-ui\"></span><span style=\"color:rgb(24,24,27)\">одностраничный план пилота для продуктовой команды.</span></li></ol><p><span style=\"color:rgb(24,24,27)\">Команда может сделать акцент на ИИ — агенте, рекомендациях и антифроде — или на продуктовой части: правилах, UX и экономике. Оба направления допустимы, если сценарии связаны и измеримы.</span></p>"
+      },
+      "style": {
+        "fillColor": "#c6dcff",
+        "fillOpacity": "1.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "24",
+        "textAlign": "left",
+        "color": "#18181b"
+      },
+      "geometry": {
+        "width": 1028.5714285714284
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": 3422.5241758158522,
+        "y": -2234.393954061822
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682473071798"
+    },
+    {
+      "id": "3458764682473071817",
+      "type": "text",
+      "data": {
+        "content": "<p><strong>Кто что делает</strong></p>"
+      },
+      "style": {
+        "fillColor": "#ffffff",
+        "fillOpacity": "0.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "64",
+        "textAlign": "left",
+        "color": "#18181b"
+      },
+      "geometry": {
+        "width": 461.71428571428567
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": 3152.8098901015665,
+        "y": -2526.9320875479402
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682473071817"
+    },
+    {
+      "id": "3458764682473563111",
+      "type": "paint",
+      "data": {},
+      "style": null,
+      "geometry": null,
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": 3501.8461457464473,
+        "y": -2445.2259534487703
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682473563111"
+    },
+    {
+      "id": "3458764682473563137",
+      "type": "paint",
+      "data": {},
+      "style": null,
+      "geometry": null,
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": 3546.2498752800784,
+        "y": -2483.1957823676657
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682473563137"
+    },
+    {
+      "id": "3458764682473563185",
+      "type": "sticky_note",
+      "data": {
+        "shape": "square",
+        "content": "<p>дизайн</p><p>- ручками</p><p>- клод и валидируем через них</p>"
+      },
+      "style": {
+        "fillColor": "light_blue",
+        "textAlign": "center",
+        "textAlignVertical": "middle"
+      },
+      "geometry": {
+        "height": 123.12,
+        "width": 107.46000000000001
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": 4498.380050581482,
+        "y": -2220.1699274222215
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682473563185"
+    },
+    {
+      "id": "3458764682473563576",
+      "type": "sticky_note",
+      "data": {
+        "shape": "square",
+        "content": "<p>исполнение интерфейса</p>"
+      },
+      "style": {
+        "fillColor": "light_yellow",
+        "textAlign": "center",
+        "textAlignVertical": "middle"
+      },
+      "geometry": {
+        "height": 154.81252816058984,
+        "width": 135.12146098226918
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": 4175.668768105555,
+        "y": -2220.1699274222215
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682473563576"
+    },
+    {
+      "id": "3458764682473792582",
+      "type": "sticky_note",
+      "data": {
+        "shape": "square",
+        "content": "<p>выполнение</p><p><br /></p>"
+      },
+      "style": {
+        "fillColor": "dark_green",
+        "textAlign": "center",
+        "textAlignVertical": "middle"
+      },
+      "geometry": {
+        "height": 123.12,
+        "width": 107.46000000000001
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": 4139.274929194059,
+        "y": -2647.7768301150672
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682473792582"
+    },
+    {
+      "id": "3458764682473792925",
+      "type": "text",
+      "data": {
+        "content": "<p>Паша</p>"
+      },
+      "style": {
+        "fillColor": "#ffffff",
+        "fillOpacity": "0.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "48",
+        "textAlign": "left",
+        "color": "#1a1a1a"
+      },
+      "geometry": {
+        "width": 366.85714285714283
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": 4291.536609042992,
+        "y": -2342.4222182421136
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682473792925"
+    },
+    {
+      "id": "3458764682473998278",
+      "type": "text",
+      "data": {
+        "content": "<p>Влад</p>"
+      },
+      "style": {
+        "fillColor": "#ffffff",
+        "fillOpacity": "0.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "48",
+        "textAlign": "left",
+        "color": "#1a1a1a"
+      },
+      "geometry": {
+        "width": 366.85714285714283
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": 4628.078622010054,
+        "y": -2342.4222182421136
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682473998278"
+    },
+    {
+      "id": "3458764682473998360",
+      "type": "text",
+      "data": {
+        "content": "<p>Дима</p>"
+      },
+      "style": {
+        "fillColor": "#ffffff",
+        "fillOpacity": "0.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "48",
+        "textAlign": "left",
+        "color": "#1a1a1a"
+      },
+      "geometry": {
+        "width": 366.85714285714283
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": 4942.3737461264145,
+        "y": -2342.4222182421136
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682473998360"
+    },
+    {
+      "id": "3458764682474199108",
+      "type": "sticky_note",
+      "data": {
+        "shape": "square",
+        "content": "<p>не персорнализация, а категорийное разбиение</p><p>(условно на 5 типов, тинейджре, батя и тд)</p><p><br /></p><p>Пайплайн: ml делить на категорию, lllm придума ываем челленджи на основне историю покупок и категории (подумать про адекватность и жесткость промта) </p>"
+      },
+      "style": {
+        "fillColor": "dark_green",
+        "textAlign": "center",
+        "textAlignVertical": "middle"
+      },
+      "geometry": {
+        "height": 123.12,
+        "width": 107.46000000000001
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": 2510.040212074901,
+        "y": -2542.7778018336544
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682474199108"
+    },
+    {
+      "id": "3458764682474199224",
+      "type": "paint",
+      "data": {},
+      "style": null,
+      "geometry": null,
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": 2772.544837687355,
+        "y": -2411.4772864702745
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682474199224"
+    },
+    {
+      "id": "3458764682474447738",
+      "type": "sticky_note",
+      "data": {
+        "shape": "square",
+        "content": "<p>ML  (мб на словах сделать - в и синтетику пролить) &#43; LLM для ИИ модуля - выполнение по индивидукальны рекомендациям</p><p></p>"
+      },
+      "style": {
+        "fillColor": "dark_green",
+        "textAlign": "center",
+        "textAlignVertical": "middle"
+      },
+      "geometry": {
+        "height": 123.12,
+        "width": 107.46000000000001
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": 4812.6751746978425,
+        "y": -2220.1699274222215
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682474447738"
+    },
+    {
+      "id": "3458764682474666880",
+      "type": "sticky_note",
+      "data": {
+        "shape": "square",
+        "content": "<p>синтетические данные гегерит</p>"
+      },
+      "style": {
+        "fillColor": "dark_green",
+        "textAlign": "center",
+        "textAlignVertical": "middle"
+      },
+      "geometry": {
+        "height": 123.12,
+        "width": 107.46000000000001
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": 4812.6751746978425,
+        "y": -2097.0499274222216
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682474666880"
+    },
+    {
+      "id": "3458764682474843095",
+      "type": "sticky_note",
+      "data": {
+        "shape": "square",
+        "content": "<p>согласовать параметры шенерации синтетикуи  </p>"
+      },
+      "style": {
+        "fillColor": "light_blue",
+        "textAlign": "center",
+        "textAlignVertical": "middle"
+      },
+      "geometry": {
+        "height": 123.12,
+        "width": 107.46000000000001
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": 4498.380050581482,
+        "y": -2097.0499274222216
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682474843095"
+    },
+    {
+      "id": "3458764682474951667",
+      "type": "sticky_note",
+      "data": {
+        "shape": "square",
+        "content": "<p>Хотим пилить MLлный ml, для антифрода и для рекомендаций - нам вообще это надо?</p><p><br /></p><p>- спросить у Кирилла</p>"
+      },
+      "style": {
+        "fillColor": "gray",
+        "textAlign": "center",
+        "textAlignVertical": "middle"
+      },
+      "geometry": {
+        "height": 297.2902416920154,
+        "width": 259.47700919610116
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": 5186.7578178491485,
+        "y": -2402.0016144894225
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682474951667"
+    },
+    {
+      "id": "3458764682475064355",
+      "type": "sticky_note",
+      "data": {
+        "shape": "square",
+        "content": "<p>прогресс аватара и какой он и концепция рейтинга и волвелченности юзерпа</p>"
+      },
+      "style": {
+        "fillColor": "gray",
+        "textAlign": "center",
+        "textAlignVertical": "middle"
+      },
+      "geometry": {
+        "height": 123.12,
+        "width": 107.46000000000001
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": 4178.399471057965,
+        "y": -1947.8543177641272
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682475064355"
+    },
+    {
+      "id": "3458764682475064683",
+      "type": "sticky_note",
+      "data": {
+        "shape": "square",
+        "content": "<p>прогресс аватара и какой он и концепция рейтинга и волвелченности юзерпа</p>"
+      },
+      "style": {
+        "fillColor": "gray",
+        "textAlign": "center",
+        "textAlignVertical": "middle"
+      },
+      "geometry": {
+        "height": 123.12,
+        "width": 107.46000000000001
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": 4498.380050581482,
+        "y": -1954.111606941509
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682475064683"
+    },
+    {
+      "id": "3458764682475064700",
+      "type": "sticky_note",
+      "data": {
+        "shape": "square",
+        "content": "<p>прогресс аватара и какой он и концепция рейтинга и волвелченности юзерпа</p>"
+      },
+      "style": {
+        "fillColor": "gray",
+        "textAlign": "center",
+        "textAlignVertical": "middle"
+      },
+      "geometry": {
+        "height": 123.12,
+        "width": 107.46000000000001
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": 4826.937677361312,
+        "y": -1954.1116069415089
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682475064700"
+    },
+    {
+      "id": "3458764682475288385",
+      "type": "sticky_note",
+      "data": {
+        "shape": "square",
+        "content": "<p>объяснение выбора механики для конкретного пользователя;</p><p><br /></p><p>- спросить у Кирилла</p>"
+      },
+      "style": {
+        "fillColor": "gray",
+        "textAlign": "center",
+        "textAlignVertical": "middle"
+      },
+      "geometry": {
+        "height": 297.2902416920154,
+        "width": 259.47700919610116
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": 5195.095853914992,
+        "y": -2122.1081410885918
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682475288385"
+    },
+    {
+      "id": "3458764682475288659",
+      "type": "paint",
+      "data": {},
+      "style": null,
+      "geometry": null,
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": 2892.1039195518897,
+        "y": -2192.7161444091153
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682475288659"
+    },
+    {
+      "id": "3458764682475288693",
+      "type": "text",
+      "data": {
+        "content": "<p>потом</p>"
+      },
+      "style": {
+        "fillColor": "#c6dcff",
+        "fillOpacity": "1.0",
+        "fontFamily": "noto_sans",
+        "fontSize": "24",
+        "textAlign": "left",
+        "color": "#18181b"
+      },
+      "geometry": {
+        "width": 73.71428571428571
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": 2830.430726146169,
+        "y": -2234.393954061822
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682475288693"
+    },
+    {
+      "id": "3458764682475446477",
+      "type": "sticky_note",
+      "data": {
+        "shape": "square",
+        "content": "<p>что он хочет чтобы мы симулировали</p><p><br /></p><p>- спросить у Кирилла</p>"
+      },
+      "style": {
+        "fillColor": "gray",
+        "textAlign": "center",
+        "textAlignVertical": "middle"
+      },
+      "geometry": {
+        "height": 297.2902416920154,
+        "width": 259.47700919610116
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": 5195.095853914992,
+        "y": -1824.8178993965764
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682475446477"
+    },
+    {
+      "id": "3458764682475618470",
+      "type": "sticky_note",
+      "data": {
+        "shape": "square",
+        "content": "<p>нейро кастдев</p>"
+      },
+      "style": {
+        "fillColor": "light_yellow",
+        "textAlign": "center",
+        "textAlignVertical": "middle"
+      },
+      "geometry": {
+        "height": 213.0027149072766,
+        "width": 185.9102643269651
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": 5548.4727633495795,
+        "y": -2575.9725240466996
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682475618470"
+    },
+    {
+      "id": "3458764682475618619",
+      "type": "sticky_note",
+      "data": {
+        "shape": "square",
+        "content": "<p>метрики и как оценивать и внедрять</p>"
+      },
+      "style": {
+        "fillColor": "light_yellow",
+        "textAlign": "center",
+        "textAlignVertical": "middle"
+      },
+      "geometry": {
+        "height": 213.0027149072766,
+        "width": 185.9102643269651
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": 5758.867043677225,
+        "y": -2575.9725240466996
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682475618619"
+    },
+    {
+      "id": "3458764682475799777",
+      "type": "sticky_note",
+      "data": {
+        "shape": "square",
+        "content": "<p>метрики и как оценивать и внедрять</p>"
+      },
+      "style": {
+        "fillColor": "light_yellow",
+        "textAlign": "center",
+        "textAlignVertical": "middle"
+      },
+      "geometry": {
+        "height": 213.0027149072766,
+        "width": 185.9102643269651
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": 5548.4727633495795,
+        "y": -2362.969809139423
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682475799777"
+    },
+    {
+      "id": "3458764682476139008",
+      "type": "sticky_note",
+      "data": {
+        "shape": "square",
+        "content": "<p>архитектура (бек, фронт, бдхи, инференс итд)</p>"
+      },
+      "style": {
+        "fillColor": "light_yellow",
+        "textAlign": "center",
+        "textAlignVertical": "middle"
+      },
+      "geometry": {
+        "height": 148.55523898320828,
+        "width": 129.66005507744936
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": 4178.399471057965,
+        "y": -2083.6919372557313
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682476139008"
+    },
+    {
+      "id": "3458764682479815625",
+      "type": "embed",
+      "data": {
+        "contentType": "link",
+        "description": "Describe your business idea in plain English. LEANSpark builds your Lean Canvas, stress-tests your assumptions, and tells you what to validate first.",
+        "html": "<iframe src=\"https://leanspark.ai/leancanvas\" width=\"100%\" height=\"100%\" frameborder=\"0\"></iframe>",
+        "previewUrl": "https://api.miro.com/v2/boards/uXjVHrrRqss%3D/resources/images/3458764518174129498?format=preview&redirect=false",
+        "providerName": "Leanspark",
+        "providerUrl": "",
+        "title": "Build Your Lean Canvas in 5 Minutes | LEANSpark",
+        "url": "https://leanspark.ai/leancanvas"
+      },
+      "style": null,
+      "geometry": {
+        "height": 483,
+        "width": 321
+      },
+      "position": {
+        "origin": "center",
+        "relativeTo": "canvas_center",
+        "x": 4866.004305400785,
+        "y": -1055.6734299631632
+      },
+      "parent": null,
+      "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682479815625"
+    }
+  ],
+  "total": 91,
+  "error_code": null,
+  "details": null,
+  "nextCursor": null,
+  "has_more": false
+}

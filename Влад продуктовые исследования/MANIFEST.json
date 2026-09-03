@@ -1,0 +1,389 @@
+{
+  "generated_at": "2026-09-04",
+  "status": "in_progress",
+  "selected_references": [
+    "Tesco Clubcard Challenges",
+    "Ozon Морковск"
+  ],
+  "main_hypothesis": "H-MAIN-01",
+  "current_choice": "placement P-1/P-2/P-3, pain-proximity mode G-1/G-2/G-3, concept C-1/C-2/C-3/C-4",
+  "file_count": 75,
+  "total_bytes": 8746019,
+  "files": [
+    {
+      "path": ".gitignore",
+      "size": 10,
+      "sha256": "cf237c7aff44efbe6e502e645c3e06da03a69d7bdeb43392108ef3348143417e"
+    },
+    {
+      "path": "CONTEXT.md",
+      "size": 25773,
+      "sha256": "3b1e6619dca61e8425ba40f64dd78cf745e59f27538eb56b008b85dad475d4b3"
+    },
+    {
+      "path": "PRODUCT_RESEARCH_INDEX.md",
+      "size": 14941,
+      "sha256": "54d6eb6c93069c3253dda918688de413c0fd14e3e6b23bbb5b60749a5e4ada82"
+    },
+    {
+      "path": "README.md",
+      "size": 4166,
+      "sha256": "04db882de3e7d7730bed600cfda355f964681acfde7e98ec719469b91be0fa7c"
+    },
+    {
+      "path": "context/BRIEF.md",
+      "size": 13647,
+      "sha256": "37d7cd9bb2f2f03519b3f4e336649ddf251de565083cde7305b42847a147d0a4"
+    },
+    {
+      "path": "context/DECISIONS.md",
+      "size": 25240,
+      "sha256": "8cf90f645c930d87ef6691aa8960ece5601a8a6950b03dec0992e3a1a89cdaf4"
+    },
+    {
+      "path": "context/IDEAS.md",
+      "size": 11834,
+      "sha256": "a6ac01719cd2156ebfa9f95514481e9f82bca2afd97d51104e28d3206f8520f7"
+    },
+    {
+      "path": "context/MAIN_HYPOTHESIS.json",
+      "size": 3468,
+      "sha256": "a049ca83553706b415b73174d80d0276eaecf3a8028ff3879833f823af5de611"
+    },
+    {
+      "path": "context/MAIN_HYPOTHESIS.md",
+      "size": 9080,
+      "sha256": "0637e1334fc610c88d852ed1989467d2602af47aabb9c1acdb8759db278ec287"
+    },
+    {
+      "path": "context/MASCOT_APPI.md",
+      "size": 4811,
+      "sha256": "7208db5c0f2ce256f346edb3d52f88e5bc55a5eb300057f5e3a2caefd8d3a7bd"
+    },
+    {
+      "path": "context/METHOD.md",
+      "size": 9536,
+      "sha256": "14b9cc891d3adcf077957125c9d0ba8748d845feb2f78c5bdf225ddab2693fb0"
+    },
+    {
+      "path": "context/PRODUCT_DIRECTION.md",
+      "size": 11141,
+      "sha256": "10c4f46a69e030852e28d9ce204ebe4014b2ba3341d1ec8cd95ca1f9cf5db508"
+    },
+    {
+      "path": "context/PRODUCT_RESEARCH_TOOLS.md",
+      "size": 12496,
+      "sha256": "92d3d08b92715d93ef4dddc2a5aa967142df2e5c57e9d4941d75e9af7a5f2a72"
+    },
+    {
+      "path": "context/SDD_METHOD.md",
+      "size": 6129,
+      "sha256": "e4921c93c7987989a449db4e4a3c42d154e70c539d84a687f716ff56e41df034"
+    },
+    {
+      "path": "context/SOURCES.md",
+      "size": 17077,
+      "sha256": "3832ff9349730681057b9eb596350dff6f2a2e3943370a8f4ad91818ad8e82fb"
+    },
+    {
+      "path": "context/extracted/AI_Product_Discovery.md",
+      "size": 20861,
+      "sha256": "7a2fba34ba6d0c74402a4640bf0fee5f757f2b84576d03d078a50a7366e27358"
+    },
+    {
+      "path": "context/extracted/general-recommendations.md",
+      "size": 30409,
+      "sha256": "8a521c315bd64a957cda7d0ce0a7b9846ec2539a9483d945c1a0fd7973485d68"
+    },
+    {
+      "path": "context/extracted/miro-text.md",
+      "size": 28548,
+      "sha256": "324e8ce040b071a12c6e65e73b6728bd4c07f171cdc49cdbea77d332b7b47e29"
+    },
+    {
+      "path": "context/extracted/Воркшоп_Ян_Анисимов.md",
+      "size": 12491,
+      "sha256": "e689f536b6ba2f810d8ab394bfd4daf4603184f33fa69e2d954ad51df57eebe6"
+    },
+    {
+      "path": "context/extracted/Постановка_и_проверка_продуктовых_гипотез.md",
+      "size": 14419,
+      "sha256": "356fc8a8e230c9357b56649c72f6c2cfa20f1ff5aae0114d4f71bd1bca7cfe7e"
+    },
+    {
+      "path": "discovery/HYPOTHESIS_WORKSHOP.md",
+      "size": 47472,
+      "sha256": "9f651f22d31c568c0cf8d0d95d8be4460e91594c1de47e8b21ec10c71dc64891"
+    },
+    {
+      "path": "discovery/N8N.md",
+      "size": 3007,
+      "sha256": "8df172ac9c1d9359e2a5c7db82cd26b06ada5814aa25cab33cce2589a44423d8"
+    },
+    {
+      "path": "discovery/ONLINE_OFFLINE_BRIDGE.md",
+      "size": 27582,
+      "sha256": "8af0b798feb041926e23f0b6df74ff6a4e58697a51a0d0817c891f7cd907e800"
+    },
+    {
+      "path": "discovery/WORKFLOW.md",
+      "size": 10044,
+      "sha256": "ac4fbaaf260a1d6c2f4cf46137c74b7445ad3b9da0e388ae5f239b94d916e23d"
+    },
+    {
+      "path": "discovery/X5_ANALOGUES_RESEARCH.md",
+      "size": 90696,
+      "sha256": "49bcbeae17065db2dac74ca050838f45e76b016ff24482291f56b4842f77e9ea"
+    },
+    {
+      "path": "discovery/round-01/discovery.json",
+      "size": 32984,
+      "sha256": "a4d1de5686432005b0b86cd2b361564f55a6648db67e306aa074a48fcc4547d1"
+    },
+    {
+      "path": "discovery/round-01/discovery.md",
+      "size": 18426,
+      "sha256": "c9054f08b702e469fc346ddf66174d327c7b3ce599b6ced8538962ef63e728eb"
+    },
+    {
+      "path": "discovery/round-01/search-log.json",
+      "size": 7500,
+      "sha256": "3bcba54c97c43fc35d39a0896ce04a55f6fd36edbd6686b8d288bd75d53eb558"
+    },
+    {
+      "path": "discovery/round-02/discovery.json",
+      "size": 45213,
+      "sha256": "e50b59c38cdbc7a2bdf891c43e32cf339b3f32d3574be29538051b142b367608"
+    },
+    {
+      "path": "discovery/round-02/discovery.md",
+      "size": 21559,
+      "sha256": "3dd9bd2295fd0125906c770b95be7234776a194cd98a58920c909af548bb1fd8"
+    },
+    {
+      "path": "discovery/round-03/discovery.json",
+      "size": 4455,
+      "sha256": "c366840e30a3022350ffdaf49bdff04aa1356e3cabe644e77097df552627e160"
+    },
+    {
+      "path": "discovery/round-03/discovery.md",
+      "size": 37962,
+      "sha256": "773f3ec38dbff738e388b031cad4c89066ed0d4a9ec899e7a942d9db50fe7e2a"
+    },
+    {
+      "path": "discovery/round-03/search-log.json",
+      "size": 2663,
+      "sha256": "9c156ae36d6ab64df93dbc00698d9468113484ddb11b028b20d3669845c0ec67"
+    },
+    {
+      "path": "discovery/round-03/sources.json",
+      "size": 5935,
+      "sha256": "057ad35ac70d99471f2819122ca43fe1eda4d705d971e67a98bc868dcd30aa3b"
+    },
+    {
+      "path": "discovery/round-04/discovery.md",
+      "size": 29998,
+      "sha256": "5e9b6d5c4d1e05dcc7f8df6f9bffe9849404a33325d8979262128185edabb149"
+    },
+    {
+      "path": "discovery/round-04/search-log.json",
+      "size": 2703,
+      "sha256": "f1b7f20515da02dd7b01408f410dfab1a8ad3269e0b74c14f60b775d05fbc2e0"
+    },
+    {
+      "path": "discovery/round-04/sources.json",
+      "size": 4440,
+      "sha256": "68e05167d4e2d64341fb81765536bf8731f8be54cc17f87d487c7dbfcdadff06"
+    },
+    {
+      "path": "discovery/workflow-map.json",
+      "size": 5663,
+      "sha256": "15c0d57a18332c3cffff73adc7edafd905ef6a4e716eac61d69d31d02d6dc8cb"
+    },
+    {
+      "path": "inputs/2026-09-03/AI_Product_Discovery.pdf",
+      "size": 3185708,
+      "sha256": "8b6ba80c052ebf0fbad5479c04262498dcf7cdc25829f7cce98b29bd94bd4839"
+    },
+    {
+      "path": "inputs/2026-09-03/CONTEXT_PACK.md",
+      "size": 29106,
+      "sha256": "f076a65556e2f9f80e4e09bced4e37ff0112d41ea9480b9e3f6233587cd4cee8"
+    },
+    {
+      "path": "inputs/2026-09-03/capture-metadata.json",
+      "size": 1244,
+      "sha256": "ec75e00054d55e8b33afee32568d03ca023d9683c0c69badd7d19c60e07aa6d1"
+    },
+    {
+      "path": "inputs/2026-09-03/case-description.txt",
+      "size": 10772,
+      "sha256": "40903541c9478cab432ac2f5d17478e3075f1cf45879488fe79d30fc4d90c8f4"
+    },
+    {
+      "path": "inputs/2026-09-03/context_pack_qwen.md",
+      "size": 51380,
+      "sha256": "6889fa6fa817165841521df4f24b0b42b041398528118541ef5d5554643f5cd5"
+    },
+    {
+      "path": "inputs/2026-09-03/general-recommendations-slides.json",
+      "size": 1299703,
+      "sha256": "5df22f215897f9a9b3dc9f73a0560fce561d1e0ee429e389170d771effb211bf"
+    },
+    {
+      "path": "inputs/2026-09-03/manifest.json",
+      "size": 2129,
+      "sha256": "6674a841032781d0b9b04180e22a29940afc5f646df970677de20182b732de5c"
+    },
+    {
+      "path": "inputs/2026-09-03/miro-items.json",
+      "size": 88128,
+      "sha256": "66126dd8cd4cffed8454be5654f3dbcbd56b6e07e4f7286c0f4d4b50ed7841ee"
+    },
+    {
+      "path": "inputs/2026-09-03/miro-table.json",
+      "size": 8805,
+      "sha256": "e15a77647d3c4b3476f740ee594d74e9597ea4de46bb95632ec007e011605d47"
+    },
+    {
+      "path": "inputs/2026-09-03/user-context.md",
+      "size": 3144,
+      "sha256": "fd0cab9a88b60b29af1fac4abf9ad62524dc1af0a17dac6169486ce2ab71d7a1"
+    },
+    {
+      "path": "inputs/2026-09-03/Воркшоп_Ян Анисимов.pdf",
+      "size": 167940,
+      "sha256": "e9ddda0d06f7c29a250d574fadfc50c16ea34b7a7fc99dba3d16cb21b6da9b72"
+    },
+    {
+      "path": "inputs/2026-09-03/Постановка_и_проверка_продуктовых_гипотез.pdf",
+      "size": 3101463,
+      "sha256": "9bf392cdee4ae133ebfa3fb78f1903faad744e6ad7e4f440c92bc864b562b504"
+    },
+    {
+      "path": "inputs/2026-09-04/mascot-appi-source.md",
+      "size": 2915,
+      "sha256": "8c41d5edfe77015947b1011e87e68a9430ce8c32b42e68ac5fcc7bbad7d3773b"
+    },
+    {
+      "path": "inputs/AI_Product_Discovery.json",
+      "size": 42417,
+      "sha256": "698e1d989faba1d3c0ea82deb4fee87d7af61c5c351619fc9b0d2e16c7b09faa"
+    },
+    {
+      "path": "setup/SETUP.md",
+      "size": 4276,
+      "sha256": "c0303af60c789062296da0c370c6bf6c7617330e97c5a31c5e40615c4414d08e"
+    },
+    {
+      "path": "skills/ai-product-discovery/SKILL.md",
+      "size": 12283,
+      "sha256": "a095107d49e57b501577e030dd99f299ee3389f76dead5bd8cbda40b01d96968"
+    },
+    {
+      "path": "skills/ai-product-discovery/references/analogue-feature-funnel.md",
+      "size": 2825,
+      "sha256": "5a18213fa35da16210ef49fe2851d760de2be0559dfd5fa7806d133fbafafaf4"
+    },
+    {
+      "path": "skills/ai-product-discovery/references/data-model.md",
+      "size": 5686,
+      "sha256": "1075f892759a12b0fee2330d41dd76bbda28a3d1b8a7f1e782d8327b34e033ab"
+    },
+    {
+      "path": "skills/ai-product-discovery/references/hypothesis-triage.md",
+      "size": 2244,
+      "sha256": "62b39dc5f253c6e9dbad41bf49b553c23ae56d44aeff1ae36047cacef4c5b8f3"
+    },
+    {
+      "path": "skills/ai-product-discovery/references/implementation-handoff.md",
+      "size": 2284,
+      "sha256": "1dfa9b71d03719d4282e06ac626d981cd2e8801d6bed71ebd4c097f5701750d1"
+    },
+    {
+      "path": "skills/ai-product-discovery/references/rice.md",
+      "size": 3180,
+      "sha256": "52c9afc9fcb61e71f21f242fdbb6bb090ba0cfd7d719428e2d3eec39e656b714"
+    },
+    {
+      "path": "skills/ai-product-discovery/references/source-mapping.md",
+      "size": 3367,
+      "sha256": "0a116f038427ef6c904d3d0ad1c51e11588876fc5f467c26f52fa957c0ae299a"
+    },
+    {
+      "path": "skills/ai-product-discovery/scripts/rank_rice.py",
+      "size": 3414,
+      "sha256": "d543d05837ae22c14be50c29d79d87ac23b32ea09e889149092f3dfc17a7fc35"
+    },
+    {
+      "path": "skills/product-segmentation-design/SKILL.md",
+      "size": 7527,
+      "sha256": "4d4ca94786e692a32db7906ad32d0d02a67a58f0de8c52856ff7cbc6fb4e6914"
+    },
+    {
+      "path": "skills/product-segmentation-design/agents/openai.yaml",
+      "size": 168,
+      "sha256": "d28245343618c4ac8425d713868b194e7f7071f4f31cc0117d8df10ad216c1ee"
+    },
+    {
+      "path": "skills/product-segmentation-design/references/segmentation-options.md",
+      "size": 1526,
+      "sha256": "77941828a089911c80b3b632b722f608688e7836e3358dfc4e757b135f67da0f"
+    },
+    {
+      "path": "skills/product-segmentation-design/references/validation-checklist.md",
+      "size": 1891,
+      "sha256": "a9cf2d31ea39fb6d7aa4151dda7b8fb51233afd9d1d96e355b3a8672d3b5f232"
+    },
+    {
+      "path": "skills/spec-driven-feature/SKILL.md",
+      "size": 8917,
+      "sha256": "48228e0cdc7b04a8dce5ac1d20ab4d3190ed2d032b2b9402a297ebe04e873beb"
+    },
+    {
+      "path": "skills/spec-driven-feature/agents/openai.yaml",
+      "size": 144,
+      "sha256": "3cf35ddc566616cfe4af7754fc5cfb2e82fa2f19b47662516de1792dc5ece32a"
+    },
+    {
+      "path": "skills/spec-driven-feature/references/convergence-checklist.md",
+      "size": 1504,
+      "sha256": "314987877f509d8ff4814a60596edd60f3643f039f0ea72ff72d1624276e550a"
+    },
+    {
+      "path": "skills/spec-driven-feature/references/spec-template.md",
+      "size": 3151,
+      "sha256": "41afeb9908678493dfbb42ff1c56a8154a59ea059a3f80aa949fdbce60ed0472"
+    },
+    {
+      "path": "skills/spec-driven-feature/references/workshop-mapping.md",
+      "size": 1986,
+      "sha256": "c8c6c6126f20cff6c012ff404195a7d433add63d8839feb770243b36c6fc47c7"
+    },
+    {
+      "path": "skills/synthetic-custdev/SKILL.md",
+      "size": 6486,
+      "sha256": "c90d2677e81107d1d0c67d17780357fe504b02b2aeea5d8cffc897c1ec7e31ab"
+    },
+    {
+      "path": "skills/synthetic-custdev/agents/openai.yaml",
+      "size": 163,
+      "sha256": "490f8bf0d55ab3993ffe332ab54ec610e79b1e23b6b10a0ec5438c9f405b9d48"
+    },
+    {
+      "path": "skills/synthetic-custdev/references/avatar-schema.md",
+      "size": 1228,
+      "sha256": "e8456c5692f8ceedb141f49d8a477c8072e6e8376cc763dd961c534dcb604e20"
+    },
+    {
+      "path": "skills/synthetic-custdev/references/interview-protocol.md",
+      "size": 1680,
+      "sha256": "0e30f0ec3d8232b1c09b15421d9f7f336620e558f91fca59e32058736f15e487"
+    },
+    {
+      "path": "skills/synthetic-custdev/references/output-schema.md",
+      "size": 856,
+      "sha256": "ffe5be2e538adf668b33d041fe686d4e22b3cf4b21f9ae41f6009ce4d6164624"
+    }
+  ]
+}

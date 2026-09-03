@@ -1,0 +1,326 @@
+{
+  "miro_url": "https://miro.com/app/board/uXjVHrrRqss=/?moveToWidget=3458764682439164675",
+  "columns": [
+    {
+      "id": "1",
+      "column_title": "Title",
+      "column_type": "text",
+      "selectOptions": null
+    },
+    {
+      "id": "12",
+      "column_title": "Tags",
+      "column_type": "multiselect",
+      "selectOptions": null
+    },
+    {
+      "id": "2",
+      "column_title": "End Date",
+      "column_type": "date",
+      "selectOptions": null
+    },
+    {
+      "id": "3",
+      "column_title": "Status",
+      "column_type": "select",
+      "selectOptions": [
+        {
+          "id": "optionTodo",
+          "displayValue": "Гипотезы",
+          "color": "#d6d6d6"
+        },
+        {
+          "id": "optionInProgress",
+          "displayValue": "В работе",
+          "color": "#a0c4fb"
+        },
+        {
+          "id": "optionDone",
+          "displayValue": "Не получилось",
+          "color": "#bd0a0a"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "column_title": "Assignee",
+      "column_type": "person",
+      "selectOptions": null
+    },
+    {
+      "id": "5",
+      "column_title": "Start Date",
+      "column_type": "date",
+      "selectOptions": null
+    },
+    {
+      "id": "7",
+      "column_title": "Description",
+      "column_type": "text",
+      "selectOptions": null
+    },
+    {
+      "id": "8",
+      "column_title": "Estimate",
+      "column_type": "number",
+      "selectOptions": null
+    },
+    {
+      "id": "9",
+      "column_title": "Priority",
+      "column_type": "select",
+      "selectOptions": [
+        {
+          "id": "optionLow",
+          "displayValue": "Low",
+          "color": "#A0C4FB"
+        },
+        {
+          "id": "optionMedium",
+          "displayValue": "Medium",
+          "color": "#FFED7B"
+        },
+        {
+          "id": "optionHigh",
+          "displayValue": "High",
+          "color": "#FFADAD"
+        }
+      ]
+    }
+  ],
+  "rows": [
+    {
+      "rowId": "0",
+      "cells": [
+        {
+          "columnTitle": "Title",
+          "valueType": "text",
+          "content": "{\"format\":\"delta\",\"ops\":[{\"insert\":\"Цифровой аватар, возможность печати его на чеках в оффлайн/онлайн\"}]}"
+        },
+        {
+          "columnTitle": "Status",
+          "valueType": "select",
+          "options": [
+            {
+              "id": "optionTodo",
+              "displayValue": "Гипотезы",
+              "color": "#d6d6d6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rowId": "83bd15ec-29c5-442c-bb60-5b46325f1ae6",
+      "cells": [
+        {
+          "columnTitle": "Title",
+          "valueType": "text",
+          "content": "{\"format\":\"delta\",\"ops\":[{\"insert\":\"Программа лояльности которую можно пролить еще куда-то\"}]}"
+        },
+        {
+          "columnTitle": "Status",
+          "valueType": "select",
+          "options": [
+            {
+              "id": "optionTodo",
+              "displayValue": "Гипотезы",
+              "color": "#d6d6d6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rowId": "0b490f56-9cfa-4da2-bc14-f307a9e50563",
+      "cells": [
+        {
+          "columnTitle": "Title",
+          "valueType": "text",
+          "content": "{\"format\":\"delta\",\"ops\":[{\"insert\":\"Рейтинг экономии/прогресс экономии\"}]}"
+        },
+        {
+          "columnTitle": "Status",
+          "valueType": "select",
+          "options": [
+            {
+              "id": "optionTodo",
+              "displayValue": "Гипотезы",
+              "color": "#d6d6d6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rowId": "cbfc7fcb-1ba7-420b-b46d-8267873bb82d",
+      "cells": [
+        {
+          "columnTitle": "Title",
+          "valueType": "text",
+          "content": "{\"format\":\"delta\",\"ops\":[{\"insert\":\"Кэшбек за кол-во покупок за месяц. Например 3% - от 3, 5% от 6 ...\"}]}"
+        },
+        {
+          "columnTitle": "Status",
+          "valueType": "select",
+          "options": [
+            {
+              "id": "optionTodo",
+              "displayValue": "Гипотезы",
+              "color": "#d6d6d6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rowId": "fdaf859f-d66e-424e-b1c6-48a4ed73ae62",
+      "cells": [
+        {
+          "columnTitle": "Title",
+          "valueType": "text",
+          "content": "{\"format\":\"delta\",\"ops\":[{\"insert\":\"ллм для предложения эффективной корзины по запросу (например, хочу добрать белка без Ешек у меня 100 рублей)\"}]}"
+        },
+        {
+          "columnTitle": "Status",
+          "valueType": "select",
+          "options": [
+            {
+              "id": "optionTodo",
+              "displayValue": "Гипотезы",
+              "color": "#d6d6d6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rowId": "95745c12-9185-469a-8c25-d399fd2b003c",
+      "cells": [
+        {
+          "columnTitle": "Title",
+          "valueType": "text",
+          "content": "{\"format\":\"delta\",\"ops\":[{\"insert\":\"Персональный челлендж для разных групп покупателей купи ингредиенты для блюда, получи скидку\"}]}"
+        },
+        {
+          "columnTitle": "Status",
+          "valueType": "select",
+          "options": [
+            {
+              "id": "optionTodo",
+              "displayValue": "Гипотезы",
+              "color": "#d6d6d6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rowId": "087b4d0f-9672-4f97-be62-e726aa0db3c7",
+      "cells": [
+        {
+          "columnTitle": "Title",
+          "valueType": "text",
+          "content": "{\"format\":\"delta\",\"ops\":[{\"insert\":\"предлагать к покупке товар в магазине, в котором это дешевле? (спорно)\"}]}"
+        },
+        {
+          "columnTitle": "Status",
+          "valueType": "select",
+          "options": [
+            {
+              "id": "optionTodo",
+              "displayValue": "Гипотезы",
+              "color": "#d6d6d6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rowId": "426d308c-8300-4e1d-934d-03b9e10bacfc",
+      "cells": [
+        {
+          "columnTitle": "Title",
+          "valueType": "text",
+          "content": "{\"format\":\"delta\",\"ops\":[{\"insert\":\"Паки купонов для постоянных покупателей и паки купонов для новых/уходящих\"}]}"
+        },
+        {
+          "columnTitle": "Status",
+          "valueType": "select",
+          "options": [
+            {
+              "id": "optionTodo",
+              "displayValue": "Гипотезы",
+              "color": "#d6d6d6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rowId": "8d0e5416-d74c-4f72-91c0-f116ecf5a0f1",
+      "cells": [
+        {
+          "columnTitle": "Title",
+          "valueType": "text",
+          "content": "{\"format\":\"delta\",\"ops\":[{\"insert\":\"Секретные купоны\"}]}"
+        },
+        {
+          "columnTitle": "Status",
+          "valueType": "select",
+          "options": [
+            {
+              "id": "optionTodo",
+              "displayValue": "Гипотезы",
+              "color": "#d6d6d6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rowId": "b0b35ee3-4aa3-4524-9d1b-14b7ce5582a9",
+      "cells": [
+        {
+          "columnTitle": "Title",
+          "valueType": "text",
+          "content": "{\"format\":\"delta\",\"ops\":[]}"
+        },
+        {
+          "columnTitle": "Status",
+          "valueType": "select",
+          "options": [
+            {
+              "id": "optionTodo",
+              "displayValue": "Гипотезы",
+              "color": "#d6d6d6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rowId": "07694fde-b00e-4fbe-b8d9-80575e45171a",
+      "cells": [
+        {
+          "columnTitle": "Title",
+          "valueType": "text",
+          "content": "{\"format\":\"delta\",\"ops\":[{\"insert\":\"сбор статистики/дашборды по экономии \"}]}"
+        },
+        {
+          "columnTitle": "Status",
+          "valueType": "select",
+          "options": [
+            {
+              "id": "optionTodo",
+              "displayValue": "Гипотезы",
+              "color": "#d6d6d6"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "total": 11,
+  "cursor": null
+}

@@ -1,0 +1,568 @@
+{
+  "schema_version": "1.0",
+  "brief": {
+    "product": "Персональный игровой слой лояльности X5",
+    "market": "Продуктовый ритейл РФ; международные аналоги и смежные механики",
+    "research_date": "2026-09-03",
+    "language": "ru",
+    "scope": "Шаги 1–2 PDF: сигнал и поиск; первая остановка — выбор аналогов на шаге 3.",
+    "business_goal": "Повысить частоту покупок без снижения маржи на участника; операционное определение метрик ещё не согласовано.",
+    "team": {
+      "product_owner": "Влад Семенов",
+      "ml": "Дмитрий",
+      "frontend_backend": "Павел"
+    },
+    "input_refs": [
+      "../../context/BRIEF.md",
+      "../../context/IDEAS.md",
+      "../../context/DECISIONS.md",
+      "../../inputs/AI_Product_Discovery.json"
+    ]
+  },
+  "execution": {
+    "mode": "semantic_tools_not_n8n_runtime",
+    "completed_pdf_steps": [
+      1,
+      2
+    ],
+    "pending_pdf_step": 3,
+    "pending_user_choice": "Выбрать 3–5 аналогов для матрицы функций и условий.",
+    "selected_product_ids": [],
+    "selected_feature_ids": [],
+    "selected_segment_ids": [],
+    "selected_respondent_ids": [],
+    "selected_value_ids": [],
+    "future_outputs_status": "not_started_pending_upstream_user_choices"
+  },
+  "sources": [
+    {
+      "id": "D-S01",
+      "title": "Eagle Eye: Tesco Clubcard Challenges",
+      "url": "https://eagleeye.com/case-studies/tesco-clubcard-challenges",
+      "accessed_at": "2026-09-03",
+      "source_type": "supplier_case_study",
+      "access_level": "full_text",
+      "supports": "Кейс поставщика описывает персональные задания по категориям/товарам с индивидуальными порогами покупок и наград. AI не означает подтверждённое использование LLM.",
+      "limitations": "Описание кампаний 2024 года; дата публикации не указана. Метрики поставщика не являются независимой оценкой причинного эффекта."
+    },
+    {
+      "id": "D-S02",
+      "title": "Tesco: Q3 and Christmas Trading Statement 2024/25",
+      "url": "https://www.tescoplc.com/q3-and-christmas-trading-statement-202425/",
+      "accessed_at": "2026-09-03",
+      "source_type": "company_report",
+      "access_level": "search_extract",
+      "supports": "Tesco сообщает об использовании персональных Clubcard Challenges в рождественский период 2024 года.",
+      "limitations": "Проверен поисковый извлечённый текст. Рост цифрового взаимодействия не доказывает прирост частоты или маржи от механики."
+    },
+    {
+      "id": "D-S03",
+      "title": "Магнит: Хеттрик выгоды",
+      "url": "https://magnit.ru/hattrick",
+      "accessed_at": "2026-09-03",
+      "source_type": "official_campaign_page",
+      "access_level": "full_text",
+      "supports": "Страница описывает игру, задания, покупки как источник попыток/ресурса и обмен игрового ресурса на поощрения.",
+      "limitations": "Сезонная кампания 2026 года. Общий срок выдачи призов нельзя считать сроком приёма игровых действий; активность акции на дату чтения не установлена."
+    },
+    {
+      "id": "D-S04",
+      "title": "ВкусВилл: мобильное приложение",
+      "url": "https://vkusvill.ru/application/",
+      "accessed_at": "2026-09-03",
+      "source_type": "official_product_page",
+      "access_level": "full_text",
+      "supports": "Приложение объединяет персональные предложения, «Любимый продукт», «Разнообразное питание», покупки и карту лояльности.",
+      "limitations": "Наличие игровой персонализации и её эффект из этой страницы не следуют. Описан продукт, а не эксперимент."
+    },
+    {
+      "id": "D-S05",
+      "title": "Carrefour: comment participer à Boost Fid",
+      "url": "https://www.carrefour.fr/faq?question=comment-participer-a-boost-fid",
+      "accessed_at": "2026-09-03",
+      "source_type": "official_faq",
+      "access_level": "search_extract_only_direct_403",
+      "supports": "Поисковое извлечение FAQ описывает активацию задания в приложении/на сайте и несколько порогов вознаграждения.",
+      "limitations": "Прямое открытие вернуло 403. Детальная матрица потребует дополнительного доступного первичного подтверждения; текущая полнота ниже остальных."
+    },
+    {
+      "id": "D-S06",
+      "title": "Золотое Яблоко: правила Бьюти-тамагочи",
+      "url": "https://tamagotchi.goldapple.ru/uploads/files/%D0%9F%D1%80%D0%B0%D0%B2%D0%B8%D0%BB%D0%B0%20%E2%80%9C%D0%91%D1%8C%D1%8E%D1%82%D0%B8-%D1%82%D0%B0%D0%BC%D0%B0%D0%B3%D0%BE%D1%87%D0%B8_%20-5.pdf",
+      "accessed_at": "2026-09-03",
+      "source_type": "official_campaign_rules",
+      "access_level": "full_text",
+      "supports": "Правила описывают развитие персонажа, игровые действия, ресурс от покупок и бонусные награды.",
+      "limitations": "Историческая редакция: 19.02–31.12.2025, стр. 2–4 PDF. Работа игры в сентябре 2026 года не подтверждена."
+    },
+    {
+      "id": "D-S07",
+      "title": "Fetch: referral",
+      "url": "https://fetch.com/referral",
+      "accessed_at": "2026-09-03",
+      "source_type": "official_product_page",
+      "access_level": "full_text",
+      "supports": "Реферальные баллы получают обе стороны после регистрации друга с кодом и первого чека.",
+      "limitations": "Неизвестны дополнительные покупки, окупаемость привлечения и качество антифрода. Условия наград зависят от акции."
+    },
+    {
+      "id": "D-S08",
+      "title": "Fetch Help: What Are Offers?",
+      "url": "https://help.fetch.com/hc/en-us/articles/4408482522771-What-Are-Offers",
+      "accessed_at": "2026-09-03",
+      "source_type": "official_help",
+      "access_level": "search_extract",
+      "supports": "Офферы задают условия покупки товара, количества либо суммы; чек используется для начисления поощрения.",
+      "limitations": "Описание функции в справке, не оценка спроса или бизнес-эффекта."
+    },
+    {
+      "id": "D-S09",
+      "title": "Antavo: Challenges",
+      "url": "https://antavo.com/product/loyalty-engine/features/challenges/",
+      "accessed_at": "2026-09-03",
+      "source_type": "official_b2b_product_page",
+      "access_level": "full_text",
+      "supports": "Коммерчески предлагаемый модуль позволяет настраивать задания по действиям, покупкам, времени и сегментам; доступен запрос демонстрации.",
+      "limitations": "B2B-платформа для оператора, не потребительская программа. Цена контракта и доказанный эффект для X5 неизвестны."
+    },
+    {
+      "id": "D-S10",
+      "title": "Lidl Deutschland: Lidl Plus Punkte",
+      "url": "https://unternehmen.lidl.de/pressreleases/2026/260521_lidl-punkte",
+      "accessed_at": "2026-09-03",
+      "source_type": "official_press_release",
+      "access_level": "search_extract",
+      "supports": "Немецкий Lidl объявил переход к баллам и выбору наград с 01.06.2026, заменяя прежние механики приложения.",
+      "limitations": "Публикация 21.05.2026. Только Германия; условия Lidl Plus других стран не переносить."
+    },
+    {
+      "id": "D-S11",
+      "title": "Starbucks: Rewards relaunch 2026",
+      "url": "https://about.starbucks.com/press/2026/reimagined-starbucks-rewards-loyalty-program-launches-with-new-member-benefits/",
+      "accessed_at": "2026-09-03",
+      "source_type": "official_press_release",
+      "access_level": "search_extract",
+      "supports": "Перезапуск 10.03.2026 описывает уровни Green, Gold, Reserve и дифференцированные привилегии.",
+      "limitations": "Референс статуса и прогрессии в США; частота кофе-покупок и экономика не равны продуктовому ритейлу."
+    },
+    {
+      "id": "D-S12",
+      "title": "Talon.One: The Gamification Engine",
+      "url": "https://www.talon.one/blog/the-gamification-engine-gamify-customer-interactions-into-rewarding-challenges",
+      "accessed_at": "2026-09-03",
+      "source_type": "official_b2b_product_announcement",
+      "access_level": "search_extract",
+      "supports": "Коммерческий движок связывает покупательские/иные события с заданиями и вознаграждениями.",
+      "limitations": "Объявление 22.05.2024. Текущие цены и конфигурационные ограничения требуют чтения после выбора."
+    },
+    {
+      "id": "D-S13",
+      "title": "Talon.One: product overview",
+      "url": "https://docs.talon.one/docs/product/overview",
+      "accessed_at": "2026-09-03",
+      "source_type": "official_documentation",
+      "access_level": "search_extract",
+      "supports": "Документация описывает движок промо, лояльности и геймификации, работающий с событиями и правилами.",
+      "limitations": "Подтверждает класс продукта; не является доказательством необходимости такой архитектуры для PoC."
+    }
+  ],
+  "products": [
+    {
+      "id": "P01",
+      "name": "Tesco Clubcard Challenges",
+      "url": "https://eagleeye.com/case-studies/tesco-clubcard-challenges",
+      "relationship": "direct_retail",
+      "screening_status": "shortlist",
+      "description": "Персональные покупательские задания в продуктовой лояльности.",
+      "commercial_offer_evidence": {
+        "value": "Потребительская механика внутри коммерческого ритейла; отдельно продаваемый потребителю тариф не установлен.",
+        "evidence_status": "observed",
+        "source_ids": [
+          "D-S01",
+          "D-S02"
+        ],
+        "assumption": "Наличие публичного коммерческого предложения или механики у ритейлера не доказывает платёжеспособный спрос на наш продукт."
+      },
+      "source_ids": [
+        "D-S01",
+        "D-S02"
+      ],
+      "relevance": {
+        "value": "Пример индивидуального подбора задания, порога и награды; ближайший референс AI-персонализации.",
+        "evidence_status": "inferred",
+        "source_ids": [
+          "D-S01",
+          "D-S02"
+        ],
+        "assumption": "Переносимость механики на X5 подлежит проверке."
+      },
+      "evidence_status": "observed",
+      "limitations": "Отличие X5 нельзя обосновать одним наличием AI. Использование LLM и причинный эффект на частоту/маржу не подтверждены."
+    },
+    {
+      "id": "P02",
+      "name": "Магнит — Хеттрик выгоды",
+      "url": "https://magnit.ru/hattrick",
+      "relationship": "direct_retail",
+      "screening_status": "shortlist",
+      "description": "Промоигра продуктовой сети с заданиями и вознаграждениями.",
+      "commercial_offer_evidence": {
+        "value": "Маркетинговая программа розничной сети; покупка может выполнять условие задания. Платную подписку Магнит не считать обязательной для этой игры.",
+        "evidence_status": "observed",
+        "source_ids": [
+          "D-S03"
+        ],
+        "assumption": "Наличие публичного коммерческого предложения или механики у ритейлера не доказывает платёжеспособный спрос на наш продукт."
+      },
+      "source_ids": [
+        "D-S03"
+      ],
+      "relevance": {
+        "value": "Российский пример связи покупки с игровым действием и призом.",
+        "evidence_status": "inferred",
+        "source_ids": [
+          "D-S03"
+        ],
+        "assumption": "Переносимость механики на X5 подлежит проверке."
+      },
+      "evidence_status": "observed",
+      "limitations": "Сезонная акция, не доказанный постоянный игровой сервис. Перенос эффекта на X5 неизвестен."
+    },
+    {
+      "id": "P03",
+      "name": "ВкусВилл — приложение и персональные предложения",
+      "url": "https://vkusvill.ru/application/",
+      "relationship": "alternative_retail",
+      "screening_status": "shortlist",
+      "description": "Персональная выгода и программа лояльности в приложении продуктовой сети.",
+      "commercial_offer_evidence": {
+        "value": "Лояльность поддерживает продажу продуктов. Отдельная продажа функции пользователю не подтверждена.",
+        "evidence_status": "observed",
+        "source_ids": [
+          "D-S04"
+        ],
+        "assumption": "Наличие публичного коммерческого предложения или механики у ритейлера не доказывает платёжеспособный спрос на наш продукт."
+      },
+      "source_ids": [
+        "D-S04"
+      ],
+      "relevance": {
+        "value": "Альтернативный способ решать задачу экономии; помогает отделить пользу предложения от интереса к игре.",
+        "evidence_status": "inferred",
+        "source_ids": [
+          "D-S04"
+        ],
+        "assumption": "Переносимость механики на X5 подлежит проверке."
+      },
+      "evidence_status": "observed",
+      "limitations": "В просмотренном источнике не подтверждены AI-челленджи или игровой аватар; это не утверждение об отсутствии таких функций вообще."
+    },
+    {
+      "id": "P04",
+      "name": "Carrefour — Challenges Fid / Boost Fid",
+      "url": "https://www.carrefour.fr/faq?question=comment-participer-a-boost-fid",
+      "relationship": "direct_retail",
+      "screening_status": "shortlist",
+      "description": "Активируемые покупательские задания с порогами вознаграждения.",
+      "commercial_offer_evidence": {
+        "value": "Покупательская программа коммерческой розничной сети; не отдельный SaaS.",
+        "evidence_status": "observed",
+        "source_ids": [
+          "D-S05"
+        ],
+        "assumption": "Наличие публичного коммерческого предложения или механики у ритейлера не доказывает платёжеспособный спрос на наш продукт."
+      },
+      "source_ids": [
+        "D-S05"
+      ],
+      "relevance": {
+        "value": "Второй продуктовый ритейл-референс для понятности задания и прогресса.",
+        "evidence_status": "inferred",
+        "source_ids": [
+          "D-S05"
+        ],
+        "assumption": "Переносимость механики на X5 подлежит проверке."
+      },
+      "evidence_status": "observed",
+      "limitations": "Описание основано на извлечении официального FAQ; прямое чтение заблокировано 403. Не установлены AI/LLM и причинный эффект."
+    },
+    {
+      "id": "P05",
+      "name": "Золотое Яблоко — Бьюти-тамагочи",
+      "url": "https://goldapple.ru/game/tamagotchi",
+      "relationship": "adjacent_retail_historical",
+      "screening_status": "shortlist",
+      "description": "Игровой персонаж, прогресс и связь покупок с ресурсом/наградами.",
+      "commercial_offer_evidence": {
+        "value": "Историческая акция коммерческого бьюти-ритейлера; официальные правила связывают покупки и игровой ресурс.",
+        "evidence_status": "observed",
+        "source_ids": [
+          "D-S06"
+        ],
+        "assumption": "Наличие публичного коммерческого предложения или механики у ритейлера не доказывает платёжеспособный спрос на наш продукт."
+      },
+      "source_ids": [
+        "D-S06"
+      ],
+      "relevance": {
+        "value": "Референс аватара и игровой экономики; иной тип покупок и частота, чем у X5.",
+        "evidence_status": "inferred",
+        "source_ids": [
+          "D-S06"
+        ],
+        "assumption": "Переносимость механики на X5 подлежит проверке."
+      },
+      "evidence_status": "observed",
+      "limitations": "Найдены правила 2025 года. Текущее состояние и окупаемость не подтверждены."
+    },
+    {
+      "id": "P06",
+      "name": "Fetch — offers и referrals",
+      "url": "https://fetch.com/referral",
+      "relationship": "adjacent_rewards_app",
+      "screening_status": "shortlist",
+      "description": "Поощрения за подтверждённые чеком покупки и привлечение друга.",
+      "commercial_offer_evidence": {
+        "value": "Потребительский reward-сервис с покупательскими офферами; продажа платной подписки потребителю не установлена.",
+        "evidence_status": "observed",
+        "source_ids": [
+          "D-S07",
+          "D-S08"
+        ],
+        "assumption": "Наличие публичного коммерческого предложения или механики у ритейлера не доказывает платёжеспособный спрос на наш продукт."
+      },
+      "source_ids": [
+        "D-S07",
+        "D-S08"
+      ],
+      "relevance": {
+        "value": "Референс связки «приглашение → первое целевое действие → награда», а не только регистрации.",
+        "evidence_status": "inferred",
+        "source_ids": [
+          "D-S07",
+          "D-S08"
+        ],
+        "assumption": "Переносимость механики на X5 подлежит проверке."
+      },
+      "evidence_status": "observed",
+      "limitations": "Неизвестны инкрементальность, стоимость награды для бизнеса и антифрод. Требование загрузки чека не переносится на X5 автоматически."
+    },
+    {
+      "id": "P07",
+      "name": "Antavo — Challenges",
+      "url": "https://antavo.com/product/loyalty-engine/features/challenges/",
+      "relationship": "b2b_platform",
+      "screening_status": "shortlist",
+      "description": "Конструктор заданий и наград для операторов программ лояльности.",
+      "commercial_offer_evidence": {
+        "value": "Прямое коммерческое B2B-предложение, запрос демо. Факт/сумма конкретной сделки и цена неизвестны.",
+        "evidence_status": "observed",
+        "source_ids": [
+          "D-S09"
+        ],
+        "assumption": "Наличие публичного коммерческого предложения или механики у ритейлера не доказывает платёжеспособный спрос на наш продукт."
+      },
+      "source_ids": [
+        "D-S09"
+      ],
+      "relevance": {
+        "value": "Референс управления правилами, сегментами и временем; полезен, если изучать сторону маркетолога X5.",
+        "evidence_status": "inferred",
+        "source_ids": [
+          "D-S09"
+        ],
+        "assumption": "Переносимость механики на X5 подлежит проверке."
+      },
+      "evidence_status": "observed",
+      "limitations": "Не прямой конкурент приложения X5. Необходимость кабинета оператора и такого объёма платформы для PoC не выбрана."
+    },
+    {
+      "id": "P08",
+      "name": "Lidl Plus — Германия, баллы 2026",
+      "url": "https://unternehmen.lidl.de/pressreleases/2026/260521_lidl-punkte",
+      "relationship": "direct_retail",
+      "screening_status": "reserve",
+      "description": "Балльная модель с выбором наград после обновления 2026 года.",
+      "commercial_offer_evidence": {
+        "value": "Лояльность коммерческого ритейлера; не отдельный платный цифровой продукт.",
+        "evidence_status": "observed",
+        "source_ids": [
+          "D-S10"
+        ],
+        "assumption": "Наличие публичного коммерческого предложения или механики у ритейлера не доказывает платёжеспособный спрос на наш продукт."
+      },
+      "source_ids": [
+        "D-S10"
+      ],
+      "relevance": {
+        "value": "Резерв для сравнения простой выгоды и изменения программы.",
+        "evidence_status": "inferred",
+        "source_ids": [
+          "D-S10"
+        ],
+        "assumption": "Переносимость механики на X5 подлежит проверке."
+      },
+      "evidence_status": "observed",
+      "limitations": "Условия зависят от страны. Старые примеры скретч-карт не описывают новую немецкую версию."
+    },
+    {
+      "id": "P09",
+      "name": "Starbucks Rewards — США, версия 2026",
+      "url": "https://about.starbucks.com/press/2026/reimagined-starbucks-rewards-loyalty-program-launches-with-new-member-benefits/",
+      "relationship": "adjacent_retail",
+      "screening_status": "reserve",
+      "description": "Программа уровней и персональных привилегий.",
+      "commercial_offer_evidence": {
+        "value": "Программа поддерживает покупку напитков/еды; отдельная плата за исследуемую механику не установлена.",
+        "evidence_status": "observed",
+        "source_ids": [
+          "D-S11"
+        ],
+        "assumption": "Наличие публичного коммерческого предложения или механики у ритейлера не доказывает платёжеспособный спрос на наш продукт."
+      },
+      "source_ids": [
+        "D-S11"
+      ],
+      "relevance": {
+        "value": "Резерв для изучения статуса и долгосрочного прогресса.",
+        "evidence_status": "inferred",
+        "source_ids": [
+          "D-S11"
+        ],
+        "assumption": "Переносимость механики на X5 подлежит проверке."
+      },
+      "evidence_status": "observed",
+      "limitations": "Иная частота потребления. Старые схемы уровней нельзя смешивать с версией марта 2026."
+    },
+    {
+      "id": "P10",
+      "name": "Talon.One — Gamification Engine",
+      "url": "https://www.talon.one/blog/the-gamification-engine-gamify-customer-interactions-into-rewarding-challenges",
+      "relationship": "b2b_platform",
+      "screening_status": "reserve",
+      "description": "Правила и событийные задания с различными вознаграждениями.",
+      "commercial_offer_evidence": {
+        "value": "Прямое коммерческое предложение платформы; текущая публичная цена не установлена.",
+        "evidence_status": "observed",
+        "source_ids": [
+          "D-S12",
+          "D-S13"
+        ],
+        "assumption": "Наличие публичного коммерческого предложения или механики у ритейлера не доказывает платёжеспособный спрос на наш продукт."
+      },
+      "source_ids": [
+        "D-S12",
+        "D-S13"
+      ],
+      "relevance": {
+        "value": "Альтернативный B2B-референс к Antavo, если выбран операторский сценарий.",
+        "evidence_status": "inferred",
+        "source_ids": [
+          "D-S12",
+          "D-S13"
+        ],
+        "assumption": "Переносимость механики на X5 подлежит проверке."
+      },
+      "evidence_status": "observed",
+      "limitations": "На первом раунде описание частичное. Не означает рекомендацию интеграции или покупки."
+    }
+  ],
+  "market_signals": [
+    {
+      "id": "MS01",
+      "value": "В продуктовом ритейле уже применялись персональные задания с AI-подбором условий.",
+      "evidence_status": "observed",
+      "source_ids": [
+        "D-S01",
+        "D-S02"
+      ],
+      "assumption": null
+    },
+    {
+      "id": "MS02",
+      "value": "Гипотезу X5 стоит проверять относительно персональной выгоды без сложной игры.",
+      "evidence_status": "inferred",
+      "source_ids": [
+        "D-S04"
+      ],
+      "assumption": "Это исследовательский вопрос, не утверждение о предпочтениях покупателей."
+    },
+    {
+      "id": "MS03",
+      "value": "Существует сегмент X5, которому игровой слой помогает покупать чаще с сохранением маржи.",
+      "evidence_status": "unknown",
+      "source_ids": [],
+      "assumption": "Исходное предположение кейса; обзор аналогов его не подтверждает."
+    }
+  ],
+  "screening_notes": [
+    {
+      "name": "Додо — Хвостики",
+      "status": "needs_primary_evidence",
+      "reason": "Кандидат из Miro. В проведённом поиске не получено достаточно первичного материала для основной подборки. Причины прекращения/результаты не установлены."
+    },
+    {
+      "name": "Ozon — Морковка",
+      "status": "needs_primary_evidence",
+      "reason": "Запросы выполнены; надёжное первичное описание не получено. Не делать вывод об отсутствии продукта."
+    },
+    {
+      "name": "Duolingo / Strava и остальные идеи исходного контекст-пака",
+      "status": "outside_first_search_scope",
+      "reason": "Сохранены в реестре идей. В этом раунде приоритет у покупательских механик и лояльности; новые проверки этих продуктов не выполнялись."
+    }
+  ],
+  "recommendation": {
+    "product_ids": [
+      "P01",
+      "P02",
+      "P03",
+      "P05"
+    ],
+    "optional_product_ids": [
+      "P04",
+      "P06",
+      "P07"
+    ],
+    "status": "assistant_proposal_not_user_decision",
+    "rationale": "Четыре разных вопроса: персональные задания, российская промоигра, простая выгода, аватар. Пятый аналог можно добавить под интерес к grocery-порогам, рефералке или операторскому сценарию."
+  },
+  "segments": [],
+  "hypotheses": [],
+  "ranking": [],
+  "selected_hypothesis_ids": [],
+  "lean_canvases": [],
+  "open_questions": [
+    {
+      "id": "OQ01",
+      "question": "Какие 3–5 аналогов Влад выбирает для следующего сравнения?",
+      "blocks_pdf_step": 4
+    },
+    {
+      "id": "OQ02",
+      "question": "Какой сегмент и связка боли с ценностью приоритетны?",
+      "blocks_pdf_step": null,
+      "note": "Предстоит отдельный выбор после соответствующих шагов; сейчас не анкетировать."
+    },
+    {
+      "id": "OQ03",
+      "question": "Что означает частота, как измеряется маржа и какие реальные агрегаты доступны?",
+      "blocks_pdf_step": null,
+      "note": "Сохранено из брифа; важно для последующих гипотез и экспериментов."
+    }
+  ],
+  "next_experiment": null,
+  "next_action": "Получить выбор P01–P10 или другой предложенный аналог; записать решение; выполнить шаг 4, затем вернуть выбор функций на шаге 5.",
+  "verification": {
+    "status": "passed",
+    "checked_at": "2026-09-03",
+    "original_workflow_unchanged": true,
+    "source_references_valid": true,
+    "local_markdown_links_valid": true,
+    "source_count": 13,
+    "product_count": 10,
+    "search_query_count": 18,
+    "no_user_selection_assumed": true,
+    "limits": "Проверено сохранение и согласованность материалов. Описания продуктов имеют разную полноту чтения; бизнес-эффект, спрос X5 и работа приложений не проверены."
+  }
+}

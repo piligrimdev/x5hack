@@ -1,0 +1,40 @@
+{
+  "round": "round-04",
+  "date": "2026-09-03",
+  "queries": [
+    "site:tescoplc.com Clubcard Challenges AI personalized official",
+    "site:tesco.com Clubcard personalized offers Your Clubcard Prices official",
+    "site:ocadogroup.com OR site:help.ocado.com refer a friend official grocery",
+    "site:picnic.app refer a friend invite official grocery",
+    "grocery refer a friend official supermarket loyalty",
+    "site:help.ocado.com refer a friend OR invite",
+    "site:walmart.com/plus refer a friend official",
+    "site:instacart.com/help refer friend customer",
+    "site:ah.nl app persoonlijke aanbiedingen Mijn Bonus Box digitaal bonnetje official",
+    "site:lidl.com OR site:lidl.co.uk Lidl Plus Coupon Plus digital receipt official",
+    "site:sainsburys.co.uk SmartShop Nectar Your Nectar Prices official personalized",
+    "site:carrefour.com AI shopping assistant loyalty challenges official Carrefour",
+    "site:corporate.walmart.com AI grocery shopping personalized recipes official 2025",
+    "site:amazon.com fresh Dash Cart official grocery shopping list recommendations",
+    "site:corporate.samsclub.com Scan and Go Just Go exit technology official",
+    "site:kroger.com app smart shopping list aisle personalized official",
+    "site:carrefour.fr parrainage ami fidélité Carrefour",
+    "site:woolworths.com.au refer a friend Everyday Rewards",
+    "site:picnic.app invite friends credit groceries",
+    "site:ocado.com refer a friend groceries",
+    "site:samsclub.com refer a friend membership official",
+    "site:costco.com refer a friend official membership",
+    "site:hellofresh.com refer a friend official free boxes",
+    "site:delivery.publix.com OR site:shipt.com refer a friend grocery official",
+    "Tesco Clubcard Challenges 20 challenges choose 10 10 weeks up to £50 official April 2024",
+    "site:tescoplc.com Scan as You Shop shopping list functionality 2026",
+    "site:tesco.com Clubcard Group points household official",
+    "site:ah.nl Mijn Bonus Box 10 persoonlijke aanbiedingen"
+  ],
+  "not_selected": [
+    {"name":"Picnic referral","reason":"В этом раунде не найден достаточный официальный источник"},
+    {"name":"HelloFresh","reason":"Найдены старые материалы; подписочная meal-kit модель дальше от X5, чем Ocado/Instacart"},
+    {"name":"Walmart+ referral","reason":"Найдена только eligibility-страница без полных условий"},
+    {"name":"Carrefour referral","reason":"Найдена историческая игровая акция 2018 года, а не текущая core loyalty referral"}
+  ]
+}

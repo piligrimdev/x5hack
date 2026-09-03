@@ -1,0 +1,30 @@
+{
+  "round": "round-03",
+  "searched_at": "2026-09-03",
+  "queries": [
+    "site:help.sainsburys.co.uk Nectar Challenges personalized official",
+    "site:everydayrewards.com.au boosters personalized offers official Everyday Rewards",
+    "site:target.com Circle Bonus personalized spend reward official",
+    "site:rewe.de bonus booster challenges loyalty official REWE Bonus",
+    "Sainsbury's Nectar Challenges official personalized challenges 2025",
+    "Woolworths Everyday Rewards boosters official personalized offers",
+    "Target Circle Bonuses official personalized rewards spend threshold",
+    "Kroger personalized challenges loyalty gamification official",
+    "site:kroger.com OptUP app personalized recommendations purchase history official",
+    "site:thekrogerco.com OptUP nutrition score purchase history official",
+    "site:support.strava.com challenges progress rewards official",
+    "site:corporate.mcdonalds.com loyalty gamification challenge app official",
+    "site:instacart.com/company Smart Shop personalized health preferences AI official",
+    "site:monzo.com help spending trends personalized insights official",
+    "site:newsroom.spotify.com personalized year in review behavior insights official Wrapped",
+    "site:corporate.mcdonalds.com Monopoly app digital game pieces official 2025"
+  ],
+  "selection_rule": "Включать новый относительно предыдущих 23 аналогов паттерн с доступным первичным источником; не включать повтор механики ради количества.",
+  "selected": ["Target Circle Bonus", "Sainsbury's Healthy Choice", "REWE Bonus-Booster", "Woolworths Everyday Rewards", "Kroger OptUP", "Instacart Smart Shop", "McDonald's Monopoly 2025"],
+  "reviewed_not_selected": [
+    {"name": "Strava Challenges", "reason": "Дублирует уже покрытый прогресс и badge; менее близко к grocery loyalty"},
+    {"name": "Spotify Wrapped", "reason": "Полезен как персональный итог, но слабее связан с проверяемыми механиками текущего раунда"},
+    {"name": "Monzo spending insights", "reason": "Поиск не дал более сильного нового паттерна с достаточной близостью к кейсу"}
+  ],
+  "stop_reason": "Получены семь неповторяющихся механик с первичными источниками; дальнейшие результаты стали повторять уже покрытые классы решений."
+}

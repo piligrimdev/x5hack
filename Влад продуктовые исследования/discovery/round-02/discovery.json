@@ -1,0 +1,890 @@
+{
+  "schema_version": "wide-context-1.0",
+  "date": "2026-09-03",
+  "scope": "Расширение аналогов по просьбе Влада; не переход к выбору функций/сегмента",
+  "user_context_ref": "../../context/PRODUCT_DIRECTION.md",
+  "sources": [
+    {
+      "id": "W-S01",
+      "title": "Ozon Tech: как устроен Морковск",
+      "url": "https://t.me/s/ozon_tech?before=2135",
+      "source_type": "official_team_post",
+      "access_level": "full_text",
+      "supports": "Задания за покупки и действия в Ozon; морковки используются в призовой механике.",
+      "limitations": "Проверен текст канала команды; карточки с техническими деталями и приложение не изучались.",
+      "accessed_at": "2026-09-03"
+    },
+    {
+      "id": "W-S02",
+      "title": "Ксения Блинова: дизайн Морковска",
+      "url": "https://kblinova.ru/morkovsk",
+      "source_type": "creator_portfolio",
+      "access_level": "full_text",
+      "supports": "Автор описывает персонажа Захара, название, игровую валюту, ежедневное действие, Лукошко и розыгрыши.",
+      "limitations": "Первичный рассказ заявленного автора дизайна; не действующие правила акции и не доказательство бизнес-эффекта.",
+      "accessed_at": "2026-09-03"
+    },
+    {
+      "id": "W-S03",
+      "title": "Т-Банк: 5 букв",
+      "url": "https://www.tbank.ru/finance/blog/legendary-game/",
+      "source_type": "official_product_explanation",
+      "access_level": "full_text",
+      "supports": "Ежедневная словесная игра; награды за прогресс, энергия, уведомления и бонусы экосистемы.",
+      "limitations": "Публикация обновлена 04.03.2025; прочитан актуально доступный текст. Состав сегодняшних персональных призов не проверялся.",
+      "accessed_at": "2026-09-03"
+    },
+    {
+      "id": "W-S04",
+      "title": "Carrefour: Challenge Fid Bio, сентябрь 2020",
+      "url": "https://static.carrefour.fr/static/cfr/C4FR/2020/jeux-concours/reglements/Challenge-fid-bio-2020.pdf",
+      "source_type": "official_campaign_rules",
+      "access_level": "full_text",
+      "supports": "Исторические правила: выбор заданий, покупки в магазинах/онлайн, пороги, прогресс и начисление поощрения.",
+      "limitations": "Правила только кампании 01–30.09.2020, стр. 2–4. Числа/ограничения не переносить на 2026 год.",
+      "accessed_at": "2026-09-03"
+    },
+    {
+      "id": "W-S05",
+      "title": "Carrefour Community: Boost Fid, сентябрь 2026",
+      "url": "https://communaute.carrefour.fr/app/730/channel/club-3453/details/les-bons-plans-continuent-avec-boost-fid-45138486",
+      "source_type": "official_community_manager_post",
+      "access_level": "search_extract_direct_reader_error",
+      "supports": "Пост сотрудника сообщества от 01.09.2026 описывает активацию до кассы и поощрение за пороги покупок.",
+      "limitations": "Поисковое извлечение; прямое открытие недоступно. Пост не заменяет полный регламент. Комментарии покупателей не использовались как факты.",
+      "accessed_at": "2026-09-03"
+    },
+    {
+      "id": "W-S06",
+      "title": "Carrefour: запуск Hopla, 2023",
+      "url": "https://www.carrefour.com/en/news/2023/carrefour-integrates-openai-technologies-and-launches-generative-ai-powered-shopping",
+      "source_type": "official_announcement",
+      "access_level": "search_extract",
+      "supports": "Hopla помогает собрать покупки по бюджету и пищевым ограничениям, предложить меню и использовать остатки.",
+      "limitations": "Объявление запуска 08.06.2023, не актуальная демонстрация приложения.",
+      "accessed_at": "2026-09-03"
+    },
+    {
+      "id": "W-S07",
+      "title": "Carrefour: Hopla+ и покупки в ChatGPT, 2026",
+      "url": "https://www.carrefour.com/fr/news/2026/carrefour-devient-le-premier-retailer-europeen-proposer-de-faire-ses-courses-sur-chatgpt",
+      "source_type": "official_announcement",
+      "access_level": "search_extract_direct_body_missing",
+      "supports": "Компания описывает смену Hopla на Hopla+ в 2025 году и подбор корзины по истории покупок.",
+      "limitations": "Полный текст получен в поисковом извлечении; при прямом открытии возвращалась только навигация. Связь с игровыми челленджами не доказана.",
+      "accessed_at": "2026-09-03"
+    },
+    {
+      "id": "W-S08",
+      "title": "Amazon: Alexa for Shopping",
+      "url": "https://www.aboutamazon.com/news/retail/alexa-for-shopping-ai-assistant?pubDate=20260514",
+      "source_type": "official_announcement",
+      "access_level": "full_text",
+      "supports": "Rufus объединён с Alexa; помощник использует предпочтения, историю покупок и диалогов и помогает сравнивать/подбирать товары.",
+      "limitations": "Изменение названия в мае 2026. Доступность функций зависит от рынка; поведение аккаунта не тестировалось.",
+      "accessed_at": "2026-09-03"
+    },
+    {
+      "id": "W-S09",
+      "title": "Samsung Food: Meal Planner",
+      "url": "https://support.samsungfood.com/hc/en-us/articles/35369657798548-Getting-Started-with-Meal-Planner",
+      "source_type": "official_help",
+      "access_level": "full_text",
+      "supports": "Food+ формирует персональный недельный план питания; план связывается со списком покупок.",
+      "limitations": "Референс задачи планирования еды, не медицинская рекомендация; качество советов и локальный ассортимент X5 не проверены.",
+      "accessed_at": "2026-09-03"
+    },
+    {
+      "id": "W-S10",
+      "title": "Duolingo: Video Call with Lily",
+      "url": "https://blog.duolingo.com/video-call/",
+      "source_type": "official_product_explanation",
+      "access_level": "full_text",
+      "supports": "AI-персонаж ведёт разговорную практику и адаптирует разговор к уровню учащегося.",
+      "limitations": "Обучающий сценарий; его полезность нельзя переносить на покупательский чат автоматически.",
+      "accessed_at": "2026-09-03"
+    },
+    {
+      "id": "W-S11",
+      "title": "Spotify: Ask DJ",
+      "url": "https://newsroom.spotify.com/2026-04-20/deeper-music-features-about-the-song-dj-songdna/",
+      "source_type": "official_announcement",
+      "access_level": "full_text",
+      "supports": "Диалог с DJ позволяет запрашивать рекомендации и пояснения по музыке в текущем сеансе.",
+      "limitations": "Анонс 20.04.2026, ограниченные языки/рынки. Метрики рекомендаций и ритейла несопоставимы без проверки.",
+      "accessed_at": "2026-09-03"
+    },
+    {
+      "id": "W-S12",
+      "title": "Finch: Creating and Completing Goals",
+      "url": "https://help.finchcare.com/hc/en-us/articles/37779940291213-Creating-and-Completing-Goals",
+      "source_type": "official_help",
+      "access_level": "full_text",
+      "supports": "Пользователь задаёт повторяемые цели; выполнение приносит энергию/валюту и связано с развитием питомца.",
+      "limitations": "Выполнение отмечает пользователь. Такая отметка не равна подтверждённой покупке; использование LLM здесь не установлено.",
+      "accessed_at": "2026-09-03"
+    },
+    {
+      "id": "W-S13",
+      "title": "Finch: Micropet Lab",
+      "url": "https://help.finchcare.com/hc/en-us/articles/37780505907469-Using-the-Micropet-Lab",
+      "source_type": "official_help",
+      "access_level": "search_extract",
+      "supports": "Пользователь связывает выбранную реальную цель с появлением питомца после повторных выполнений.",
+      "limitations": "Справка обновлена 25.07.2025; текущий интерфейс не тестировался.",
+      "accessed_at": "2026-09-03"
+    },
+    {
+      "id": "W-S14",
+      "title": "Pikmin Bloom",
+      "url": "https://www.pikminbloom.com/",
+      "source_type": "official_product_page",
+      "access_level": "full_text",
+      "supports": "Ходьба связана с выращиванием существ, цветами, коллекцией и записью повседневного маршрута.",
+      "limitations": "Подтверждает игровой паттерн вокруг офлайн-действия; не покупательскую лояльность и не LLM.",
+      "accessed_at": "2026-09-03"
+    },
+    {
+      "id": "W-S15",
+      "title": "Alipay Ant Forest: user instructions",
+      "url": "https://render.alipay.com/p/f/antforest/license.html",
+      "source_type": "official_product_rules",
+      "access_level": "full_text",
+      "supports": "Действия дают энергию; виртуальное выращивание связывается с реальной посадкой деревьев организациями-партнёрами.",
+      "limitations": "Редакция 18.04.2021. Это исторически документированный механизм, не аудит экологического эффекта или всех условий 2026.",
+      "accessed_at": "2026-09-03"
+    },
+    {
+      "id": "W-S16",
+      "title": "Oracle Opower: Neighbor FAQs",
+      "url": "https://docs.oracle.com/en/industries/energy-water/digital-self-service/transactions-csr/Content/Global_Topics/FAQs/Neighbor_FAQs.htm",
+      "source_type": "official_documentation",
+      "access_level": "full_text",
+      "supports": "Расход энергии сопоставляется с похожими домами; учитываются известные характеристики жилья, можно уточнить профиль.",
+      "limitations": "Методический референс сравнения. Не доказывает корректность рейтинга покупательской экономии.",
+      "accessed_at": "2026-09-03"
+    },
+    {
+      "id": "W-S17",
+      "title": "Catalina: In-Store Print",
+      "url": "https://www.catalina.com/solutions/media-and-activation/in-store-print-media",
+      "source_type": "official_b2b_product_page",
+      "access_level": "full_text",
+      "supports": "Персональные предложения печатаются на кассах и кассах самообслуживания с учётом истории покупок.",
+      "limitations": "Речь о кассовых печатных материалах, не о доказанной печати аватара на фискальном чеке. Рекламные uplift-числа не переносились.",
+      "accessed_at": "2026-09-03"
+    },
+    {
+      "id": "W-S18",
+      "title": "Royal Match: карточка Dream Games",
+      "url": "https://play.google.com/store/apps/details?hl=en-US&id=com.dreamgames.royalmatch",
+      "source_type": "developer_store_listing",
+      "access_level": "search_extract",
+      "supports": "Match-3 уровни связаны с развитием замка, наградами и событиями.",
+      "limitations": "Использовано описание разработчика, не отзывы и рейтинги. Это игра с внутренними покупками, а не скидочная лояльность.",
+      "accessed_at": "2026-09-03"
+    },
+    {
+      "id": "W-S19",
+      "title": "n8n Documentation",
+      "url": "https://docs.n8n.io/",
+      "source_type": "official_documentation",
+      "access_level": "search_extract_direct_unsupported_markdown",
+      "supports": "Конструктор автоматизаций связывает приложения/API, данные и AI-шаги.",
+      "limitations": "Прямой reader вернул unsupported text/markdown. Экземпляр n8n не устанавливался и не тестировался.",
+      "accessed_at": "2026-09-03"
+    },
+    {
+      "id": "W-S20",
+      "title": "Чижик — приложение X5 Tech",
+      "url": "https://play.google.com/store/apps/details?hl=ru&id=club.chizhik",
+      "source_type": "developer_store_listing",
+      "access_level": "search_extract_and_page_open",
+      "supports": "Приложение торговой сети существует; в описании есть купоны и функции покупок.",
+      "limitations": "Не подтверждает участие Чижика в едином балльном счёте X5 Клуба. Ошибочное совпадение с приложением трамвая исключено.",
+      "accessed_at": "2026-09-03"
+    },
+    {
+      "id": "W-S21",
+      "title": "Ozon: вход в Морковск",
+      "url": "https://www.ozon.ru/gameapp/welcome-page/",
+      "source_type": "official_product_landing",
+      "access_level": "search_extract_direct_redirect_loop",
+      "supports": "Официальная посадочная страница указывает доступ через приложение и накопление морковок.",
+      "limitations": "Прямой reader получил redirect loop. Игровой интерфейс в аккаунте не проверен.",
+      "accessed_at": "2026-09-03"
+    },
+    {
+      "id": "D-S01",
+      "title": "Eagle Eye: Tesco Clubcard Challenges",
+      "url": "https://eagleeye.com/case-studies/tesco-clubcard-challenges",
+      "accessed_at": "2026-09-03",
+      "source_type": "supplier_case_study",
+      "access_level": "full_text",
+      "supports": "Кейс поставщика описывает персональные задания по категориям/товарам с индивидуальными порогами покупок и наград. AI не означает подтверждённое использование LLM.",
+      "limitations": "Описание кампаний 2024 года; дата публикации не указана. Метрики поставщика не являются независимой оценкой причинного эффекта.",
+      "reused_from": "../round-01/discovery.json",
+      "rechecked_this_round": false
+    },
+    {
+      "id": "D-S06",
+      "title": "Золотое Яблоко: правила Бьюти-тамагочи",
+      "url": "https://tamagotchi.goldapple.ru/uploads/files/%D0%9F%D1%80%D0%B0%D0%B2%D0%B8%D0%BB%D0%B0%20%E2%80%9C%D0%91%D1%8C%D1%8E%D1%82%D0%B8-%D1%82%D0%B0%D0%BC%D0%B0%D0%B3%D0%BE%D1%87%D0%B8_%20-5.pdf",
+      "accessed_at": "2026-09-03",
+      "source_type": "official_campaign_rules",
+      "access_level": "full_text",
+      "supports": "Правила описывают развитие персонажа, игровые действия, ресурс от покупок и бонусные награды.",
+      "limitations": "Историческая редакция: 19.02–31.12.2025, стр. 2–4 PDF. Работа игры в сентябре 2026 года не подтверждена.",
+      "reused_from": "../round-01/discovery.json",
+      "rechecked_this_round": false
+    },
+    {
+      "id": "D-S07",
+      "title": "Fetch: referral",
+      "url": "https://fetch.com/referral",
+      "accessed_at": "2026-09-03",
+      "source_type": "official_product_page",
+      "access_level": "full_text",
+      "supports": "Реферальные баллы получают обе стороны после регистрации друга с кодом и первого чека.",
+      "limitations": "Неизвестны дополнительные покупки, окупаемость привлечения и качество антифрода. Условия наград зависят от акции.",
+      "reused_from": "../round-01/discovery.json",
+      "rechecked_this_round": false
+    },
+    {
+      "id": "D-S08",
+      "title": "Fetch Help: What Are Offers?",
+      "url": "https://help.fetch.com/hc/en-us/articles/4408482522771-What-Are-Offers",
+      "accessed_at": "2026-09-03",
+      "source_type": "official_help",
+      "access_level": "search_extract",
+      "supports": "Офферы задают условия покупки товара, количества либо суммы; чек используется для начисления поощрения.",
+      "limitations": "Описание функции в справке, не оценка спроса или бизнес-эффекта.",
+      "reused_from": "../round-01/discovery.json",
+      "rechecked_this_round": false
+    },
+    {
+      "id": "D-S09",
+      "title": "Antavo: Challenges",
+      "url": "https://antavo.com/product/loyalty-engine/features/challenges/",
+      "accessed_at": "2026-09-03",
+      "source_type": "official_b2b_product_page",
+      "access_level": "full_text",
+      "supports": "Коммерчески предлагаемый модуль позволяет настраивать задания по действиям, покупкам, времени и сегментам; доступен запрос демонстрации.",
+      "limitations": "B2B-платформа для оператора, не потребительская программа. Цена контракта и доказанный эффект для X5 неизвестны.",
+      "reused_from": "../round-01/discovery.json",
+      "rechecked_this_round": false
+    }
+  ],
+  "references": [
+    {
+      "id": "W01",
+      "name": "Ozon — Морковск",
+      "angle": "Игровой центр и награды",
+      "source_ids": [
+        "W-S01",
+        "W-S02",
+        "W-S21"
+      ],
+      "user_priority": null,
+      "observed": {
+        "value": "Задания и действия в сервисе дают морковки; персонаж и призовые сценарии объединены в одном разделе.",
+        "evidence_status": "observed",
+        "source_ids": [
+          "W-S01",
+          "W-S02",
+          "W-S21"
+        ]
+      },
+      "transfer": {
+        "value": "Место, где видны задания, ресурс, прогресс и доступные награды; наградой может стать полезное персональное предложение.",
+        "evidence_status": "inferred",
+        "source_ids": [
+          "W-S01",
+          "W-S02",
+          "W-S21"
+        ],
+        "assumption": "Возможная аналогия для обсуждения, не решение команды."
+      },
+      "limitations": "Не подтверждены match-3 и награды по любимым покупкам. Нельзя объявлять текущие задания случайными или неперсональными без просмотра аккаунта.",
+      "added_from_user_examples": true
+    },
+    {
+      "id": "W02",
+      "name": "Т-Банк — 5 букв",
+      "angle": "Короткий игровой ритуал",
+      "source_ids": [
+        "W-S03"
+      ],
+      "user_priority": null,
+      "observed": {
+        "value": "Ежедневная головоломка ведёт к наградам за накопленный прогресс и бонусам экосистемы.",
+        "evidence_status": "observed",
+        "source_ids": [
+          "W-S03"
+        ]
+      },
+      "transfer": {
+        "value": "Разделить удовольствие от игры и подбор полезной награды; объяснять расстояние до следующего поощрения.",
+        "evidence_status": "inferred",
+        "source_ids": [
+          "W-S03"
+        ],
+        "assumption": "Возможная аналогия для обсуждения, не решение команды."
+      },
+      "limitations": "Персонализация призов по истории трат здесь не подтверждена. Рост заходов в игру не равен росту офлайн-покупок.",
+      "added_from_user_examples": true
+    },
+    {
+      "id": "W03",
+      "name": "Carrefour — Challenge Fid / Boost Fid",
+      "angle": "Задания и покупательские пороги",
+      "source_ids": [
+        "W-S04",
+        "W-S05"
+      ],
+      "user_priority": null,
+      "observed": {
+        "value": "Покупатель активирует/выбирает задания, покупки двигают прогресс к поощрению.",
+        "evidence_status": "observed",
+        "source_ids": [
+          "W-S04",
+          "W-S05"
+        ]
+      },
+      "transfer": {
+        "value": "Прозрачные условия до похода в магазин, понятный прогресс после покупки, ограниченный срок.",
+        "evidence_status": "inferred",
+        "source_ids": [
+          "W-S04",
+          "W-S05"
+        ],
+        "assumption": "Возможная аналогия для обсуждения, не решение команды."
+      },
+      "limitations": "Правила 2020 и пост сентября 2026 описывают разные версии. Не соединять их пороги и ставки в одну актуальную механику.",
+      "added_from_user_examples": true
+    },
+    {
+      "id": "W04",
+      "name": "Carrefour — Hopla / Hopla+",
+      "angle": "ИИ для конкретной бытовой задачи",
+      "source_ids": [
+        "W-S06",
+        "W-S07"
+      ],
+      "user_priority": null,
+      "observed": {
+        "value": "Помощник связывает меню, бюджет, ограничения и покупки; в последующей версии заявлена история покупок.",
+        "evidence_status": "observed",
+        "source_ids": [
+          "W-S06",
+          "W-S07"
+        ]
+      },
+      "transfer": {
+        "value": "Начинать разговор с задачи семьи: что приготовить/купить в пределах бюджета, затем предложить подходящее задание.",
+        "evidence_status": "inferred",
+        "source_ids": [
+          "W-S06",
+          "W-S07"
+        ],
+        "assumption": "Возможная аналогия для обсуждения, не решение команды."
+      },
+      "limitations": "Не найдено подтверждения, что Hopla+ сам генерирует Challenge Fid. Их соединение для X5 — наша идея.",
+      "added_from_user_examples": true
+    },
+    {
+      "id": "W05",
+      "name": "Amazon — Alexa for Shopping, ранее Rufus",
+      "angle": "Помощник с контекстом",
+      "source_ids": [
+        "W-S08"
+      ],
+      "user_priority": null,
+      "observed": {
+        "value": "Рекомендации опираются на предпочтения, прошлые покупки и разговоры.",
+        "evidence_status": "observed",
+        "source_ids": [
+          "W-S08"
+        ]
+      },
+      "transfer": {
+        "value": "Сохранять полезные предпочтения и объяснять, почему предложение подходит в текущей ситуации.",
+        "evidence_status": "inferred",
+        "source_ids": [
+          "W-S08"
+        ],
+        "assumption": "Возможная аналогия для обсуждения, не решение команды."
+      },
+      "limitations": "Чат поверх пустого каталога не воспроизводит эту ценность. Данные и границы памяти для X5 не определены.",
+      "added_from_user_examples": false
+    },
+    {
+      "id": "W06",
+      "name": "Samsung Food / Food+",
+      "angle": "План → список → действие",
+      "source_ids": [
+        "W-S09"
+      ],
+      "user_priority": null,
+      "observed": {
+        "value": "План питания превращается в список покупок; возможна AI-персонализация недельного плана.",
+        "evidence_status": "observed",
+        "source_ids": [
+          "W-S09"
+        ]
+      },
+      "transfer": {
+        "value": "Задание может помогать выполнить план питания/закупки, а не просто купить ещё товар.",
+        "evidence_status": "inferred",
+        "source_ids": [
+          "W-S09"
+        ],
+        "assumption": "Возможная аналогия для обсуждения, не решение команды."
+      },
+      "limitations": "Нужны ассортимент, доступность и ограничения пользователя. Это возможная задача, не выбранная миссия.",
+      "added_from_user_examples": false
+    },
+    {
+      "id": "W07",
+      "name": "Duolingo Max — Lily",
+      "angle": "Полезный AI-персонаж",
+      "source_ids": [
+        "W-S10"
+      ],
+      "user_priority": null,
+      "observed": {
+        "value": "Разговорная практика с персонажем адаптируется к уровню ученика.",
+        "evidence_status": "observed",
+        "source_ids": [
+          "W-S10"
+        ]
+      },
+      "transfer": {
+        "value": "У маскота должна быть полезная роль: уточнить задачу, помочь выбрать, объяснить результат.",
+        "evidence_status": "inferred",
+        "source_ids": [
+          "W-S10"
+        ],
+        "assumption": "Возможная аналогия для обсуждения, не решение команды."
+      },
+      "limitations": "Разговор сам по себе полезен при изучении языка; в магазине его необходимость ещё надо доказать.",
+      "added_from_user_examples": false
+    },
+    {
+      "id": "W08",
+      "name": "Spotify — DJ / Ask DJ",
+      "angle": "Пользователь управляет рекомендациями",
+      "source_ids": [
+        "W-S11"
+      ],
+      "user_priority": null,
+      "observed": {
+        "value": "Рекомендации можно уточнять через разговор и запрашивать контекст.",
+        "evidence_status": "observed",
+        "source_ids": [
+          "W-S11"
+        ]
+      },
+      "transfer": {
+        "value": "Дать простые способы поправить систему: сегодня дешевле, без готовки, это уже куплено, такое не подходит.",
+        "evidence_status": "inferred",
+        "source_ids": [
+          "W-S11"
+        ],
+        "assumption": "Возможная аналогия для обсуждения, не решение команды."
+      },
+      "limitations": "Вывод о применении к X5 — аналогия. Не делать один жёсткий ярлык пользователя единственным входом рекомендаций.",
+      "added_from_user_examples": false
+    },
+    {
+      "id": "W09",
+      "name": "Finch",
+      "angle": "Питомец и личные действия",
+      "source_ids": [
+        "W-S12",
+        "W-S13"
+      ],
+      "user_priority": null,
+      "observed": {
+        "value": "Повторяемые цели связаны с энергией, прогрессом и появлением питомцев.",
+        "evidence_status": "observed",
+        "source_ids": [
+          "W-S12",
+          "W-S13"
+        ]
+      },
+      "transfer": {
+        "value": "Аватар может отражать движение к выбранной человеком цели, а не только сумму расходов.",
+        "evidence_status": "inferred",
+        "source_ids": [
+          "W-S12",
+          "W-S13"
+        ],
+        "assumption": "Возможная аналогия для обсуждения, не решение команды."
+      },
+      "limitations": "Самоотметку цели нельзя использовать как подтверждение оплаченной покупки. LLM в этой механике не установлен.",
+      "added_from_user_examples": false
+    },
+    {
+      "id": "W10",
+      "name": "Pikmin Bloom",
+      "angle": "Прогресс от офлайн-действия",
+      "source_ids": [
+        "W-S14"
+      ],
+      "user_priority": null,
+      "observed": {
+        "value": "Ходьба развивает цифровую коллекцию и сохраняет следы маршрута.",
+        "evidence_status": "observed",
+        "source_ids": [
+          "W-S14"
+        ]
+      },
+      "transfer": {
+        "value": "Думать о походе за покупками как о событии, которое продолжает историю в приложении.",
+        "evidence_status": "inferred",
+        "source_ids": [
+          "W-S14"
+        ],
+        "assumption": "Возможная аналогия для обсуждения, не решение команды."
+      },
+      "limitations": "Сам факт визита ещё не полезная покупка; location/AR не являются выбранными требованиями PoC.",
+      "added_from_user_examples": false
+    },
+    {
+      "id": "W11",
+      "name": "Alipay Ant Forest",
+      "angle": "Миссия с реальным результатом",
+      "source_ids": [
+        "W-S15"
+      ],
+      "user_priority": null,
+      "observed": {
+        "value": "Повседневные действия питают виртуальный прогресс, связанный с реальной посадкой деревьев.",
+        "evidence_status": "observed",
+        "source_ids": [
+          "W-S15"
+        ]
+      },
+      "transfer": {
+        "value": "Видимая миссия может соединять игровые и неигровые действия и давать понятный результат.",
+        "evidence_status": "inferred",
+        "source_ids": [
+          "W-S15"
+        ],
+        "assumption": "Возможная аналогия для обсуждения, не решение команды."
+      },
+      "limitations": "Посадку и другие обещания надо реально обеспечивать. Экологическая миссия не выбрана и не равна росту продаж.",
+      "added_from_user_examples": false
+    },
+    {
+      "id": "W12",
+      "name": "Oracle Opower",
+      "angle": "Сопоставимая экономия",
+      "source_ids": [
+        "W-S16"
+      ],
+      "user_priority": null,
+      "observed": {
+        "value": "Потребление сравнивается с похожими домами, а не только с соседями по адресу.",
+        "evidence_status": "observed",
+        "source_ids": [
+          "W-S16"
+        ]
+      },
+      "transfer": {
+        "value": "Для рейтинга экономии объяснять показатель, группу сравнения и способ уточнить сведения о семье.",
+        "evidence_status": "inferred",
+        "source_ids": [
+          "W-S16"
+        ],
+        "assumption": "Возможная аналогия для обсуждения, не решение команды."
+      },
+      "limitations": "Нельзя ранжировать по низким тратам и называть это качеством экономии. Пищевые корзины сложнее одной единицы энергии.",
+      "added_from_user_examples": false
+    },
+    {
+      "id": "W13",
+      "name": "Catalina",
+      "angle": "Персональное сообщение на кассе",
+      "source_ids": [
+        "W-S17"
+      ],
+      "user_priority": null,
+      "observed": {
+        "value": "Персональные печатные предложения появляются в точке оплаты на основе покупок.",
+        "evidence_status": "observed",
+        "source_ids": [
+          "W-S17"
+        ]
+      },
+      "transfer": {
+        "value": "Связь офлайн-чека/купона, следующего задания и цифрового прогресса.",
+        "evidence_status": "inferred",
+        "source_ids": [
+          "W-S17"
+        ],
+        "assumption": "Возможная аналогия для обсуждения, не решение команды."
+      },
+      "limitations": "Печать маскота на фискальном чеке — отдельная идея команды. Доступ к кассовому контуру не получен.",
+      "added_from_user_examples": false
+    },
+    {
+      "id": "W14",
+      "name": "Royal Match",
+      "angle": "Три в ряд и долгий прогресс",
+      "source_ids": [
+        "W-S18"
+      ],
+      "user_priority": null,
+      "observed": {
+        "value": "Короткие match-3 уровни открывают развитие замка, ресурсы и события.",
+        "evidence_status": "observed",
+        "source_ids": [
+          "W-S18"
+        ]
+      },
+      "transfer": {
+        "value": "Разобрать разницу между удовольствием от одного уровня и долгосрочной целью.",
+        "evidence_status": "inferred",
+        "source_ids": [
+          "W-S18"
+        ],
+        "assumption": "Возможная аналогия для обсуждения, не решение команды."
+      },
+      "limitations": "Не копировать объём полноценной коммерческой игры в PoC. Полезные товарные награды здесь не подтверждены.",
+      "added_from_user_examples": false
+    },
+    {
+      "id": "W15",
+      "name": "Tesco Clubcard Challenges",
+      "angle": "Индивидуальные условия задания",
+      "source_ids": [
+        "D-S01"
+      ],
+      "user_priority": null,
+      "observed": {
+        "value": "AI-подбор покупательских заданий и порогов описан поставщиком.",
+        "evidence_status": "observed",
+        "source_ids": [
+          "D-S01"
+        ]
+      },
+      "transfer": {
+        "value": "Персонализировать товар, усилие и награду; исследовать относительно обычного поведения.",
+        "evidence_status": "inferred",
+        "source_ids": [
+          "D-S01"
+        ],
+        "assumption": "Возможная аналогия для обсуждения, не решение команды."
+      },
+      "limitations": "Описание кампаний, а не подтверждение эффективности для X5. AI не тождественен LLM.",
+      "added_from_user_examples": false
+    },
+    {
+      "id": "W16",
+      "name": "Antavo — Challenges",
+      "angle": "Управление программой",
+      "source_ids": [
+        "D-S09"
+      ],
+      "user_priority": null,
+      "observed": {
+        "value": "Оператор задаёт правила и сегменты для заданий и наград.",
+        "evidence_status": "observed",
+        "source_ids": [
+          "D-S09"
+        ]
+      },
+      "transfer": {
+        "value": "Продумать, как бизнес задаёт допустимые условия и видит результат.",
+        "evidence_status": "inferred",
+        "source_ids": [
+          "D-S09"
+        ],
+        "assumption": "Возможная аналогия для обсуждения, не решение команды."
+      },
+      "limitations": "B2B-референс. Полный кабинет или покупка платформы не выбраны.",
+      "added_from_user_examples": false
+    },
+    {
+      "id": "W17",
+      "name": "Fetch",
+      "angle": "Реферал и подтверждение действия",
+      "source_ids": [
+        "D-S07",
+        "D-S08"
+      ],
+      "user_priority": null,
+      "observed": {
+        "value": "Покупательские офферы и приглашения связаны с чеками/целевыми действиями.",
+        "evidence_status": "observed",
+        "source_ids": [
+          "D-S07",
+          "D-S08"
+        ]
+      },
+      "transfer": {
+        "value": "Награждать за осмысленный результат приглашения и ясно объяснять момент начисления.",
+        "evidence_status": "inferred",
+        "source_ids": [
+          "D-S07",
+          "D-S08"
+        ],
+        "assumption": "Возможная аналогия для обсуждения, не решение команды."
+      },
+      "limitations": "В X5 не обязательно просить фотографировать чек. Антифрод и экономика не доказаны.",
+      "added_from_user_examples": false
+    },
+    {
+      "id": "W18",
+      "name": "Золотое Яблоко — Бьюти-тамагочи",
+      "angle": "Аватар внутри ритейла",
+      "source_ids": [
+        "D-S06"
+      ],
+      "user_priority": null,
+      "observed": {
+        "value": "Историческая акция связывает развитие персонажа, покупки и игровые награды.",
+        "evidence_status": "observed",
+        "source_ids": [
+          "D-S06"
+        ]
+      },
+      "transfer": {
+        "value": "Ближайшая форма для идеи маскота/тамагочи, которую Влад пока рассматривает.",
+        "evidence_status": "inferred",
+        "source_ids": [
+          "D-S06"
+        ],
+        "assumption": "Возможная аналогия для обсуждения, не решение команды."
+      },
+      "limitations": "Правила 2025; текущая работа и бизнес-эффект не подтверждены.",
+      "added_from_user_examples": false
+    }
+  ],
+  "confirmed_research_priorities": [],
+  "final_comparison_set": null,
+  "selected_features": [],
+  "selected_segment": null,
+  "next_action": "По следующему сообщению Влада продолжить обсуждение всего расширенного обзора. Не считать упомянутые примеры приоритетами или уже выбранным набором для детального сравнения.",
+  "verification": {
+    "status": "passed",
+    "checked_at": "2026-09-03",
+    "source_ids_valid": true,
+    "reference_ids_valid": true,
+    "local_links_valid": true,
+    "original_n8n_unchanged": true,
+    "no_features_or_segment_assumed": true,
+    "limits": "Подтверждена согласованность сохранённых материалов. Интерфейсы под аккаунтом, бизнес-эффект и спрос не проверены.",
+    "user_examples_not_treated_as_priorities": true
+  },
+  "queries": [
+    {
+      "q": "site:docs.n8n.io workflows nodes AI automation what is n8n"
+    },
+    {
+      "q": "Морковск Ozon игра правила официальный"
+    },
+    {
+      "q": "site:tbank.ru 5 букв Город игра покупки правила"
+    },
+    {
+      "q": "site:carrefour.fr challenges fidélité boost fid"
+    },
+    {
+      "q": "site:ozon.ru \"Морковск\" правила"
+    },
+    {
+      "q": "site:corp.ozon.ru \"Морковск\""
+    },
+    {
+      "q": "site:tbank.ru \"5 букв\" \"персонал\""
+    },
+    {
+      "q": "site:carrefour.com Hopla artificial intelligence budget food waste"
+    },
+    {
+      "q": "\"Морковск\" Ozon \"три\" правила игры"
+    },
+    {
+      "q": "\"Морковск\" \"Ozon\" \"задания\""
+    },
+    {
+      "q": "site:aboutamazon.com Rufus remembers preferences purchase history personalized 2025"
+    },
+    {
+      "q": "site:samsungfood.com Food AI personalized meal plans food list"
+    },
+    {
+      "q": "site:finchcare.com pet goals self care rewards"
+    },
+    {
+      "q": "site:blog.duolingo.com video call Lily memory roleplay Max"
+    },
+    {
+      "q": "site:pikminbloom.com walking flowers postcards"
+    },
+    {
+      "q": "site:antgroup.com ant forest virtual tree real trees low carbon"
+    },
+    {
+      "q": "site:oracle.com opower home energy reports similar homes"
+    },
+    {
+      "q": "site:newsroom.spotify.com DJ requests personalized AI 2025"
+    },
+    {
+      "q": "site:catalina.com personalized coupons checkout purchase history"
+    },
+    {
+      "q": "site:chizhik.club приложение"
+    },
+    {
+      "q": "site:finchcare.com goals pet rewards"
+    },
+    {
+      "q": "site:antgroup.com \"Ant Forest\" \"trees\""
+    },
+    {
+      "q": "site:catalina.com \"checkout\" \"personalized\""
+    },
+    {
+      "q": "site:chizhik.club приложение"
+    },
+    {
+      "q": "Alipay Ant Forest virtual tree real trees official UNEP"
+    },
+    {
+      "q": "Pikmin Bloom walk grow flowers postcards official"
+    },
+    {
+      "q": "Чижик официальное приложение сайт"
+    },
+    {
+      "q": "\"Морковск\" \"Ozon Tech\""
+    },
+    {
+      "q": "site.dreamgames.com Royal Match match 3 levels castle"
+    },
+    {
+      "q": "site:royalmatch.com match 3"
+    },
+    {
+      "q": "site:docs.n8n.io \"workflow is a collection\""
+    }
+  ],
+  "method_limits": [
+    "Публичные страницы, документы и описания авторов; приложения под аккаунтом не тестировались.",
+    "Сохранены различия между актуальным описанием, историческими правилами и частичным чтением.",
+    "Бизнес-эффект для X5, спрос и сегменты не проверялись. Синтетические интервью не создавались."
+  ],
+  "user_example_ids": [
+    "W01",
+    "W02",
+    "W03",
+    "W04"
+  ],
+  "priority_status": "not_selected",
+  "user_clarification": "Названные аналоги — примеры для расширения небольшого первоначального списка, не приоритеты пользователя. D-11."
+}

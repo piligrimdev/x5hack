@@ -1,0 +1,316 @@
+{
+  "source_sha256": "698e1d989faba1d3c0ea82deb4fee87d7af61c5c351619fc9b0d2e16c7b09faa",
+  "workflow_name": "Product Engineering",
+  "node_count": 22,
+  "parsing_note": {
+    "source_line": 506,
+    "action": "Authorization value omitted in memory; source unchanged"
+  },
+  "execution_mode": "Semantic execution via installed skill and native tools; n8n HTTP/code nodes not executed",
+  "nodes": [
+    {
+      "name": "Code22",
+      "type": "n8n-nodes-base.code"
+    },
+    {
+      "name": "HTTP Request31",
+      "type": "n8n-nodes-base.httpRequest"
+    },
+    {
+      "name": "Code24",
+      "type": "n8n-nodes-base.code"
+    },
+    {
+      "name": "Code1",
+      "type": "n8n-nodes-base.code"
+    },
+    {
+      "name": "Code2",
+      "type": "n8n-nodes-base.code"
+    },
+    {
+      "name": "VPC",
+      "type": "@n8n/n8n-nodes-langchain.openAi"
+    },
+    {
+      "name": "JTBD",
+      "type": "@n8n/n8n-nodes-langchain.openAi"
+    },
+    {
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set"
+    },
+    {
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote"
+    },
+    {
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote"
+    },
+    {
+      "name": "ICP",
+      "type": "@n8n/n8n-nodes-langchain.openAi"
+    },
+    {
+      "name": "Segments",
+      "type": "@n8n/n8n-nodes-langchain.openAi"
+    },
+    {
+      "name": "Interviews",
+      "type": "@n8n/n8n-nodes-langchain.openAi"
+    },
+    {
+      "name": "Pain map",
+      "type": "@n8n/n8n-nodes-langchain.openAi"
+    },
+    {
+      "name": "Code3",
+      "type": "n8n-nodes-base.code"
+    },
+    {
+      "name": "Hypotheses",
+      "type": "@n8n/n8n-nodes-langchain.openAi"
+    },
+    {
+      "name": "RICE",
+      "type": "@n8n/n8n-nodes-langchain.openAi"
+    },
+    {
+      "name": "Lean Canvas",
+      "type": "@n8n/n8n-nodes-langchain.openAi"
+    },
+    {
+      "name": "Edit Fields5",
+      "type": "n8n-nodes-base.set"
+    },
+    {
+      "name": "HTTP Request5",
+      "type": "n8n-nodes-base.httpRequest"
+    },
+    {
+      "name": "Product",
+      "type": "@n8n/n8n-nodes-langchain.openAi"
+    },
+    {
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger"
+    }
+  ],
+  "connections": {
+    "Code22": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request31",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request31": {
+      "main": [
+        [
+          {
+            "node": "Code24",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code24": {
+      "main": [
+        [
+          {
+            "node": "Product",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Code2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code2": {
+      "main": [
+        [
+          {
+            "node": "ICP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "VPC": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JTBD": {
+      "main": [
+        [
+          {
+            "node": "VPC",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ICP": {
+      "main": [
+        [
+          {
+            "node": "Interviews",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Segments": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Interviews": {
+      "main": [
+        [
+          {
+            "node": "Pain map",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pain map": {
+      "main": [
+        [
+          {
+            "node": "JTBD",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Code3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code3": {
+      "main": [
+        [
+          {
+            "node": "Hypotheses",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hypotheses": {
+      "main": [
+        [
+          {
+            "node": "RICE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RICE": {
+      "main": [
+        [
+          {
+            "node": "Lean Canvas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lean Canvas": {
+      "main": [
+        []
+      ]
+    },
+    "Edit Fields5": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request5": {
+      "main": [
+        [
+          {
+            "node": "Code22",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Product": {
+      "main": [
+        [
+          {
+            "node": "Segments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

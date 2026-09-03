@@ -1,0 +1,3 @@
+interface:
+  display_name: "Product Segmentation Design"
+  short_description: "Основа сегментов, ML-категории и проверка пользы"

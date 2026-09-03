@@ -1,0 +1,3 @@
+interface:
+  display_name: "Spec-Driven Feature"
+  short_description: "Спецификация, план, реализация и convergence"

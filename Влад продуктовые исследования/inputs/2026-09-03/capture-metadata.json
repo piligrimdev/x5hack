@@ -1,0 +1,39 @@
+{
+  "captured_on": "2026-09-03",
+  "board": {
+    "url": "https://miro.com/app/board/uXjVHrrRqss=/",
+    "tool": "board_list_items",
+    "items": 91,
+    "has_more": false,
+    "table_rows": 11,
+    "table_has_more": false,
+    "visual_preview_item_ids": [
+      "3458764682441483957",
+      "3458764682442236913",
+      "3458764682442419510",
+      "3458764682442548990"
+    ],
+    "visual_limit": "Small previews; detailed screenshot analysis not performed"
+  },
+  "slides": {
+    "url": "https://docs.google.com/presentation/d/1xRBv8NT6J1UeCk7j2Txlznsg64Irp3bPE2SEsswa6gs/edit?usp=sharing",
+    "tool": "google_drive_get_presentation_text",
+    "title": "Установка 2-го дня: AI Product Hack",
+    "slide_count": 31,
+    "revisionId": null
+  },
+  "snapshots": [
+    {
+      "path": "inputs/2026-09-03/miro-items.json",
+      "sha256": "66126dd8cd4cffed8454be5654f3dbcbd56b6e07e4f7286c0f4d4b50ed7841ee"
+    },
+    {
+      "path": "inputs/2026-09-03/miro-table.json",
+      "sha256": "e15a77647d3c4b3476f740ee594d74e9597ea4de46bb95632ec007e011605d47"
+    },
+    {
+      "path": "inputs/2026-09-03/general-recommendations-slides.json",
+      "sha256": "5df22f215897f9a9b3dc9f73a0560fce561d1e0ee429e389170d771effb211bf"
+    }
+  ]
+}

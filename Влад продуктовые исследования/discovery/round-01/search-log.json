@@ -1,0 +1,108 @@
+{
+  "date": "2026-09-03",
+  "method": "web search and primary-source reading",
+  "query_count": 18,
+  "queries": [
+    "Tesco Clubcard Challenges AI personalised challenges official",
+    "Lidl Plus challenges missions rewards official",
+    "Carrefour défis fidélité personnalisés application officiel",
+    "ВкусВилл челленджи персональные покупки приложение скидки сайт vkusvill",
+    "Магнит челленджи задания Магнит Плюс покупки игра официальный",
+    "Золотое Яблоко бьюти тамагочи игра официальный",
+    "Додо Хвостики игра питомец dodo официальный",
+    "Starbucks Rewards personalized challenges bonus stars official",
+    "Fetch rewards receipt offers referrals official",
+    "Antavo loyalty challenges gamification platform official",
+    "Talon.One loyalty gamification challenges official",
+    "Ozon морковка игра баллы покупки официальный",
+    "site.vkusvill.ru челленджи Разнообразное питание",
+    "Бьюти тамагочи правила игра (goldapple.ru)",
+    "Хвостики игра (Dodo domains)",
+    "Tesco Clubcard Challenges AI personalised 2024 2025",
+    "Хвостики Додо игра 2024 2025 закрытие",
+    "Ozon морковка игра правила"
+  ],
+  "query_note": "Текст запросов записан в рабочем журнале; часть уточняющих записей нормализована, фильтры доменов не воспроизводятся как буквальная строка запроса.",
+  "source_reading_log": [
+    {
+      "source_id": "D-S01",
+      "url": "https://eagleeye.com/case-studies/tesco-clubcard-challenges",
+      "access_level": "full_text",
+      "limitations": "Описание кампаний 2024 года; дата публикации не указана. Метрики поставщика не являются независимой оценкой причинного эффекта."
+    },
+    {
+      "source_id": "D-S02",
+      "url": "https://www.tescoplc.com/q3-and-christmas-trading-statement-202425/",
+      "access_level": "search_extract",
+      "limitations": "Проверен поисковый извлечённый текст. Рост цифрового взаимодействия не доказывает прирост частоты или маржи от механики."
+    },
+    {
+      "source_id": "D-S03",
+      "url": "https://magnit.ru/hattrick",
+      "access_level": "full_text",
+      "limitations": "Сезонная кампания 2026 года. Общий срок выдачи призов нельзя считать сроком приёма игровых действий; активность акции на дату чтения не установлена."
+    },
+    {
+      "source_id": "D-S04",
+      "url": "https://vkusvill.ru/application/",
+      "access_level": "full_text",
+      "limitations": "Наличие игровой персонализации и её эффект из этой страницы не следуют. Описан продукт, а не эксперимент."
+    },
+    {
+      "source_id": "D-S05",
+      "url": "https://www.carrefour.fr/faq?question=comment-participer-a-boost-fid",
+      "access_level": "search_extract_only_direct_403",
+      "limitations": "Прямое открытие вернуло 403. Детальная матрица потребует дополнительного доступного первичного подтверждения; текущая полнота ниже остальных."
+    },
+    {
+      "source_id": "D-S06",
+      "url": "https://tamagotchi.goldapple.ru/uploads/files/%D0%9F%D1%80%D0%B0%D0%B2%D0%B8%D0%BB%D0%B0%20%E2%80%9C%D0%91%D1%8C%D1%8E%D1%82%D0%B8-%D1%82%D0%B0%D0%BC%D0%B0%D0%B3%D0%BE%D1%87%D0%B8_%20-5.pdf",
+      "access_level": "full_text",
+      "limitations": "Историческая редакция: 19.02–31.12.2025, стр. 2–4 PDF. Работа игры в сентябре 2026 года не подтверждена."
+    },
+    {
+      "source_id": "D-S07",
+      "url": "https://fetch.com/referral",
+      "access_level": "full_text",
+      "limitations": "Неизвестны дополнительные покупки, окупаемость привлечения и качество антифрода. Условия наград зависят от акции."
+    },
+    {
+      "source_id": "D-S08",
+      "url": "https://help.fetch.com/hc/en-us/articles/4408482522771-What-Are-Offers",
+      "access_level": "search_extract",
+      "limitations": "Описание функции в справке, не оценка спроса или бизнес-эффекта."
+    },
+    {
+      "source_id": "D-S09",
+      "url": "https://antavo.com/product/loyalty-engine/features/challenges/",
+      "access_level": "full_text",
+      "limitations": "B2B-платформа для оператора, не потребительская программа. Цена контракта и доказанный эффект для X5 неизвестны."
+    },
+    {
+      "source_id": "D-S10",
+      "url": "https://unternehmen.lidl.de/pressreleases/2026/260521_lidl-punkte",
+      "access_level": "search_extract",
+      "limitations": "Публикация 21.05.2026. Только Германия; условия Lidl Plus других стран не переносить."
+    },
+    {
+      "source_id": "D-S11",
+      "url": "https://about.starbucks.com/press/2026/reimagined-starbucks-rewards-loyalty-program-launches-with-new-member-benefits/",
+      "access_level": "search_extract",
+      "limitations": "Референс статуса и прогрессии в США; частота кофе-покупок и экономика не равны продуктовому ритейлу."
+    },
+    {
+      "source_id": "D-S12",
+      "url": "https://www.talon.one/blog/the-gamification-engine-gamify-customer-interactions-into-rewarding-challenges",
+      "access_level": "search_extract",
+      "limitations": "Объявление 22.05.2024. Текущие цены и конфигурационные ограничения требуют чтения после выбора."
+    },
+    {
+      "source_id": "D-S13",
+      "url": "https://docs.talon.one/docs/product/overview",
+      "access_level": "search_extract",
+      "limitations": "Подтверждает класс продукта; не является доказательством необходимости такой архитектуры для PoC."
+    }
+  ],
+  "excluded_evidence": "Не использовались неподтверждённые Reddit-комментарии, случайные совпадения названия Додо и утверждения старых контекст-паков о результатах аналогов.",
+  "limits": "Первая поисковая итерация, не исчерпывающий обзор рынка. Приложения не тестировались, кабинет оператора и реальные продажи не проверялись. Полные тексты чужих сайтов не сохранялись."
+}

@@ -1,0 +1,28 @@
+{
+  "round": "round-04",
+  "date": "2026-09-03",
+  "sources": [
+    {"id":"R4-S01","company":"Tesco","title":"Clubcard Challenges","url":"https://www.tescoplc.com/tesco-brings-its-ai-game-to-new-clubcard-challenges","type":"official_news","status":"read_title_and_date; details_cross_checked_in_results"},
+    {"id":"R4-S02","company":"Tesco","title":"FY24/25 preliminary results","url":"https://www.tescoplc.com/media/hkjbexki/prelims-fy-2425-slide-master_for-website_v2.pdf","type":"official_results","status":"read"},
+    {"id":"R4-S03","company":"Tesco","title":"Clubcard terms","url":"https://www.tesco.com/shop/en-GB/zone/clubcard-terms-and-conditions/","type":"official_terms","status":"read"},
+    {"id":"R4-S04","company":"Tesco","title":"FY26 preliminary results","url":"https://www.tescoplc.com/media/ch1fbgss/tesco-plc-preliminary-results-statement-fy26.pdf","type":"official_results","status":"read"},
+    {"id":"R4-S05","company":"Sainsbury's","title":"Your Nectar Prices","url":"https://help.sainsburys.co.uk/help/offers-promotions/your-nectar-prices","type":"official_help","status":"read"},
+    {"id":"R4-S06","company":"Carrefour","title":"Hopla launch","url":"https://www.carrefour.com/en/news/2023/carrefour-integrates-openai-technologies-and-launches-generative-ai-powered-shopping","type":"official_news","status":"read_search_extract"},
+    {"id":"R4-S07","company":"Carrefour","title":"Shopping through ChatGPT and Hopla+","url":"https://www.carrefour.com/fr/news/2026/carrefour-devient-le-premier-retailer-europeen-proposer-de-faire-ses-courses-sur-chatgpt","type":"official_news","status":"read"},
+    {"id":"R4-S08","company":"Carrefour","title":"Voice grocery shopping","url":"https://www.carrefour.com/en/news/voice-grocery-shopping-new-e-commerce-grocery-experience","type":"official_news","status":"read"},
+    {"id":"R4-S09","company":"Lidl","title":"Lidl Plus FAQ","url":"https://www.lidl.com/c/lidl-plus-faqs/s10097623","type":"official_help","status":"read"},
+    {"id":"R4-S10","company":"Lidl","title":"Lidl Plus UK terms","url":"https://www.lidl.co.uk/c/lidl-plus-terms-of-use/s10025414","type":"official_terms","status":"read"},
+    {"id":"R4-S11","company":"Albert Heijn","title":"Mijn Bonus Box","url":"https://www.ah.nl/acties/bonusbox","type":"official_product_page","status":"read"},
+    {"id":"R4-S12","company":"Walmart","title":"Meet Sparky","url":"https://corporate.walmart.com/news/2025/06/06/walmart-the-future-of-shopping-is-agentic-meet-sparky","type":"official_news","status":"read"},
+    {"id":"R4-S13","company":"Whole Foods","title":"Payments and Ways to Shop","url":"https://wfm.amazon.com/amazon/payments-and-ways-to-shop","type":"official_help","status":"read"},
+    {"id":"R4-S14","company":"Amazon Fresh","title":"Dash Cart case","url":"https://aws.amazon.com/blogs/industries/amazon-fresh-saves-shoppers-time-and-drives-satisfaction-with-dash-cart/","type":"official_vendor_case","status":"read; metrics are self-reported"},
+    {"id":"R4-S15","company":"Ocado","title":"Refer a Friend","url":"https://www.ocado.com/content/refer-a-friend","type":"official_terms","status":"read"},
+    {"id":"R4-S16","company":"Instacart","title":"Referrals","url":"https://www.instacart.com/help/section/360007902791/360048755892","type":"official_help","status":"read"},
+    {"id":"R4-S17","company":"Costco","title":"Refer-a-Friend","url":"https://www.costco.com/f/-/warehouse-refer-a-friend","type":"official_terms","status":"read"},
+    {"id":"R4-S18","company":"Sam's Club","title":"Refer a Friend","url":"https://help.samsclub.com/app/answers/detail/a_id/1214","type":"official_help","status":"read"},
+    {"id":"R4-S19","company":"Woolworths","title":"Everyday Mobile plans and referral","url":"https://pilot-mobile.woolworths.com.au/plans","type":"official_product_page","status":"read; referral is mobile, not grocery"},
+    {"id":"R4-S20","company":"Albert Heijn","title":"Mijn Bonus Box terms","url":"https://static.ah.nl/binaries/ah/content/assets/ah-nl/core/legal/algemene-voorwaarden-bonusbox.pdf","type":"official_terms","status":"read"}
+  ],
+  "reused_from_round_03": ["REWE Bonus", "Kroger OptUP", "Target Circle Bonus"],
+  "evidence_rule": "Механика считается подтверждённой только при наличии официальной страницы; заявленный эффект компании хранится как self-reported."
+}
