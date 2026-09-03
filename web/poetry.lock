@@ -496,6 +496,18 @@ files = [
 ]
 
 [[package]]
+name = "phonenumbers"
+version = "9.0.38"
+description = "Python version of Google's common library for parsing, formatting, storing and validating international phone numbers."
+optional = false
+python-versions = ">=2.5"
+groups = ["main"]
+files = [
+    {file = "phonenumbers-9.0.38-py2.py3-none-any.whl", hash = "sha256:f3cbeb1a42bf226060c60fc6277f5431755d325eddc23fbf2c72ef7e156113c6"},
+    {file = "phonenumbers-9.0.38.tar.gz", hash = "sha256:6806bebd46638af2fc2609675ea046067a40512eca81bf1446132e2fda29d113"},
+]
+
+[[package]]
 name = "pluggy"
 version = "1.6.0"
 description = "plugin and hook calling mechanisms for python"
@@ -781,6 +793,21 @@ files = [
 
 [package.extras]
 windows-terminal = ["colorama (>=0.4.6)"]
+
+[[package]]
+name = "pyjwt"
+version = "2.13.0"
+description = "JSON Web Token implementation in Python"
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "pyjwt-2.13.0-py3-none-any.whl", hash = "sha256:66adcc2aff09b3f1bbd95fc1e1577df8ac8723c978552fd43304c8a290ac5728"},
+    {file = "pyjwt-2.13.0.tar.gz", hash = "sha256:41571c89ca91598c79e8ef18a2d07367d4810fbbd6f637794879baf1b7703423"},
+]
+
+[package.extras]
+crypto = ["cryptography (>=3.4.0)"]
 
 [[package]]
 name = "pytest"
@@ -1464,4 +1491,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12"
-content-hash = "d98d6d0635f7846a3a9c7cf35b0f2ad893aea52a90ebd27895cc710f4db3f5dd"
+content-hash = "fe274b621cf89b5797dbce22e08e70ef5516c3f9f8c92aa80512a5a8df3cc0e3"

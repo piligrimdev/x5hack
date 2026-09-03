@@ -1,5 +1,4 @@
-from sqlalchemy.orm import DeclarativeBase
+from webx5.entities.base import Base
+from webx5.entities.user import User
 
-
-class Base(DeclarativeBase):
-    pass
+__all__ = ["Base", "User"]
