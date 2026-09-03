@@ -5,7 +5,66 @@
 ## Структура проекта
 
 - **`/x5mobile`** — мобильное приложение на React Native + Expo (iOS/Android)
-- **`/backend`** (TBD) — Python бэкенд для генерации ИИ-челленджей и рекомендаций
+- **`/web`** — Python бэкенд (FastAPI + PostgreSQL)
+
+```
+web/
+├── pyproject.toml           # Зависимости (Poetry)
+├── poetry.lock
+├── alembic.ini              # Конфиг Alembic
+├── alembic/
+│   ├── env.py               # Читает Base из entities, DATABASE_URL из env
+│   └── versions/            # Ревизии миграций
+└── src/webx5/
+    ├── main.py              # Точка входа: load_dotenv + logging + uvicorn
+    ├── core/
+    │   ├── db.py            # Инстанс Database
+    │   ├── server.py        # FastAPI app + роутеры
+    │   └── logging_config.py
+    ├── database/
+    │   └── database.py      # class Database (get_db, get_sync_session)
+    ├── entities/            # SQLAlchemy DeclarativeBase + таблицы
+    ├── crud/                # Репозитории (доступ к данным)
+    ├── services/            # Бизнес-логика
+    ├── routes/              # FastAPI endpoints
+    │   └── health.py        # GET /health
+    ├── schemas/             # Pydantic request/response модели
+    ├── dependencies/
+    │   └── db.py            # SessionDep
+    └── utils/
+
+tests/webx5/
+└── routes/
+    └── test_health.py
+```
+
+## Сетап бэкенда
+
+### Требования
+
+- **Python** >= 3.12
+- **Poetry** (`pip install poetry`)
+- **PostgreSQL** (локально или через Docker)
+
+### Установка и запуск
+
+```bash
+# 1. Скопировать и заполнить .env
+cp .env.example .env
+# Отредактировать DATABASE_URL в .env
+
+# 2. Установить зависимости
+cd web
+poetry install
+
+# 3. Применить миграции
+poetry run alembic upgrade head
+
+# 4. Запустить сервер
+poetry run python -m webx5
+# Сервер доступен на http://localhost:8000
+# Проверка: curl http://localhost:8000/health → {"status":"ok"}
+```
 
 ## Сетап мобильного приложения
 
