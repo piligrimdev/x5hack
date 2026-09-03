@@ -38,7 +38,41 @@ tests/webx5/
     └── test_health.py
 ```
 
-## Сетап бэкенда
+## Запуск через Docker (рекомендуется)
+
+### Требования
+
+- **Docker Desktop** установлен и запущен
+
+### Запуск
+
+```bash
+# 1. Скопировать .env (значения по умолчанию работают без правок)
+cp .env.example .env
+
+# 2. Собрать и запустить весь стек
+docker compose up --build
+
+# Сервис доступен на http://localhost:8000
+# Проверка: curl http://localhost:8000/health → {"status":"ok"}
+# Документация: http://localhost:8000/docs (Scalar UI)
+```
+
+### Полезные команды
+
+```bash
+docker compose up -d          # Запуск в фоне
+docker compose down           # Остановить стек
+docker compose down -v        # Остановить и удалить данные БД
+docker compose logs -f web    # Логи веб-сервера
+docker compose build          # Пересобрать образ без запуска
+```
+
+> Миграции БД применяются автоматически при каждом старте контейнера.
+
+---
+
+## Сетап бэкенда (без Docker)
 
 ### Требования
 

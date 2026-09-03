@@ -16,6 +16,7 @@ dependencies = [
     "structlog>=24.0.0,<25.0.0",
     "python-dotenv>=1.0.0,<2.0.0",
     "psycopg2-binary>=2.9.0,<3.0.0",
+    "scalar-fastapi>=1.0.0,<2.0.0",
 ]
 
 [dependency-groups]

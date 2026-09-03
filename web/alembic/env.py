@@ -1,13 +1,9 @@
 import os
 from logging.config import fileConfig
-from pathlib import Path
-
 from alembic import context
 from dotenv import load_dotenv
 from sqlalchemy import engine_from_config, pool
 
-_REPO_ROOT = Path(__file__).resolve().parents[3]
-load_dotenv(_REPO_ROOT / ".env")
 load_dotenv()
 
 from webx5.entities import Base  # noqa: E402
