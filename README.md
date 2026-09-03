@@ -108,3 +108,13 @@ x5mobile/
 
 - iOS: `cmd+d`
 - Android: `cmd+m`
+
+**claude code**
+
+(Паша) для работы со спеккитом юзайте команду ниже
+
+```
+specify init --here --integration claude
+```
+
+без нее, но с указанием пути до репо спеккита у меня не работало + с указнием пути до репо я бы не коммитил `.claude/settings.json`
