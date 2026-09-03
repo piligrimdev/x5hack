@@ -7,8 +7,8 @@
   ],
   "main_hypothesis": "H-MAIN-01",
   "current_choice": "placement P-1/P-2/P-3, pain-proximity mode G-1/G-2/G-3, concept C-1/C-2/C-3/C-4",
-  "file_count": 81,
-  "total_bytes": 9341997,
+  "file_count": 83,
+  "total_bytes": 10427875,
   "files": [
     {
       "path": ".gitignore",
@@ -17,13 +17,13 @@
     },
     {
       "path": "CONTEXT.md",
-      "size": 26674,
-      "sha256": "965a67b43c099809b428ea4261aae77346c082670f9e565c9c414a6ae26391c7"
+      "size": 27428,
+      "sha256": "bbc51695ede5dd50e11590ebfe50ac972a95cdab948beee3d8ae1b92b04cf041"
     },
     {
       "path": "PRODUCT_RESEARCH_INDEX.md",
-      "size": 15160,
-      "sha256": "2c0ae587d42605dfcc925bf601f72ebca38c1db649900d2b2a864c7aaee211de"
+      "size": 15676,
+      "sha256": "beb332337d6652c325d7d036e1cfd1d9ed978bb068b391d5d39fd43b46c675f2"
     },
     {
       "path": "README.md",
@@ -37,8 +37,8 @@
     },
     {
       "path": "context/DECISIONS.md",
-      "size": 25996,
-      "sha256": "722991363379de92d20031792c4cbd8ee3adfcb3905a119d46cfb5954358d214"
+      "size": 26679,
+      "sha256": "3a74b47f0487ccd34d63eaa6d655eb4571e97978be51e44470de6736f8d41921"
     },
     {
       "path": "context/IDEAS.md",
@@ -66,6 +66,11 @@
       "sha256": "14b9cc891d3adcf077957125c9d0ba8748d845feb2f78c5bdf225ddab2693fb0"
     },
     {
+      "path": "context/PRESENTATION_READINESS_AUDIT.md",
+      "size": 17679,
+      "sha256": "5cb94c4462c5139642788080e27ee298e54cf2a1d20c2eb37d5a3b693b9ded06"
+    },
+    {
       "path": "context/PRODUCT_DIRECTION.md",
       "size": 11141,
       "sha256": "10c4f46a69e030852e28d9ce204ebe4014b2ba3341d1ec8cd95ca1f9cf5db508"
@@ -82,8 +87,8 @@
     },
     {
       "path": "context/SOURCES.md",
-      "size": 17574,
-      "sha256": "dc3dcdad689542e5c72602dec2a0daf1752c58b23804ee7f44d4f9c8a835a1f6"
+      "size": 18138,
+      "sha256": "f4583db060d0966ef17f28be96933da0e2a6b994f3a075cff2218953e6226e3f"
     },
     {
       "path": "context/extracted/AI_Product_Discovery.md",
@@ -259,6 +264,11 @@
       "path": "inputs/2026-09-03/Постановка_и_проверка_продуктовых_гипотез.pdf",
       "size": 3101463,
       "sha256": "9bf392cdee4ae133ebfa3fb78f1903faad744e6ad7e4f440c92bc864b562b504"
+    },
+    {
+      "path": "inputs/2026-09-04/X5_AI_Loyalty_Hackathon_White_Orange.pptx",
+      "size": 1065682,
+      "sha256": "0756ef69a96b19e8d9c3080f47b242c5ad6f6883164ae963f7a37a08a2b0890e"
     },
     {
       "path": "inputs/2026-09-04/mascot-appi-references/01-customization-board.jpg",
