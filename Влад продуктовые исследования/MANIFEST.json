@@ -7,8 +7,8 @@
   ],
   "main_hypothesis": "H-MAIN-01",
   "current_choice": "placement P-1/P-2/P-3, pain-proximity mode G-1/G-2/G-3, concept C-1/C-2/C-3/C-4",
-  "file_count": 75,
-  "total_bytes": 8747690,
+  "file_count": 81,
+  "total_bytes": 9341997,
   "files": [
     {
       "path": ".gitignore",
@@ -17,13 +17,13 @@
     },
     {
       "path": "CONTEXT.md",
-      "size": 26588,
-      "sha256": "9dfd5b61604470738c1022b5ddd46ce8dbc31405f831f08f509c90d81b40efb7"
+      "size": 26674,
+      "sha256": "965a67b43c099809b428ea4261aae77346c082670f9e565c9c414a6ae26391c7"
     },
     {
       "path": "PRODUCT_RESEARCH_INDEX.md",
-      "size": 14941,
-      "sha256": "54d6eb6c93069c3253dda918688de413c0fd14e3e6b23bbb5b60749a5e4ada82"
+      "size": 15160,
+      "sha256": "2c0ae587d42605dfcc925bf601f72ebca38c1db649900d2b2a864c7aaee211de"
     },
     {
       "path": "README.md",
@@ -37,8 +37,8 @@
     },
     {
       "path": "context/DECISIONS.md",
-      "size": 25834,
-      "sha256": "f6f2b220c08d5495c62d82bbf167bf57e2206ed35efa9bdd6cb133a2077b8826"
+      "size": 25996,
+      "sha256": "722991363379de92d20031792c4cbd8ee3adfcb3905a119d46cfb5954358d214"
     },
     {
       "path": "context/IDEAS.md",
@@ -57,8 +57,8 @@
     },
     {
       "path": "context/MASCOT_APPI.md",
-      "size": 4811,
-      "sha256": "7208db5c0f2ce256f346edb3d52f88e5bc55a5eb300057f5e3a2caefd8d3a7bd"
+      "size": 7427,
+      "sha256": "2ee6f390eeaf0fe1461ace9185ee3a772fdda2ef1e1eedf5f09530f8eaf9dbaf"
     },
     {
       "path": "context/METHOD.md",
@@ -82,8 +82,8 @@
     },
     {
       "path": "context/SOURCES.md",
-      "size": 17077,
-      "sha256": "3832ff9349730681057b9eb596350dff6f2a2e3943370a8f4ad91818ad8e82fb"
+      "size": 17574,
+      "sha256": "dc3dcdad689542e5c72602dec2a0daf1752c58b23804ee7f44d4f9c8a835a1f6"
     },
     {
       "path": "context/extracted/AI_Product_Discovery.md",
@@ -261,9 +261,39 @@
       "sha256": "9bf392cdee4ae133ebfa3fb78f1903faad744e6ad7e4f440c92bc864b562b504"
     },
     {
+      "path": "inputs/2026-09-04/mascot-appi-references/01-customization-board.jpg",
+      "size": 148887,
+      "sha256": "f3602b8b0e2f5b5d251f032620872c297e20053bb8aec60cd2ecc5028331ea32"
+    },
+    {
+      "path": "inputs/2026-09-04/mascot-appi-references/02-segment-personas.jpg",
+      "size": 141335,
+      "sha256": "4f7f981e091d7278b7fc5601fe3a185d766f3f7988d2280658aaa6bf21e60bdc"
+    },
+    {
+      "path": "inputs/2026-09-04/mascot-appi-references/03-ai-shopping-assistant.jpg",
+      "size": 156005,
+      "sha256": "bdf48466eb6acd7f812d3233c7d3b8f453c51392f8a3eb09070c93de2d7b8525"
+    },
+    {
+      "path": "inputs/2026-09-04/mascot-appi-references/04-compact-chat-logo.jpg",
+      "size": 43573,
+      "sha256": "c3b2cae16348a149827e27991f1689000c36a9684e609943ed3366905d0a0a60"
+    },
+    {
+      "path": "inputs/2026-09-04/mascot-appi-references/05-character-lineup.jpg",
+      "size": 98244,
+      "sha256": "19e889736018d1afdeb1f1fcfab0f15d9c42e1b49ddf271734f1ec5fd840218d"
+    },
+    {
+      "path": "inputs/2026-09-04/mascot-appi-references/README.md",
+      "size": 2800,
+      "sha256": "0b7187fd9d3329f7f2b89af318971555921a68f0123ad0e57844b0dee56ce6bc"
+    },
+    {
       "path": "inputs/2026-09-04/mascot-appi-source.md",
-      "size": 2915,
-      "sha256": "8c41d5edfe77015947b1011e87e68a9430ce8c32b42e68ac5fcc7bbad7d3773b"
+      "size": 2798,
+      "sha256": "b0793c0b75a2d8dd1c8e2f5fa7e73aedea3c3610e52a705f3a23490d70d01628"
     },
     {
       "path": "inputs/AI_Product_Discovery.json",
