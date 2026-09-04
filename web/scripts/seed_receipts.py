@@ -13,6 +13,7 @@ Config via env vars:
   SEED_LIMIT       Max number of user lines to process (default: all)
 """
 
+import hashlib
 import json
 import os
 import sys
@@ -37,6 +38,8 @@ from webx5.crud.discount import DiscountRepository  # noqa: E402
 from webx5.crud.store import StoreRepository  # noqa: E402
 from webx5.entities.loyalty import LoyaltyCard, Segment  # noqa: E402
 from webx5.entities.receipt import Receipt, ReceiptItem  # noqa: E402
+from webx5.entities.user import User  # noqa: E402
+from webx5.utils.auth import normalize_phone  # noqa: E402
 
 _USER_NS = uuid.UUID("6ba7b810-9dad-11d1-80b4-00c04fd430c8")  # uuid.NAMESPACE_URL
 
@@ -47,6 +50,17 @@ def _user_uuid(user_id: str) -> uuid.UUID:
 
 def _receipt_uuid(receipt_id: str) -> uuid.UUID:
     return uuid.uuid5(_USER_NS, f"receipt:{receipt_id}")
+
+
+def _synthetic_phone(user_id_str: str) -> str:
+    """Deterministic, valid RU mobile number for a synthetic user — lets a
+    demo login as this user via the real /login flow (POST /login with this
+    phone). +7900 is a real MegaFon mobile range; the 7-digit suffix is
+    derived from user_id_str so re-running the seed always produces the
+    same phone for the same synthetic user."""
+    digest = hashlib.sha256(user_id_str.encode("utf-8")).hexdigest()
+    suffix = str(int(digest[:8], 16) % 10_000_000).zfill(7)
+    return normalize_phone(f"+7900{suffix}")
 
 
 def main() -> None:
@@ -67,7 +81,8 @@ def main() -> None:
     store_repo = StoreRepository()
     discount_repo = DiscountRepository()
 
-    users_processed = cards_created = receipts_created = receipts_skipped = items_created = 0
+    users_processed = users_created = cards_created = receipts_created = receipts_skipped = items_created = 0
+    demo_logins: list[tuple[str, str]] = []
 
     with db.get_sync_session() as session:
         # Cache: segment_name → Segment.id
@@ -160,6 +175,19 @@ def main() -> None:
                     session.flush()
                     cards_created += 1
 
+                # Create matching User row so a demo login (POST /login with
+                # this phone) resolves to this same id — receipts.loyalty_card_id
+                # is actually a FK to users.id, not loyalty_cards.id.
+                user = session.get(User, loyalty_card_id)
+                if not user:
+                    phone = _synthetic_phone(user_id_str)
+                    user = User(id=loyalty_card_id, phone=phone)
+                    session.add(user)
+                    session.flush()
+                    users_created += 1
+                    if len(demo_logins) < 5:
+                        demo_logins.append((user_id_str, phone))
+
                 store_id = _get_store_id(chain, district)
                 if not store_id:
                     print(f"WARNING: no store for chain='{chain}', district='{district}' — skipping user {user_id_str}")
@@ -241,11 +269,16 @@ def main() -> None:
 
     print(
         f"Done. Users processed: {users_processed}, "
+        f"Users created: {users_created}, "
         f"Cards created: {cards_created}, "
         f"Receipts created: {receipts_created}, "
         f"Receipts skipped: {receipts_skipped}, "
         f"Items created: {items_created}"
     )
+    if demo_logins:
+        print("Demo logins (POST /login with one of these phones):")
+        for user_id_str, phone in demo_logins:
+            print(f"  user_id={user_id_str}  phone={phone}")
 
 
 if __name__ == "__main__":
