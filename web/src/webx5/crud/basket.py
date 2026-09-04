@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, noload
 
 from webx5.entities.product import Product
 from webx5.entities.receipt import Receipt, ReceiptItem
@@ -43,6 +43,7 @@ class BasketRepository:
             .join(ReceiptItem, ReceiptItem.product_id == Product.id)
             .join(Receipt, Receipt.id == ReceiptItem.receipt_id)
             .where(Receipt.loyalty_card_id == user_id)
+            .options(noload(Product.category))
             .group_by(Product.id)
         ).all()
 
