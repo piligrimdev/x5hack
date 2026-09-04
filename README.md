@@ -50,12 +50,13 @@ tests/webx5/
 # 1. Скопировать .env (значения по умолчанию работают без правок)
 cp .env.example .env
 
-# 2. Собрать и запустить весь стек
+# 2. Собрать и запустить весь стек (db + redis + web + worker + beat)
 docker compose up --build
 
 # Сервис доступен на http://localhost:8000
 # Проверка: curl http://localhost:8000/health → {"status":"ok"}
 # Документация: http://localhost:8000/docs (Scalar UI)
+# GET /challenges/current → 3 персональных задания пользователя (Bearer JWT)
 ```
 
 ### Полезные команды
@@ -137,8 +138,16 @@ docker compose exec web python scripts/generate_discounts.py
 #### Порядок запуска для полного сидирования из датасета
 
 ```bash
-seed_products → seed_stores → seed_discounts → seed_receipts
+seed_products → seed_stores → seed_discounts → seed_receipts → seed_task_status
 ```
+
+#### 5. Словарь статусов заданий (обязателен для feature 006)
+
+```bash
+docker compose run --rm --entrypoint python web scripts/seed_task_status.py
+```
+
+> Идемпотентен. Создаёт 4 строки в `task_status`: открыто / выполнено / провалено / истекло.
 
 ---
 

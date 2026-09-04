@@ -34,4 +34,19 @@
 - Скидки по дням недели / времени суток (is_recurrent, schedule)
 
 ### Уценка как фиксированная сумма
-- value_type на скидке (percent / fixed_rub) для корректного моделирования уценки
+- ~~value_type на скидке (percent / fixed_rub)~~ — реализовано в feature 006 для награды за задание. Уценку кассой ещё нужно смоделировать явно.
+
+### Дополнительные типы наград (мост FR-011a готов)
+- Coupon-сущность (id, code, discount_value, expires_at, used_at) как второй `task.reward_type`
+- Points/апельсинки как третий `task.reward_type` (требует таблицы транзакций баллов из «Апельсинки»-раздела)
+
+### Langfuse интеграция
+- Экспортировать записи `challenge_generation_log` как traces + tool-calls в Langfuse для внешнего аудита LLM
+- Сейчас — только Postgres-таблица
+
+### Unit-тесты Celery-задач с live Postgres
+- test_generation_and_receipt.py, test_process_receipt_progress.py, test_expiration.py — требуют pytest-фикстуры на реальную БД
+- Логика частично покрыта unit-тестами task_completion/challenge_service
+
+### Adapter unit-tests
+- `web/tests/webx5/services/test_challenge_adapter.py` — детально проверить `build_profile` (margin из config), `_lookup_product` (ILIKE + ordering), `persist_challenge` для всех известных `SCRIPT_FIELD_TO_CRITERION_KIND`

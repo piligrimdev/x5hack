@@ -13,10 +13,15 @@
 | API                  | FastAPI, Python 3.12, sync SQLAlchemy, Alembic | ✅ работает    |
 | База данных          | PostgreSQL 16                                  | ✅ работает    |
 | Мобильное приложение | React Native, Expo 57, TypeScript              | ✅ скаффолд    |
-| Фоновые задачи       | —                                              | ❌ отсутствует |
-| Кэш / брокер         | —                                              | ❌ отсутствует |
+| Фоновые задачи       | Celery 5.4 (worker + beat)                     | ✅ работает    |
+| Кэш / брокер         | Redis 7                                        | ✅ работает    |
 
-**docker-compose:** только `db` + `web`.
+**docker-compose:** `db`, `redis`, `web`, `worker`, `beat` (5 сервисов). См. `specs/006-user-challenges/`.
+
+**Celery-задачи (реализованы):**
+- `webx5.tasks.receipt.process_receipt` — очередь `receipts`; триггер: POST /receipts enqueue после успешной вставки; ответственность: pessimistic user-lock, инкремент прогресса активных tasks, atomic reward creation, enqueue замены для завершённых.
+- `webx5.tasks.generation.generate_challenges` — очередь `challenges`; триггер: process_receipt (для новичка count=3 / для замены count=1) + expire_tasks; ответственность: mix из `spend_threshold`+`category_expansion`+`llm`, persist в `task` + `task_criterion`, аудит в `challenge_generation_log`.
+- `webx5.tasks.expiration.expire_tasks` — Beat каждые 60 сек; SELECT FOR UPDATE SKIP LOCKED overdue tasks → status='истекло' → enqueue replacements.
 
 ### API (`web/`)
 
@@ -24,14 +29,19 @@
 
 **Роуты:**
 
-| Метод | Путь           | Назначение                            |
-| ----- | -------------- | ------------------------------------- |
-| GET   | /health        | Healthcheck                           |
-| POST  | /register      | Регистрация по номеру телефона        |
-| POST  | /login         | Логин по номеру телефона              |
-| POST  | /refresh       | Обновление пары токенов               |
-| GET   | /me            | Текущий пользователь (Bearer)         |
-| GET   | /terminal/ping | Пинг для терминала (X-Terminal-Token) |
+| Метод | Путь                | Назначение                            |
+| ----- | ------------------- | ------------------------------------- |
+| GET   | /health             | Healthcheck                           |
+| POST  | /register           | Регистрация по номеру телефона        |
+| POST  | /login              | Логин по номеру телефона              |
+| POST  | /refresh            | Обновление пары токенов               |
+| GET   | /me                 | Текущий пользователь (Bearer)         |
+| GET   | /terminal/ping      | Пинг для терминала (X-Terminal-Token) |
+| POST  | /receipts           | Создание чека кассой (X-Terminal-Token) |
+| POST  | /receipts/calculate | Предварительный расчёт скидок          |
+| GET   | /receipts           | История чеков пользователя (Bearer)    |
+| GET   | /receipts/economy   | Сводка экономии пользователя (Bearer)  |
+| GET   | /challenges/current | 3 активных задания пользователя (Bearer) |
 
 **Авторизация:** JWT stateless. Access + refresh — оба возвращаются в теле ответа (не HttpOnly cookie). Refresh принимается в теле запроса (не cookie). Отличается от целевой схемы из правил — см. трейд-оффы.
 
@@ -43,15 +53,17 @@
 
 - `users` — id (UUID), phone (unique), created_at
 
-**Описано в `context/schema.md`, но не реализовано:**
+**Реализовано (после feature 005 + 006):**
 
-- brand, category, product, discount, discount_type, discount_link_type
+- category, product, discount (+ value_type, link_task_id), discount_type, discount_link_type
 - store_format, store, format_discount, store_discount
 - segment, loyalty_card
 - receipt, receipt_item
-- task, task_status
+- **task**, **task_status**, **task_criterion** (EAV), **task_receipt_increment** (dedupe), **challenge_generation_log** (audit)
 
-Все бизнес-сущности — на бумаге, в Postgres их нет.
+**Осталось на бумаге:**
+
+- brand (`products.brand_id` без FK)
 
 ### Мобильное приложение (`x5mobile/`)
 

@@ -118,65 +118,14 @@ class ReceiptService:
             items=items_data,
         )
 
-        # Update task progress synchronously (best-effort)
-        if data.loyalty_card_id and is_new:
-            self._update_task_progress(session, data.loyalty_card_id, items_data, products)
+        # Kick off background processing of this receipt (task progress + generation).
+        # Fire-and-forget: does not block the API response (FR-012).
+        if is_new and data.loyalty_card_id is not None:
+            try:
+                from webx5.tasks.receipt import process_receipt
+
+                process_receipt.apply_async(args=[str(receipt.id)], queue="receipts")
+            except Exception:  # noqa: BLE001 — Celery/Redis outage must not fail the API write
+                pass
 
         return receipt, is_new
-
-    def _update_task_progress(
-        self,
-        session: Session,
-        loyalty_card_id: uuid.UUID,
-        items_data: list[dict],
-        products: dict,
-    ) -> None:
-        from sqlalchemy import select
-
-        from webx5.entities.product import Product
-
-        try:
-            # Lazy import to avoid circular deps
-            from webx5.entities.loyalty import LoyaltyCard
-
-            # Check if task table exists (may not in all setups)
-            from sqlalchemy import inspect, text
-
-            inspector = inspect(session.bind)
-            if "task" not in inspector.get_table_names():
-                return
-
-            task_result = session.execute(
-                text(
-                    "SELECT id, criterion_type, criterion_entity_id, quantity_current, quantity_target, task_status_id "
-                    "FROM task WHERE loyalty_card_id = :uid AND task_status_id IN "
-                    "(SELECT id FROM task_status WHERE name = 'открыто')"
-                ),
-                {"uid": str(loyalty_card_id)},
-            ).fetchall()
-
-            for task_row in task_result:
-                for item_data in items_data:
-                    pid = item_data["product_id"]
-                    product = products.get(pid)
-                    if not product:
-                        continue
-
-                    matches = False
-                    if task_row.criterion_type == "product" and str(pid) == str(task_row.criterion_entity_id):
-                        matches = True
-                    elif task_row.criterion_type == "category" and str(product.category_id) == str(task_row.criterion_entity_id):
-                        matches = True
-
-                    if matches:
-                        new_qty = min(
-                            task_row.quantity_current + item_data["quantity"],
-                            task_row.quantity_target,
-                        )
-                        session.execute(
-                            text("UPDATE task SET quantity_current = :qty WHERE id = :id"),
-                            {"qty": new_qty, "id": str(task_row.id)},
-                        )
-            session.commit()
-        except Exception:
-            pass  # task update is best-effort

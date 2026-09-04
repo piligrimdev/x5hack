@@ -27,11 +27,15 @@ class Discount(Base):
     __tablename__ = "discounts"
     __table_args__ = (
         CheckConstraint("scope IN ('all', 'by_format', 'by_store')", name="ck_discounts_scope"),
-        CheckConstraint("value >= 0 AND value <= 100", name="ck_discounts_value"),
+        CheckConstraint("value >= 0", name="ck_discounts_value_nonneg"),
+        CheckConstraint("value_type IN ('percent', 'fixed_rub')", name="ck_discounts_value_type"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     value: Mapped[float] = mapped_column(Numeric(5, 2), nullable=False)
+    value_type: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="percent", server_default="percent"
+    )
     discount_type_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("discount_types.id", ondelete="RESTRICT"), nullable=False
     )
@@ -42,6 +46,7 @@ class Discount(Base):
     loyalty_card_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
     )
+    link_task_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True)
     min_loyalty_level: Mapped[int | None] = mapped_column(nullable=True)
     scope: Mapped[str] = mapped_column(String(20), nullable=False, default="all", index=True)
     valid_from: Mapped[datetime | None] = mapped_column(nullable=True)
