@@ -21,6 +21,7 @@ _HIDDEN_KEYS = {
     "challenge_sensitivity",
     "reward_sensitivity",
     "basket_uplift_sensitivity",
+    "novelty_receptiveness",
     "app_open_probability",
     "fatigue_sensitivity",
     "category_affinity",

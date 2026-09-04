@@ -21,6 +21,7 @@ class SimulationTruth:
     challenge_sensitivity: float
     reward_sensitivity: float
     basket_uplift_sensitivity: float
+    novelty_receptiveness: float
     app_open_probability: float
     fatigue_sensitivity: float
     category_affinity: dict[str, float]
@@ -81,6 +82,14 @@ def generate_user_behavior(
     # channel for personal/generic offers): this drives the basket-uplift
     # channel instead (see synth/simulation.py's spend_threshold handling).
     basket_uplift_sensitivity = round(rng.betavariate(2, 3), 3)
+    # How willing this user is to try a category they don't normally buy,
+    # given a category_expansion challenge — deliberately skewed low
+    # (betavariate(2,5), mean ~0.29): trying something unfamiliar is harder
+    # than repeating a habit, unlike challenge_sensitivity (general
+    # receptiveness to any challenge) or basket_uplift_sensitivity
+    # (stretching spend within an already-familiar pattern). Drives the
+    # "expansion" channel in synth/simulation.py.
+    novelty_receptiveness = round(rng.betavariate(2, 5), 3)
     app_open_probability = round(rng.uniform(0.10, 0.90), 3)
     fatigue_sensitivity = round(rng.betavariate(2, 4), 3)
 
@@ -109,6 +118,7 @@ def generate_user_behavior(
         challenge_sensitivity=challenge_sensitivity,
         reward_sensitivity=reward_sensitivity,
         basket_uplift_sensitivity=basket_uplift_sensitivity,
+        novelty_receptiveness=novelty_receptiveness,
         app_open_probability=app_open_probability,
         fatigue_sensitivity=fatigue_sensitivity,
         category_affinity=category_affinity,

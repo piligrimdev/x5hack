@@ -260,6 +260,103 @@ def build_spend_threshold_challenge(
     }
 
 
+def build_category_expansion_challenge(
+    profile: dict,
+    config: SynthConfig,
+    discount_pct: float = 5.0,
+) -> dict | None:
+    """Deterministic, no-LLM-call challenge: a discount on an item from a
+    category this user essentially never buys — the opposite target of
+    `build_spend_threshold_challenge`.
+
+    `discount_pct=5.0` (not the 15-20% used by the other two challenge
+    types) is a deliberate, config-derived choice, not an arbitrary
+    smaller number: unlike `build_spend_threshold_challenge`, this
+    challenge's reward is NOT discounted for "would have bought it
+    anyway" (see `synth/simulation.py`'s expansion-channel docstring — the
+    whole point is that it's fully incremental), so `discount_pct` alone
+    must stay below the category's own `margin_pct` or every single
+    response is a guaranteed per-unit loss regardless of how rare
+    responses are. The thinnest ELIGIBLE (non-forbidden) category margin
+    in the current config (v0.6.0) is 8.47% (мясо и птица / рыба и
+    морепродукты) — 5% leaves real headroom under that floor for every
+    category, so a response is unit-economically sound before the
+    behavioral question ("did they respond at all") even comes into it.
+
+    Rationale (raised by the user, not originally in this project's design):
+    a challenge on a habitual category rewards a purchase that would very
+    likely have happened anyway — the reward buys no incremental behavior,
+    only margin given away. A challenge on a category the user doesn't buy
+    is lower-probability to land, but a response is far more likely to be a
+    genuinely NEW purchase, not a subsidized habit. This is the standard
+    "always-buyer" problem from uplift/incrementality marketing: targeting
+    people who'd convert anyway wastes the reward.
+
+    Entirely rule-based from OBSERVABLE train-period receipts:
+    - target category = the LEAST-bought non-forbidden category among ALL
+      of `config.categories` (ties broken by category name for
+      determinism), including categories with a train-period count of
+      zero — those are the most novel by construction.
+    - target item = picked deterministically from that category's item
+      list via a hash of the user_id (mirrors `pick_generic_challenge`) —
+      there's no observed purchase to anchor on, unlike the spend-threshold
+      challenge's "favorite item".
+    - reward_rub = `discount_pct`% of the category's own CONFIGURED
+      `base_price_rub` (there's no per-user observed price for a category
+      they don't buy), clamped by the same margin-based ceiling as the
+      other paths (`estimate_max_reward_rub`, from the user's own overall
+      purchase history — that part IS observable regardless of category).
+
+    Returns None if there isn't enough train-period purchase history to
+    compute category counts, or if every one of `config.categories` is a
+    forbidden category (never true for this project's schema, but kept for
+    the same reason the other builders guard their inputs).
+    """
+    train_end = config.temporal_split.train_end.isoformat()
+    train_receipts = [r for r in profile["receipts"] if r["purchase_date"] <= train_end]
+    lines = [l for r in train_receipts for l in r["lines"]]
+    if not lines:
+        return None
+
+    category_counts = Counter(l["category"] for l in lines)
+    econ_by_category = {e.category: e for e in config.category_economics}
+    items_by_category = {c.name: c.items for c in config.categories}
+
+    eligible = [c.name for c in config.categories if c.name not in config.forbidden_categories]
+    if not eligible:
+        return None
+    eligible.sort(key=lambda cat: (category_counts.get(cat, 0), cat))
+    target_category = eligible[0]
+
+    items = items_by_category[target_category]
+    idx = int(hashlib.sha256(profile["user_id"].encode("utf-8")).hexdigest(), 16) % len(items)
+    target_item = items[idx]
+
+    base_price = econ_by_category[target_category].base_price_rub
+    max_reward = estimate_max_reward_rub(profile)
+    reward_rub = round(min(base_price * (discount_pct / 100), max_reward), 2)
+
+    n_purchases = category_counts.get(target_category, 0)
+
+    return {
+        "challenge_title": f"Попробуйте: {discount_pct:.0f}% на {target_item}",
+        "description": (
+            f"Скидка {discount_pct:.0f}% на {target_item} — категория, которую вы "
+            "почти не покупаете. Попробуйте что-то новое."
+        ),
+        "target_categories": [target_category],
+        "mechanic": "скидка на новую категорию",
+        "reward_rub": reward_rub,
+        "reasoning": (
+            f"«{target_category}» — наименее покупаемая категория пользователя "
+            f"({n_purchases} покупок за train-период) — максимум шансов на инкрементальную, "
+            "а не замещающую покупку."
+        ),
+        "novel_category": target_category,
+        "novel_item": target_item,
+    }
+
+
 def summarize_purchase_pattern(profile: dict, config: SynthConfig) -> dict:
     train_end = config.temporal_split.train_end.isoformat()
     train_receipts = [r for r in profile["receipts"] if r["purchase_date"] <= train_end]
@@ -445,13 +542,18 @@ def generate_challenge_for_user(
       API call, no cost, always the same shape. Falls back to generic if
       there isn't enough train-period history to identify a favorite
       product (same as any other "can't build this" case).
+    - `"category_expansion"`: deterministic discount on a category this
+      user essentially never buys (see `build_category_expansion_challenge`)
+      — targets incrementality (a genuinely new purchase) over relevance
+      (a habitual one, likely to happen regardless of the reward). Falls
+      back to generic on the same "not enough history" condition.
 
     Any failure on the LLM path (network error, invalid/forbidden model
     output) falls back to a generic challenge rather than shipping an
     unvalidated result — `path` records what actually happened
     (`no_challenge`, `personal`, `generic`, or `generic_fallback`).
     """
-    if challenge_type not in ("llm", "spend_threshold"):
+    if challenge_type not in ("llm", "spend_threshold", "category_expansion"):
         raise ValueError(f"unknown challenge_type: {challenge_type!r}")
 
     saturated, frequency_signal = compute_frequency_saturation(profile, config)
@@ -480,6 +582,20 @@ def generate_challenge_for_user(
                 "receptiveness_signal": signal,
                 "model": None,
                 "error": "not enough train-period history to identify a favorite product",
+                **offer,
+            }
+        return {"user_id": profile["user_id"], "path": "personal", "receptiveness_signal": signal, "model": None, **challenge}
+
+    if challenge_type == "category_expansion":
+        challenge = build_category_expansion_challenge(profile, config)
+        if challenge is None:
+            offer = pick_generic_challenge(profile["user_id"])
+            return {
+                "user_id": profile["user_id"],
+                "path": "generic_fallback",
+                "receptiveness_signal": signal,
+                "model": None,
+                "error": "not enough train-period history to compute category counts",
                 **offer,
             }
         return {"user_id": profile["user_id"], "path": "personal", "receptiveness_signal": signal, "model": None, **challenge}

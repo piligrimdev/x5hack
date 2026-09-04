@@ -1,0 +1,30 @@
+[
+  {
+    "user_id": "fcf18a73-184b-4ddd-9338-3dc666662e03",
+    "path": "no_challenge",
+    "frequency_signal": {
+      "n_receipts_train": 87,
+      "threshold": 85
+    },
+    "model": null,
+    "reasoning": "Purchase frequency is already unusually high — an additional challenge is unlikely to be worth its reward cost."
+  },
+  {
+    "user_id": "e29473b0-c4b1-4d26-918a-2a3edf464515",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 39,
+      "concentration": 0.436
+    },
+    "model": "deepseek/deepseek-chat",
+    "challenge_title": "Молочная неделя",
+    "description": "Купите 3 молочных продукта в одном чеке и получите кешбэк 100 ₽",
+    "target_categories": [
+      "молочные продукты и яйца"
+    ],
+    "mechanic": "cashback",
+    "reward_rub": 100.0,
+    "reasoning": "Молочные продукты - самая частая категория покупок (26 позиций), акция стимулирует увеличение среднего количества позиций в категории"
+  }
+]

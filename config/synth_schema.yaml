@@ -1,0 +1,356 @@
+version: "0.6.0"
+# 0.4.0 (2026-09-03): added SKU-level financial fields (regular/paid price,
+# cost, margin, savings), a stable per-SKU price catalog, individual
+# visit-frequency/basket-size behavior (segments now differ on these
+# instead of on price), a train/holdout temporal split, and
+# forbidden_categories for challenge eligibility. Segments no longer carry
+# price_multiplier (replaced by visit_frequency_multiplier +
+# basket_size_multiplier) — chain still carries price_multiplier (real
+# per-banner pricing). See docs/superpowers/specs/2026-09-03-financial-data-v2-design.md
+#
+# 0.5.0 (2026-09-03): explicit, recorded change to a frozen (0.4.0) config
+# — see the freeze note below for why this needs recording, not a silent
+# edit. Root-caused why the LLM-challenge module's hit rate on
+# already_optimal_no_challenge profiles was 0/8: `visit_frequency_multiplier`
+# up to 1.35 (Старшие) pushed that segment's MEAN rate to ~0.99/day, already
+# at the practical one-purchase-per-day ceiling the old day-sampling model
+# enforced — so a large share of the general population collided with the
+# same day-count cap already_optimal's profiles hit, making "receipt count"
+# useless as an observable signal for genuinely-high-frequency users.
+# Compressed visit_frequency_multiplier to max 1.15 (Старшие) so every
+# segment's mean stays under ~0.85/day, and synth/receipts.py's day-sampling
+# switched from "sample distinct days, capped at window_days" to
+# "Poisson(per_day_rate) receipts per day, uncapped" — see that file's
+# docstring. Population and reference data must be regenerated after this
+# change; anything generated against 0.4.0 is stale.
+#
+# 0.6.0 (2026-09-04): explicit, recorded change to a frozen (0.5.0) config.
+# `category_economics.margin_pct` (originally 15-28%, uncited assumption)
+# is realized against `synth/catalog.py`'s cost anchor — the CHEAPEST
+# chain's price (Чижик, 0.75x), a deliberate earlier fix so a discount
+# chain never sells below cost. Side effect never checked until now: any
+# chain pricier than the anchor (Пятёрочка 1.0x, Перекрёсток 1.25x) earns
+# margin on top of its own margin_pct, since its cost floor is set by a
+# cheaper chain's price, not its own. Measured on the full 10k population:
+# realized margin was 18.7% (Чижик, ≈ margin_pct as intended), 38.75%
+# (Пятёрочка), 51.05% (Перекрёсток) — population-blended 38.81%, well
+# above X5 Group's real public gross margin (~24-25%) and implausible for
+# a hackathon economics story. Scaled every category's margin_pct down by
+# a calibrated factor (x0.4708, bisected on a 1500-user sample against the
+# existing cost-anchor design — not re-architected, to avoid a larger,
+# riskier change this late) so the population-blended realized margin
+# lands at ~30%. New range: 7.06%-13.18% (was 15%-28%) — plausible for
+# lean staple categories, thin for margin-heavy ones (personal care,
+# snacks) in absolute terms; the population-level 30% blended figure is
+# the number this change was calibrated to, not the individual category
+# values, which are a means to that end under the existing anchor design.
+# Population, reference profiles, and simulation must be regenerated after
+# this change; anything generated against 0.5.0 is stale.
+frozen_at: "2026-09-04"
+# FROZEN 2026-09-04 at v0.6.0, re-frozen after the margin-calibration
+# change above (validated + tested before re-freezing — see
+# data/v2/validation_report.md and the pytest run recorded in project
+# history). Per CONTEXT_PACK.md §8's anti-circularity guard: do not change
+# categories, category_economics, calibration, chains, segments,
+# forbidden_categories, or temporal_split after this point without an
+# explicit, recorded decision — H2/H3 LLM tuning starts against this exact
+# schema, and changing it later would invalidate the hit-rate comparison.
+# A version bump + changelog entry (like this one) is the explicit-decision
+# mechanism if a change is truly needed; a silent edit is not.
+reference_date: "2026-09-01"
+
+# Regulated/sensitive categories: never eligible as a challenge target,
+# regardless of user segment. Алкоголь is age-restricted (legal/regulatory
+# reason); детское питание is a sensitive marketing-to-parents-of-infants
+# category we choose to exclude rather than a legal requirement.
+forbidden_categories:
+  - "алкоголь"
+  - "детское питание"
+
+temporal_split:
+  train_start: "2026-06-03"
+  train_end: "2026-08-03"
+  holdout_start: "2026-08-04"
+  holdout_end: "2026-08-31"
+
+calibration:
+  avg_receipt_total_rub: 710.0
+  purchases_per_month_mean: 22.0
+  purchases_per_month_stddev: 6.5
+  offline_share: 0.8
+  source: >
+    avg_receipt_total_rub: X5's own reported offline average check for
+    Пятёрочка/Перекрёсток in 2025, 550-870 rub (midpoint used) — Retail.ru,
+    "Как меняется средний чек в ритейле" (2025/2026).
+    purchases_per_month_mean: derived, not directly reported. Rosstat's
+    "Потребительские расходы домашних хозяйств в 2025 году" gives monthly
+    food spend per person by household size (single: 19000 rub;
+    3-person household: ~13000 rub/person; 5-person: ~10500 rub/person;
+    2- and 4-person interpolated linearly, not independently sourced).
+    Weighted by this config's household_size_weights: ~15512 rub/month/person.
+    Dividing by the X5 average check above gives ~21.85 purchases/month,
+    rounded to 22 — consistent with Rosstat's separate city-tier figures
+    (14500-15000 rub/month for medium/large cities, in the same range as
+    the weighted estimate). purchases_per_month_stddev kept at the same
+    ~30% relative spread as the original unsourced assumption (not itself
+    sourced from Rosstat, which does not publish a purchase-frequency
+    variance). offline_share (0.8) and household_size_weights are still
+    unsourced assumptions per CONTEXT_PACK.md §3/§4/§7 — no public data
+    found for these two. Revisit if the case owner provides real numbers.
+
+districts:
+  - "Район-01"
+  - "Район-02"
+  - "Район-03"
+  - "Район-04"
+  - "Район-05"
+  - "Район-06"
+  - "Район-07"
+  - "Район-08"
+  - "Район-09"
+  - "Район-10"
+  - "Район-11"
+  - "Район-12"
+  - "Район-13"
+  - "Район-14"
+  - "Район-15"
+  - "Район-16"
+  - "Район-17"
+  - "Район-18"
+  - "Район-19"
+  - "Район-20"
+
+household_size_weights:
+  1: 0.30
+  2: 0.30
+  3: 0.25
+  4: 0.15
+
+categories:
+  - name: "молочные продукты и яйца"
+    items: ["молоко", "сметана", "творог", "кефир", "сыр", "яйца"]
+  - name: "овощи"
+    items: ["картофель", "морковь", "лук", "свёкла", "капуста", "огурцы"]
+  - name: "фрукты"
+    items: ["яблоки", "бананы", "апельсины", "груши", "виноград", "лимоны"]
+  - name: "мясо и птица"
+    items: ["курица", "говядина", "свинина", "фарш", "сосиски", "колбаса"]
+  - name: "рыба и морепродукты"
+    items: ["сельдь", "форель", "рыбные консервы", "креветки", "кальмары", "минтай"]
+  - name: "бакалея"
+    items: ["мука", "сахар", "соль", "гречка", "рис", "макароны"]
+  - name: "хлеб и выпечка"
+    items: ["хлеб белый", "хлеб чёрный", "батон", "лаваш", "булочки", "сухари"]
+  - name: "напитки"
+    items: ["вода", "сок", "газировка", "чай", "кофе", "компот"]
+  - name: "заморозка"
+    items: ["пельмени", "овощная смесь", "мороженое", "замороженные ягоды", "наггетсы", "блины"]
+  - name: "сладости и снеки"
+    items: ["шоколад", "печенье", "чипсы", "орехи солёные", "зефир", "вафли"]
+  - name: "консервация"
+    items: ["тушёнка", "кукуруза консервированная", "горошек консервированный", "оливки", "огурцы маринованные", "томатная паста"]
+  - name: "соусы и приправы"
+    items: ["майонез", "кетчуп", "соевый соус", "специи", "горчица", "уксус"]
+  - name: "масла и жиры"
+    items: ["подсолнечное масло", "оливковое масло", "сливочное масло", "маргарин", "кокосовое масло", "кулинарный жир"]
+  - name: "бытовая химия"
+    items: ["стиральный порошок", "средство для мытья посуды", "чистящее средство", "мешки для мусора", "губки", "отбеливатель"]
+  - name: "личная гигиена"
+    items: ["зубная паста", "шампунь", "мыло", "гель для душа", "дезодорант", "туалетная бумага"]
+  - name: "детское питание"
+    items: ["пюре детское", "каша детская", "молочная смесь", "печенье детское", "сок детский", "вода детская"]
+  - name: "алкоголь"
+    items: ["пиво", "вино", "водка", "сидр", "шампанское", "коньяк"]
+  - name: "кондитерка"
+    items: ["торт", "пирожное", "конфеты", "мармелад", "пастила", "круассан"]
+  - name: "готовая еда"
+    items: ["салат готовый", "суп готовый", "пицца готовая", "роллы", "сэндвич", "каша быстрого приготовления"]
+  - name: "орехи и сухофрукты"
+    items: ["изюм", "курага", "чернослив", "миндаль", "фундук", "кешью"]
+  - name: "товары для дома"
+    items: ["свечи", "батарейки", "фольга", "плёнка пищевая", "спички", "скотч"]
+  - name: "товары для животных"
+    items: ["корм для кошек", "корм для собак", "наполнитель для туалета", "лакомства", "миски", "игрушки для животных"]
+
+chains:
+  - name: "Пятёрочка"
+    price_multiplier: 1.0
+    segment_weights:
+      "Молодёжь": 0.37
+      "Взрослые с вредными привычками": 0.05
+      "Взрослые с детьми до 3х лет": 0.26
+      "Зрелые": 0.21
+      "Старшие": 0.11
+  - name: "Перекрёсток"
+    price_multiplier: 1.25
+    segment_weights:
+      "Молодёжь": 0.31
+      "Взрослые с вредными привычками": 0.03
+      "Взрослые с детьми до 3х лет": 0.26
+      "Зрелые": 0.32
+      "Старшие": 0.09
+  - name: "Чижик"
+    price_multiplier: 0.75
+    segment_weights:
+      "Молодёжь": 0.27
+      "Взрослые с вредными привычками": 0.04
+      "Взрослые с детьми до 3х лет": 0.28
+      "Зрелые": 0.24
+      "Старшие": 0.18
+
+# Segments now differ on shopping BEHAVIOR (how often, how much per trip),
+# not on price — price is a per-SKU/per-chain property (see catalog below
+# and chains' price_multiplier above), which is more realistic than the
+# old "same store charges different people different prices" model.
+#
+# visit_frequency_multiplier ranges were compressed from an earlier
+# 0.85-1.35 (see v0.4.0) after the frequency-calibration fix in 0.5.0: the
+# purchase-day model changed from "one receipt per sampled day, capped at
+# the window's day count" to "Poisson(per_day_rate) receipts per day, no
+# cap" (see synth/receipts.py), which exposed that visit_frequency_multiplier
+# 1.35 pushed Старшие's MEAN rate to ~27.7/28days ≈ 0.99/day — already at
+# the practical one-purchase-per-day ceiling before any personal variation,
+# so most of that segment collided with the day-count cap regardless of the
+# old capping mechanism. The new max (Старшие 1.15) keeps every segment's
+# mean rate under ~0.85/day, leaving real headroom for personal variation
+# and for `already_optimal_no_challenge`'s explicit 1.8-2.5x override (see
+# synth/reference_profiles.py) to be a genuinely distinguishable outlier
+# rather than something a normal high-frequency user regularly matches by
+# chance.
+segments:
+  - name: "Молодёжь"
+    visit_frequency_multiplier: 0.80
+    basket_size_multiplier: 0.80
+  - name: "Взрослые с вредными привычками"
+    visit_frequency_multiplier: 0.95
+    basket_size_multiplier: 0.85
+  - name: "Взрослые с детьми до 3х лет"
+    visit_frequency_multiplier: 1.10
+    basket_size_multiplier: 1.25
+  - name: "Зрелые"
+    visit_frequency_multiplier: 1.00
+    basket_size_multiplier: 1.15
+  - name: "Старшие"
+    visit_frequency_multiplier: 1.15
+    basket_size_multiplier: 0.75
+
+# Stable SKU price catalog: base_price_rub/margin_pct/popularity_weight are
+# per CATEGORY; synth/catalog.py assigns each concrete item a stable
+# per-SKU price by jittering base_price_rub +/- price_jitter_pct with a
+# seed derived only from catalog position (not the run seed), so prices
+# are the same catalog run to run and item to item within a category no
+# longer share one price (this is the "соль и говядина have identical
+# distributions" bug fix). margin_pct sets unit_cost_rub = price*(1-margin).
+# popularity_weight is used for non-habitual ("exploration") category
+# draws so the basket doesn't sample categories uniformly.
+category_economics:
+  - category: "молочные продукты и яйца"
+    base_price_rub: 90
+    price_jitter_pct: 0.25
+    margin_pct: 0.0942
+    popularity_weight: 14
+  - category: "овощи"
+    base_price_rub: 55
+    price_jitter_pct: 0.30
+    margin_pct: 0.1177
+    popularity_weight: 13
+  - category: "фрукты"
+    base_price_rub: 90
+    price_jitter_pct: 0.30
+    margin_pct: 0.1036
+    popularity_weight: 10
+  - category: "мясо и птица"
+    base_price_rub: 320
+    price_jitter_pct: 0.30
+    margin_pct: 0.0847
+    popularity_weight: 12
+  - category: "рыба и морепродукты"
+    base_price_rub: 380
+    price_jitter_pct: 0.35
+    margin_pct: 0.0847
+    popularity_weight: 6
+  - category: "бакалея"
+    base_price_rub: 70
+    price_jitter_pct: 0.35
+    margin_pct: 0.1036
+    popularity_weight: 11
+  - category: "хлеб и выпечка"
+    base_price_rub: 55
+    price_jitter_pct: 0.20
+    margin_pct: 0.0942
+    popularity_weight: 12
+  - category: "напитки"
+    base_price_rub: 90
+    price_jitter_pct: 0.30
+    margin_pct: 0.1177
+    popularity_weight: 9
+  - category: "заморозка"
+    base_price_rub: 180
+    price_jitter_pct: 0.30
+    margin_pct: 0.0942
+    popularity_weight: 6
+  - category: "сладости и снеки"
+    base_price_rub: 130
+    price_jitter_pct: 0.35
+    margin_pct: 0.1318
+    popularity_weight: 8
+  - category: "консервация"
+    base_price_rub: 100
+    price_jitter_pct: 0.30
+    margin_pct: 0.1036
+    popularity_weight: 5
+  - category: "соусы и приправы"
+    base_price_rub: 110
+    price_jitter_pct: 0.30
+    margin_pct: 0.1318
+    popularity_weight: 6
+  - category: "масла и жиры"
+    base_price_rub: 160
+    price_jitter_pct: 0.25
+    margin_pct: 0.0942
+    popularity_weight: 5
+  - category: "бытовая химия"
+    base_price_rub: 220
+    price_jitter_pct: 0.30
+    margin_pct: 0.1177
+    popularity_weight: 4
+  - category: "личная гигиена"
+    base_price_rub: 190
+    price_jitter_pct: 0.30
+    margin_pct: 0.1318
+    popularity_weight: 5
+  - category: "детское питание"
+    base_price_rub: 250
+    price_jitter_pct: 0.20
+    margin_pct: 0.0847
+    popularity_weight: 3
+  - category: "алкоголь"
+    base_price_rub: 450
+    price_jitter_pct: 0.40
+    margin_pct: 0.0706
+    popularity_weight: 4
+  - category: "кондитерка"
+    base_price_rub: 220
+    price_jitter_pct: 0.30
+    margin_pct: 0.1177
+    popularity_weight: 4
+  - category: "готовая еда"
+    base_price_rub: 250
+    price_jitter_pct: 0.30
+    margin_pct: 0.1036
+    popularity_weight: 5
+  - category: "орехи и сухофрукты"
+    base_price_rub: 260
+    price_jitter_pct: 0.30
+    margin_pct: 0.1177
+    popularity_weight: 3
+  - category: "товары для дома"
+    base_price_rub: 130
+    price_jitter_pct: 0.35
+    margin_pct: 0.1177
+    popularity_weight: 3
+  - category: "товары для животных"
+    base_price_rub: 210
+    price_jitter_pct: 0.35
+    margin_pct: 0.1036
+    popularity_weight: 3

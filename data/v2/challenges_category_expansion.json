@@ -1,0 +1,700 @@
+[
+  {
+    "user_id": "c9f51e79-b5e1-4236-9d58-dbc84998a999",
+    "path": "generic",
+    "receptiveness_signal": {
+      "reason": "weak/insufficient pattern",
+      "n_receipts_train": 37,
+      "concentration": 0.356
+    },
+    "model": null,
+    "challenge_title": "Бонус за покупку свежих овощей и фруктов",
+    "description": "Начислим бонусные баллы за покупку овощей или фруктов на сумму от 300 рублей.",
+    "target_categories": [
+      "овощи",
+      "фрукты"
+    ],
+    "mechanic": "бонусные баллы",
+    "reward_rub": 40.0
+  },
+  {
+    "user_id": "7f7e70d8-178b-421b-80a3-d9cec8b73ad9",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 27,
+      "concentration": 0.506
+    },
+    "model": null,
+    "challenge_title": "Попробуйте: 5% на стиральный порошок",
+    "description": "Скидка 5% на стиральный порошок — категория, которую вы почти не покупаете. Попробуйте что-то новое.",
+    "target_categories": [
+      "бытовая химия"
+    ],
+    "mechanic": "скидка на новую категорию",
+    "reward_rub": 11.0,
+    "reasoning": "«бытовая химия» — наименее покупаемая категория пользователя (0 покупок за train-период) — максимум шансов на инкрементальную, а не замещающую покупку.",
+    "novel_category": "бытовая химия",
+    "novel_item": "стиральный порошок"
+  },
+  {
+    "user_id": "5d4fb5e2-c807-4d78-ac51-675e06be7099",
+    "path": "generic",
+    "receptiveness_signal": {
+      "reason": "weak/insufficient pattern",
+      "n_receipts_train": 51,
+      "concentration": 0.415
+    },
+    "model": null,
+    "challenge_title": "Скидка на личную гигиену от партнёра",
+    "description": "Партнёрская скидка 15% на товары личной гигиены.",
+    "target_categories": [
+      "личная гигиена"
+    ],
+    "mechanic": "партнёрская скидка",
+    "reward_rub": 45.0
+  },
+  {
+    "user_id": "8cbf5995-17dd-4e22-a5bc-5079e0c2936a",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 46,
+      "concentration": 0.578
+    },
+    "model": null,
+    "challenge_title": "Попробуйте: 5% на роллы",
+    "description": "Скидка 5% на роллы — категория, которую вы почти не покупаете. Попробуйте что-то новое.",
+    "target_categories": [
+      "готовая еда"
+    ],
+    "mechanic": "скидка на новую категорию",
+    "reward_rub": 12.5,
+    "reasoning": "«готовая еда» — наименее покупаемая категория пользователя (1 покупок за train-период) — максимум шансов на инкрементальную, а не замещающую покупку.",
+    "novel_category": "готовая еда",
+    "novel_item": "роллы"
+  },
+  {
+    "user_id": "5f15103b-ab27-4449-9f4b-5fe29cf80430",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 43,
+      "concentration": 0.537
+    },
+    "model": null,
+    "challenge_title": "Попробуйте: 5% на наггетсы",
+    "description": "Скидка 5% на наггетсы — категория, которую вы почти не покупаете. Попробуйте что-то новое.",
+    "target_categories": [
+      "заморозка"
+    ],
+    "mechanic": "скидка на новую категорию",
+    "reward_rub": 9.0,
+    "reasoning": "«заморозка» — наименее покупаемая категория пользователя (0 покупок за train-период) — максимум шансов на инкрементальную, а не замещающую покупку.",
+    "novel_category": "заморозка",
+    "novel_item": "наггетсы"
+  },
+  {
+    "user_id": "25995851-9e3b-4283-a7ed-bcea35ada712",
+    "path": "no_challenge",
+    "frequency_signal": {
+      "n_receipts_train": 88,
+      "threshold": 85
+    },
+    "model": null,
+    "reasoning": "Purchase frequency is already unusually high — an additional challenge is unlikely to be worth its reward cost."
+  },
+  {
+    "user_id": "f4290dac-4b65-4c04-8446-750d860faf24",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 31,
+      "concentration": 0.507
+    },
+    "model": null,
+    "challenge_title": "Попробуйте: 5% на туалетная бумага",
+    "description": "Скидка 5% на туалетная бумага — категория, которую вы почти не покупаете. Попробуйте что-то новое.",
+    "target_categories": [
+      "личная гигиена"
+    ],
+    "mechanic": "скидка на новую категорию",
+    "reward_rub": 9.5,
+    "reasoning": "«личная гигиена» — наименее покупаемая категория пользователя (0 покупок за train-период) — максимум шансов на инкрементальную, а не замещающую покупку.",
+    "novel_category": "личная гигиена",
+    "novel_item": "туалетная бумага"
+  },
+  {
+    "user_id": "87ec70d8-0d38-495e-992d-f6c6414194a7",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 45,
+      "concentration": 0.515
+    },
+    "model": null,
+    "challenge_title": "Попробуйте: 5% на горошек консервированный",
+    "description": "Скидка 5% на горошек консервированный — категория, которую вы почти не покупаете. Попробуйте что-то новое.",
+    "target_categories": [
+      "консервация"
+    ],
+    "mechanic": "скидка на новую категорию",
+    "reward_rub": 5.0,
+    "reasoning": "«консервация» — наименее покупаемая категория пользователя (0 покупок за train-период) — максимум шансов на инкрементальную, а не замещающую покупку.",
+    "novel_category": "консервация",
+    "novel_item": "горошек консервированный"
+  },
+  {
+    "user_id": "d6d15731-fb31-4627-b51f-090a1e01be7b",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 27,
+      "concentration": 0.586
+    },
+    "model": null,
+    "challenge_title": "Попробуйте: 5% на овощная смесь",
+    "description": "Скидка 5% на овощная смесь — категория, которую вы почти не покупаете. Попробуйте что-то новое.",
+    "target_categories": [
+      "заморозка"
+    ],
+    "mechanic": "скидка на новую категорию",
+    "reward_rub": 9.0,
+    "reasoning": "«заморозка» — наименее покупаемая категория пользователя (0 покупок за train-период) — максимум шансов на инкрементальную, а не замещающую покупку.",
+    "novel_category": "заморозка",
+    "novel_item": "овощная смесь"
+  },
+  {
+    "user_id": "2cb8a690-ed7d-4fff-a6f5-6009677e4829",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 59,
+      "concentration": 0.537
+    },
+    "model": null,
+    "challenge_title": "Попробуйте: 5% на тушёнка",
+    "description": "Скидка 5% на тушёнка — категория, которую вы почти не покупаете. Попробуйте что-то новое.",
+    "target_categories": [
+      "консервация"
+    ],
+    "mechanic": "скидка на новую категорию",
+    "reward_rub": 5.0,
+    "reasoning": "«консервация» — наименее покупаемая категория пользователя (0 покупок за train-период) — максимум шансов на инкрементальную, а не замещающую покупку.",
+    "novel_category": "консервация",
+    "novel_item": "тушёнка"
+  },
+  {
+    "user_id": "6b69c2db-a9e4-45cf-894b-de718ab4fc9a",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 62,
+      "concentration": 0.439
+    },
+    "model": null,
+    "challenge_title": "Попробуйте: 5% на зубная паста",
+    "description": "Скидка 5% на зубная паста — категория, которую вы почти не покупаете. Попробуйте что-то новое.",
+    "target_categories": [
+      "личная гигиена"
+    ],
+    "mechanic": "скидка на новую категорию",
+    "reward_rub": 9.5,
+    "reasoning": "«личная гигиена» — наименее покупаемая категория пользователя (0 покупок за train-период) — максимум шансов на инкрементальную, а не замещающую покупку.",
+    "novel_category": "личная гигиена",
+    "novel_item": "зубная паста"
+  },
+  {
+    "user_id": "b387a5ff-326e-4df0-8a94-3676ed2040fb",
+    "path": "generic",
+    "receptiveness_signal": {
+      "reason": "weak/insufficient pattern",
+      "n_receipts_train": 69,
+      "concentration": 0.402
+    },
+    "model": null,
+    "challenge_title": "Бонус за сладости и снеки",
+    "description": "Начислим баллы за покупку сладостей или снеков на сумму от 250 рублей.",
+    "target_categories": [
+      "сладости и снеки"
+    ],
+    "mechanic": "бонусные баллы",
+    "reward_rub": 35.0
+  },
+  {
+    "user_id": "93d59af9-02d3-4f1a-b724-1b3039ada9f0",
+    "path": "no_challenge",
+    "frequency_signal": {
+      "n_receipts_train": 87,
+      "threshold": 85
+    },
+    "model": null,
+    "reasoning": "Purchase frequency is already unusually high — an additional challenge is unlikely to be worth its reward cost."
+  },
+  {
+    "user_id": "5316f87f-7176-4d85-a832-8fdc926839a9",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 34,
+      "concentration": 0.424
+    },
+    "model": null,
+    "challenge_title": "Попробуйте: 5% на стиральный порошок",
+    "description": "Скидка 5% на стиральный порошок — категория, которую вы почти не покупаете. Попробуйте что-то новое.",
+    "target_categories": [
+      "бытовая химия"
+    ],
+    "mechanic": "скидка на новую категорию",
+    "reward_rub": 11.0,
+    "reasoning": "«бытовая химия» — наименее покупаемая категория пользователя (0 покупок за train-период) — максимум шансов на инкрементальную, а не замещающую покупку.",
+    "novel_category": "бытовая химия",
+    "novel_item": "стиральный порошок"
+  },
+  {
+    "user_id": "65f40d54-c757-4410-bb07-f3d761d9699b",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 38,
+      "concentration": 0.506
+    },
+    "model": null,
+    "challenge_title": "Попробуйте: 5% на сэндвич",
+    "description": "Скидка 5% на сэндвич — категория, которую вы почти не покупаете. Попробуйте что-то новое.",
+    "target_categories": [
+      "готовая еда"
+    ],
+    "mechanic": "скидка на новую категорию",
+    "reward_rub": 12.5,
+    "reasoning": "«готовая еда» — наименее покупаемая категория пользователя (0 покупок за train-период) — максимум шансов на инкрементальную, а не замещающую покупку.",
+    "novel_category": "готовая еда",
+    "novel_item": "сэндвич"
+  },
+  {
+    "user_id": "36b60365-39a1-498c-98e0-849ed34c9b68",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 34,
+      "concentration": 0.468
+    },
+    "model": null,
+    "challenge_title": "Попробуйте: 5% на стиральный порошок",
+    "description": "Скидка 5% на стиральный порошок — категория, которую вы почти не покупаете. Попробуйте что-то новое.",
+    "target_categories": [
+      "бытовая химия"
+    ],
+    "mechanic": "скидка на новую категорию",
+    "reward_rub": 11.0,
+    "reasoning": "«бытовая химия» — наименее покупаемая категория пользователя (0 покупок за train-период) — максимум шансов на инкрементальную, а не замещающую покупку.",
+    "novel_category": "бытовая химия",
+    "novel_item": "стиральный порошок"
+  },
+  {
+    "user_id": "780241c2-81f4-4997-af41-ebac3931bab3",
+    "path": "no_challenge",
+    "frequency_signal": {
+      "n_receipts_train": 89,
+      "threshold": 85
+    },
+    "model": null,
+    "reasoning": "Purchase frequency is already unusually high — an additional challenge is unlikely to be worth its reward cost."
+  },
+  {
+    "user_id": "08c72d3e-cc7c-4354-88a6-6160f4673674",
+    "path": "no_challenge",
+    "frequency_signal": {
+      "n_receipts_train": 88,
+      "threshold": 85
+    },
+    "model": null,
+    "reasoning": "Purchase frequency is already unusually high — an additional challenge is unlikely to be worth its reward cost."
+  },
+  {
+    "user_id": "4f23835c-0363-48bd-89ae-39704f13b86d",
+    "path": "generic",
+    "receptiveness_signal": {
+      "reason": "weak/insufficient pattern",
+      "n_receipts_train": 82,
+      "concentration": 0.42
+    },
+    "model": null,
+    "challenge_title": "Скидка партнёра на молочную продукцию",
+    "description": "5% кэшбэк баллами на молочные продукты и яйца от партнёра программы лояльности.",
+    "target_categories": [
+      "молочные продукты и яйца"
+    ],
+    "mechanic": "партнёрский кэшбэк",
+    "reward_rub": 50.0
+  },
+  {
+    "user_id": "3cf1de8b-d996-43c4-bb7c-d3a2d09d64e1",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 50,
+      "concentration": 0.466
+    },
+    "model": null,
+    "challenge_title": "Попробуйте: 5% на пельмени",
+    "description": "Скидка 5% на пельмени — категория, которую вы почти не покупаете. Попробуйте что-то новое.",
+    "target_categories": [
+      "заморозка"
+    ],
+    "mechanic": "скидка на новую категорию",
+    "reward_rub": 9.0,
+    "reasoning": "«заморозка» — наименее покупаемая категория пользователя (0 покупок за train-период) — максимум шансов на инкрементальную, а не замещающую покупку.",
+    "novel_category": "заморозка",
+    "novel_item": "пельмени"
+  },
+  {
+    "user_id": "86d704d2-f310-4e05-b62b-b111cc1e50f8",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 54,
+      "concentration": 0.514
+    },
+    "model": null,
+    "challenge_title": "Попробуйте: 5% на мешки для мусора",
+    "description": "Скидка 5% на мешки для мусора — категория, которую вы почти не покупаете. Попробуйте что-то новое.",
+    "target_categories": [
+      "бытовая химия"
+    ],
+    "mechanic": "скидка на новую категорию",
+    "reward_rub": 11.0,
+    "reasoning": "«бытовая химия» — наименее покупаемая категория пользователя (0 покупок за train-период) — максимум шансов на инкрементальную, а не замещающую покупку.",
+    "novel_category": "бытовая химия",
+    "novel_item": "мешки для мусора"
+  },
+  {
+    "user_id": "d5a1c8f0-e9e1-43b9-a571-3f2cb9a6a957",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 47,
+      "concentration": 0.482
+    },
+    "model": null,
+    "challenge_title": "Попробуйте: 5% на курага",
+    "description": "Скидка 5% на курага — категория, которую вы почти не покупаете. Попробуйте что-то новое.",
+    "target_categories": [
+      "орехи и сухофрукты"
+    ],
+    "mechanic": "скидка на новую категорию",
+    "reward_rub": 13.0,
+    "reasoning": "«орехи и сухофрукты» — наименее покупаемая категория пользователя (0 покупок за train-период) — максимум шансов на инкрементальную, а не замещающую покупку.",
+    "novel_category": "орехи и сухофрукты",
+    "novel_item": "курага"
+  },
+  {
+    "user_id": "cf0758ef-e3f8-4c34-abf7-bb843326190b",
+    "path": "generic",
+    "receptiveness_signal": {
+      "reason": "weak/insufficient pattern",
+      "n_receipts_train": 58,
+      "concentration": 0.386
+    },
+    "model": null,
+    "challenge_title": "Бонус за покупку свежих овощей и фруктов",
+    "description": "Начислим бонусные баллы за покупку овощей или фруктов на сумму от 300 рублей.",
+    "target_categories": [
+      "овощи",
+      "фрукты"
+    ],
+    "mechanic": "бонусные баллы",
+    "reward_rub": 40.0
+  },
+  {
+    "user_id": "eac031a6-65ab-40b7-b698-8916f1f18fe4",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 42,
+      "concentration": 0.511
+    },
+    "model": null,
+    "challenge_title": "Попробуйте: 5% на мороженое",
+    "description": "Скидка 5% на мороженое — категория, которую вы почти не покупаете. Попробуйте что-то новое.",
+    "target_categories": [
+      "заморозка"
+    ],
+    "mechanic": "скидка на новую категорию",
+    "reward_rub": 9.0,
+    "reasoning": "«заморозка» — наименее покупаемая категория пользователя (0 покупок за train-период) — максимум шансов на инкрементальную, а не замещающую покупку.",
+    "novel_category": "заморозка",
+    "novel_item": "мороженое"
+  },
+  {
+    "user_id": "1ad63d0b-c93d-49a8-9d9b-2ac5ce376f82",
+    "path": "generic",
+    "receptiveness_signal": {
+      "reason": "weak/insufficient pattern",
+      "n_receipts_train": 62,
+      "concentration": 0.294
+    },
+    "model": null,
+    "challenge_title": "Скидка партнёра на молочную продукцию",
+    "description": "5% кэшбэк баллами на молочные продукты и яйца от партнёра программы лояльности.",
+    "target_categories": [
+      "молочные продукты и яйца"
+    ],
+    "mechanic": "партнёрский кэшбэк",
+    "reward_rub": 50.0
+  },
+  {
+    "user_id": "0ef123aa-6178-4a4a-b477-bb5ffee5d914",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 25,
+      "concentration": 0.51
+    },
+    "model": null,
+    "challenge_title": "Попробуйте: 5% на пицца готовая",
+    "description": "Скидка 5% на пицца готовая — категория, которую вы почти не покупаете. Попробуйте что-то новое.",
+    "target_categories": [
+      "готовая еда"
+    ],
+    "mechanic": "скидка на новую категорию",
+    "reward_rub": 12.5,
+    "reasoning": "«готовая еда» — наименее покупаемая категория пользователя (0 покупок за train-период) — максимум шансов на инкрементальную, а не замещающую покупку.",
+    "novel_category": "готовая еда",
+    "novel_item": "пицца готовая"
+  },
+  {
+    "user_id": "d2753a18-9427-4547-8677-6fc124d51840",
+    "path": "generic",
+    "receptiveness_signal": {
+      "reason": "weak/insufficient pattern",
+      "n_receipts_train": 56,
+      "concentration": 0.383
+    },
+    "model": null,
+    "challenge_title": "Кэшбэк за товары для животных",
+    "description": "Верните часть стоимости при покупке корма или аксессуаров для питомцев.",
+    "target_categories": [
+      "товары для животных"
+    ],
+    "mechanic": "кэшбэк",
+    "reward_rub": 50.0
+  },
+  {
+    "user_id": "6281b7e8-e94e-4ae7-b3ee-e3b910698a62",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 58,
+      "concentration": 0.437
+    },
+    "model": null,
+    "challenge_title": "Попробуйте: 5% на фольга",
+    "description": "Скидка 5% на фольга — категория, которую вы почти не покупаете. Попробуйте что-то новое.",
+    "target_categories": [
+      "товары для дома"
+    ],
+    "mechanic": "скидка на новую категорию",
+    "reward_rub": 6.5,
+    "reasoning": "«товары для дома» — наименее покупаемая категория пользователя (0 покупок за train-период) — максимум шансов на инкрементальную, а не замещающую покупку.",
+    "novel_category": "товары для дома",
+    "novel_item": "фольга"
+  },
+  {
+    "user_id": "dc680de0-78ad-41e8-8a90-eb1ba6603b06",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 59,
+      "concentration": 0.664
+    },
+    "model": null,
+    "challenge_title": "Попробуйте: 5% на томатная паста",
+    "description": "Скидка 5% на томатная паста — категория, которую вы почти не покупаете. Попробуйте что-то новое.",
+    "target_categories": [
+      "консервация"
+    ],
+    "mechanic": "скидка на новую категорию",
+    "reward_rub": 5.0,
+    "reasoning": "«консервация» — наименее покупаемая категория пользователя (0 покупок за train-период) — максимум шансов на инкрементальную, а не замещающую покупку.",
+    "novel_category": "консервация",
+    "novel_item": "томатная паста"
+  },
+  {
+    "user_id": "fcf18a73-184b-4ddd-9338-3dc666662e03",
+    "path": "no_challenge",
+    "frequency_signal": {
+      "n_receipts_train": 87,
+      "threshold": 85
+    },
+    "model": null,
+    "reasoning": "Purchase frequency is already unusually high — an additional challenge is unlikely to be worth its reward cost."
+  },
+  {
+    "user_id": "e40508d1-6e66-400b-9116-33567c50b1c1",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 40,
+      "concentration": 0.505
+    },
+    "model": null,
+    "challenge_title": "Попробуйте: 5% на каша быстрого приготовления",
+    "description": "Скидка 5% на каша быстрого приготовления — категория, которую вы почти не покупаете. Попробуйте что-то новое.",
+    "target_categories": [
+      "готовая еда"
+    ],
+    "mechanic": "скидка на новую категорию",
+    "reward_rub": 12.5,
+    "reasoning": "«готовая еда» — наименее покупаемая категория пользователя (1 покупок за train-период) — максимум шансов на инкрементальную, а не замещающую покупку.",
+    "novel_category": "готовая еда",
+    "novel_item": "каша быстрого приготовления"
+  },
+  {
+    "user_id": "ffa53faa-301d-4935-b907-dda4b05aba98",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 35,
+      "concentration": 0.542
+    },
+    "model": null,
+    "challenge_title": "Попробуйте: 5% на торт",
+    "description": "Скидка 5% на торт — категория, которую вы почти не покупаете. Попробуйте что-то новое.",
+    "target_categories": [
+      "кондитерка"
+    ],
+    "mechanic": "скидка на новую категорию",
+    "reward_rub": 11.0,
+    "reasoning": "«кондитерка» — наименее покупаемая категория пользователя (0 покупок за train-период) — максимум шансов на инкрементальную, а не замещающую покупку.",
+    "novel_category": "кондитерка",
+    "novel_item": "торт"
+  },
+  {
+    "user_id": "c8311f98-5476-4495-a1f7-5952ec026c56",
+    "path": "no_challenge",
+    "frequency_signal": {
+      "n_receipts_train": 92,
+      "threshold": 85
+    },
+    "model": null,
+    "reasoning": "Purchase frequency is already unusually high — an additional challenge is unlikely to be worth its reward cost."
+  },
+  {
+    "user_id": "58f9091a-5e6a-4473-ac17-5b1bcda6e65b",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 48,
+      "concentration": 0.513
+    },
+    "model": null,
+    "challenge_title": "Попробуйте: 5% на пицца готовая",
+    "description": "Скидка 5% на пицца готовая — категория, которую вы почти не покупаете. Попробуйте что-то новое.",
+    "target_categories": [
+      "готовая еда"
+    ],
+    "mechanic": "скидка на новую категорию",
+    "reward_rub": 12.5,
+    "reasoning": "«готовая еда» — наименее покупаемая категория пользователя (0 покупок за train-период) — максимум шансов на инкрементальную, а не замещающую покупку.",
+    "novel_category": "готовая еда",
+    "novel_item": "пицца готовая"
+  },
+  {
+    "user_id": "e4039782-67e5-43c9-ae73-35a01662e2ce",
+    "path": "no_challenge",
+    "frequency_signal": {
+      "n_receipts_train": 90,
+      "threshold": 85
+    },
+    "model": null,
+    "reasoning": "Purchase frequency is already unusually high — an additional challenge is unlikely to be worth its reward cost."
+  },
+  {
+    "user_id": "ab870179-a80a-464d-9f0f-0133575d110d",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 37,
+      "concentration": 0.424
+    },
+    "model": null,
+    "challenge_title": "Попробуйте: 5% на изюм",
+    "description": "Скидка 5% на изюм — категория, которую вы почти не покупаете. Попробуйте что-то новое.",
+    "target_categories": [
+      "орехи и сухофрукты"
+    ],
+    "mechanic": "скидка на новую категорию",
+    "reward_rub": 13.0,
+    "reasoning": "«орехи и сухофрукты» — наименее покупаемая категория пользователя (1 покупок за train-период) — максимум шансов на инкрементальную, а не замещающую покупку.",
+    "novel_category": "орехи и сухофрукты",
+    "novel_item": "изюм"
+  },
+  {
+    "user_id": "7b46c9ce-c1a9-4388-b911-5be54c589997",
+    "path": "no_challenge",
+    "frequency_signal": {
+      "n_receipts_train": 89,
+      "threshold": 85
+    },
+    "model": null,
+    "reasoning": "Purchase frequency is already unusually high — an additional challenge is unlikely to be worth its reward cost."
+  },
+  {
+    "user_id": "4686fd9b-97a0-4271-af96-00667f7a2172",
+    "path": "generic",
+    "receptiveness_signal": {
+      "reason": "weak/insufficient pattern",
+      "n_receipts_train": 47,
+      "concentration": 0.351
+    },
+    "model": null,
+    "challenge_title": "Бонус за сладости и снеки",
+    "description": "Начислим баллы за покупку сладостей или снеков на сумму от 250 рублей.",
+    "target_categories": [
+      "сладости и снеки"
+    ],
+    "mechanic": "бонусные баллы",
+    "reward_rub": 35.0
+  },
+  {
+    "user_id": "e29473b0-c4b1-4d26-918a-2a3edf464515",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 39,
+      "concentration": 0.436
+    },
+    "model": null,
+    "challenge_title": "Попробуйте: 5% на маргарин",
+    "description": "Скидка 5% на маргарин — категория, которую вы почти не покупаете. Попробуйте что-то новое.",
+    "target_categories": [
+      "масла и жиры"
+    ],
+    "mechanic": "скидка на новую категорию",
+    "reward_rub": 8.0,
+    "reasoning": "«масла и жиры» — наименее покупаемая категория пользователя (1 покупок за train-период) — максимум шансов на инкрементальную, а не замещающую покупку.",
+    "novel_category": "масла и жиры",
+    "novel_item": "маргарин"
+  },
+  {
+    "user_id": "42cc0ea1-a7cd-4157-87ab-02660cebe09f",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 75,
+      "concentration": 0.691
+    },
+    "model": null,
+    "challenge_title": "Попробуйте: 5% на круассан",
+    "description": "Скидка 5% на круассан — категория, которую вы почти не покупаете. Попробуйте что-то новое.",
+    "target_categories": [
+      "кондитерка"
+    ],
+    "mechanic": "скидка на новую категорию",
+    "reward_rub": 11.0,
+    "reasoning": "«кондитерка» — наименее покупаемая категория пользователя (0 покупок за train-период) — максимум шансов на инкрементальную, а не замещающую покупку.",
+    "novel_category": "кондитерка",
+    "novel_item": "круассан"
+  }
+]
