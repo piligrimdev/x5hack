@@ -1,19 +1,31 @@
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useState } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BrandColors } from '@/constants/theme';
+import { BasketItem, useBasket } from '@/hooks/useBasket';
 import { LeaderboardEntry, Savings, Task } from '@/mock-data';
 
 interface SavingsViewProps {
   tasks: Task[];
   leaderboard: LeaderboardEntry[];
   savings: Savings;
+  token: string;
   goHome: () => void;
   goHistory: () => void;
 }
 
-export function SavingsView({ tasks, leaderboard, savings, goHome, goHistory }: SavingsViewProps) {
+export function SavingsView({ tasks, leaderboard, savings, token, goHome, goHistory }: SavingsViewProps) {
   const insets = useSafeAreaInsets();
+  const { items: basketItems, loading: basketLoading, message: basketMessage, sendInstruction } = useBasket(token);
+  const [instructionText, setInstructionText] = useState('');
+
+  function handleSendInstruction() {
+    const text = instructionText.trim();
+    if (!text) return;
+    sendInstruction(text);
+    setInstructionText('');
+  }
   const savedAmount = savings.withoutDiscount - savings.paid;
   const savedPct = Math.round((savedAmount / savings.withoutDiscount) * 100);
   const paidPct = (savings.paid / savings.withoutDiscount) * 100;
@@ -62,6 +74,44 @@ export function SavingsView({ tasks, leaderboard, savings, goHome, goHistory }: 
               <View style={[styles.legendDot, { backgroundColor: BrandColors.green }]} />
               <Text style={styles.legendText}>Сэкономлено {savedAmount} ₽</Text>
             </View>
+          </View>
+        </View>
+
+        {/* Weekly basket */}
+        <Text style={styles.sectionTitle}>Корзина на неделю</Text>
+        <View style={styles.basketCard}>
+          {basketLoading && basketItems.length === 0 ? (
+            <ActivityIndicator color={BrandColors.textSecondary} />
+          ) : basketItems.length === 0 ? (
+            <Text style={styles.basketEmptyText}>Пока нечего предложить — мало истории покупок</Text>
+          ) : (
+            basketItems.map((item: BasketItem) => (
+              <View key={item.product_id} style={styles.basketRow}>
+                <Text style={styles.basketItemName}>{item.name}</Text>
+                <Text style={styles.basketItemQty}>{item.quantity} шт</Text>
+              </View>
+            ))
+          )}
+          {basketMessage && <Text style={styles.basketMessage}>{basketMessage}</Text>}
+          <View style={styles.basketInputRow}>
+            <TextInput
+              style={styles.basketInput}
+              placeholder="Например: добавь молоко"
+              placeholderTextColor={BrandColors.textSecondary}
+              value={instructionText}
+              onChangeText={setInstructionText}
+              editable={!basketLoading}
+            />
+            <TouchableOpacity
+              style={styles.basketSendBtn}
+              onPress={handleSendInstruction}
+              activeOpacity={0.7}
+              disabled={basketLoading || !instructionText.trim()}>
+              {basketLoading
+                ? <ActivityIndicator color="#fff" size="small" />
+                : <Text style={styles.basketSendBtnText}>→</Text>
+              }
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -255,6 +305,65 @@ const styles = StyleSheet.create({
   },
   tasksList: {
     gap: 12,
+  },
+  basketCard: {
+    backgroundColor: BrandColors.cardBg,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: BrandColors.cardBorder,
+    padding: 14,
+    gap: 10,
+  },
+  basketRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  basketItemName: {
+    fontSize: 14,
+    color: BrandColors.textPrimary,
+  },
+  basketItemQty: {
+    fontSize: 13,
+    color: BrandColors.textSecondary,
+    fontWeight: '600',
+  },
+  basketEmptyText: {
+    fontSize: 13,
+    color: BrandColors.textSecondary,
+  },
+  basketMessage: {
+    fontSize: 12.5,
+    color: BrandColors.textSecondary,
+    fontStyle: 'italic',
+  },
+  basketInputRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 4,
+  },
+  basketInput: {
+    flex: 1,
+    backgroundColor: BrandColors.elementBg,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: BrandColors.textPrimary,
+  },
+  basketSendBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: BrandColors.dark,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  basketSendBtnText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '700',
   },
   taskCard: {
     backgroundColor: BrandColors.cardBg,

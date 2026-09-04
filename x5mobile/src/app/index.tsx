@@ -110,6 +110,7 @@ function AppContent({ token }: { token: string }) {
             tasks={data.tasks}
             leaderboard={data.leaderboard}
             savings={{ paid: totalPaid, withoutDiscount: totalPaid + totalSaved }}
+            token={token}
             goHome={() => navigate('home')}
             goHistory={() => navigate('history')}
           />
