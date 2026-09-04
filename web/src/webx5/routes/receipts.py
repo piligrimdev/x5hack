@@ -158,7 +158,10 @@ def create_receipt(
         )
 
     total_base = sum(i.base_price_at_purchase * i.quantity for i in item_responses)
-    total_paid = sum(i.paid_price * i.quantity for i in item_responses)
+    total_paid_before_cashback = sum(i.paid_price * i.quantity for i in item_responses)
+    cashback_rub = Decimal(str(receipt.cashback_applied_rub))
+    discount_saved = total_base - total_paid_before_cashback
+    total_paid = max(total_paid_before_cashback - cashback_rub, Decimal("0"))
 
     return ReceiptResponse(
         id=receipt.id,
@@ -169,7 +172,8 @@ def create_receipt(
         items=item_responses,
         total_base=total_base,
         total_paid=total_paid,
-        total_saved=(total_base - total_paid) + int(receipt.cashback_applied_rub),
+        total_saved=discount_saved + cashback_rub,
+        discount_saved_rub=discount_saved,
         cashback_applied_points=int(receipt.cashback_applied_points),
         cashback_applied_rub=int(receipt.cashback_applied_rub),
         points_rate_at_purchase=(
@@ -197,9 +201,9 @@ def list_receipts(
         total_base = sum(Decimal(str(ri.base_price_at_purchase)) * ri.quantity for ri, _ in items_data)
         total_paid_before_cashback = sum(Decimal(str(ri.paid_price)) * ri.quantity for ri, _ in items_data)
         cashback_rub = Decimal(str(receipt.cashback_applied_rub))
-        # Feature 007: cashback reduces final paid amount and counts as savings (FR-013).
+        discount_saved = total_base - total_paid_before_cashback
         total_paid = max(total_paid_before_cashback - cashback_rub, Decimal("0"))
-        total_saved = (total_base - total_paid_before_cashback) + cashback_rub
+        total_saved = discount_saved + cashback_rub
 
         store = session.get(__import__("webx5.entities.store", fromlist=["Store"]).Store, receipt.store_id)
 
@@ -213,6 +217,9 @@ def list_receipts(
                 total_base=total_base,
                 total_paid=total_paid,
                 total_saved=total_saved,
+                discount_saved_rub=discount_saved,
+                cashback_applied_points=int(receipt.cashback_applied_points),
+                cashback_applied_rub=int(receipt.cashback_applied_rub),
                 items_count=len(items_data),
             )
         )
@@ -269,8 +276,9 @@ def get_receipt(
     total_base = sum(i.base_price_at_purchase * i.quantity for i in detail_items)
     total_paid_before_cashback = sum(i.paid_price * i.quantity for i in detail_items)
     cashback_rub = Decimal(str(receipt.cashback_applied_rub))
+    discount_saved = total_base - total_paid_before_cashback
     total_paid = max(total_paid_before_cashback - cashback_rub, Decimal("0"))
-    total_saved = (total_base - total_paid_before_cashback) + cashback_rub
+    total_saved = discount_saved + cashback_rub
 
     return ReceiptDetailResponse(
         id=receipt.id,
@@ -285,6 +293,7 @@ def get_receipt(
         total_base=total_base,
         total_paid=total_paid,
         total_saved=total_saved,
+        discount_saved_rub=discount_saved,
         cashback_applied_points=int(receipt.cashback_applied_points),
         cashback_applied_rub=int(receipt.cashback_applied_rub),
         points_rate_at_purchase=(

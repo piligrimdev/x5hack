@@ -98,6 +98,7 @@ class ReceiptResponse(BaseModel):
     total_base: JsonDecimal
     total_paid: JsonDecimal
     total_saved: JsonDecimal
+    discount_saved_rub: JsonDecimal = Decimal("0")
     cashback_applied_points: int = 0
     cashback_applied_rub: int = 0
     points_rate_at_purchase: int | None = None
@@ -124,6 +125,9 @@ class ReceiptListItem(BaseModel):
     total_base: JsonDecimal
     total_paid: JsonDecimal
     total_saved: JsonDecimal
+    discount_saved_rub: JsonDecimal = Decimal("0")
+    cashback_applied_points: int = 0
+    cashback_applied_rub: int = 0
     items_count: int
 
     model_config = {"from_attributes": True}
@@ -150,6 +154,7 @@ class ReceiptDetailResponse(BaseModel):
     total_base: JsonDecimal
     total_paid: JsonDecimal
     total_saved: JsonDecimal
+    discount_saved_rub: JsonDecimal = Decimal("0")
     cashback_applied_points: int = 0
     cashback_applied_rub: int = 0
     points_rate_at_purchase: int | None = None

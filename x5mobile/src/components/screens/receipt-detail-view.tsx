@@ -55,10 +55,18 @@ export function ReceiptDetailView({ token, receiptId, goBack }: ReceiptDetailVie
               <Text style={styles.summaryLabel}>Без скидок</Text>
               <Text style={styles.summaryValue}>{formatMoney(detail.total_base)}</Text>
             </View>
-            {detail.total_saved > 0 && (
+            {detail.discount_saved_rub > 0 && (
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Скидка</Text>
-                <Text style={[styles.summaryValue, styles.savedValue]}>−{formatMoney(detail.total_saved)}</Text>
+                <Text style={[styles.summaryValue, styles.savedValue]}>−{formatMoney(detail.discount_saved_rub)}</Text>
+              </View>
+            )}
+            {detail.cashback_applied_rub > 0 && (
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>
+                  Бонусы{detail.cashback_applied_points > 0 ? ` (${detail.cashback_applied_points})` : ''}
+                </Text>
+                <Text style={[styles.summaryValue, styles.savedValue]}>−{formatMoney(detail.cashback_applied_rub)}</Text>
               </View>
             )}
             <View style={[styles.summaryRow, styles.summaryRowTotal]}>

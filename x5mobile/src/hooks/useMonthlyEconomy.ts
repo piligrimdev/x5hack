@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
 
 import { apiFetch } from '@/api/client';
+import { receiptSavedRub } from '@/hooks/useReceipts';
 
 interface ReceiptSlim {
   purchase_date: string;
   total_saved: number;
   total_base: number;
+  discount_saved_rub?: number;
+  cashback_applied_rub?: number;
 }
 
 export interface MonthData {
@@ -17,6 +20,7 @@ export interface MonthData {
 export interface MonthlyEconomy {
   months: MonthData[];
   currentMonthSaved: number;
+  currentMonthCashbackRub: number;
   currentMonthBase: number;
   consecutiveGrowthMonths: number;
 }
@@ -37,10 +41,12 @@ export function useMonthlyEconomy(token: string) {
     apiFetch<{ items: ReceiptSlim[] }>('/receipts?size=200', token)
       .then(resp => {
         const bySaved = new Map<string, number>();
+        const byCashback = new Map<string, number>();
         const byBase = new Map<string, number>();
         for (const r of resp.items) {
           const key = monthKey(new Date(r.purchase_date));
-          bySaved.set(key, (bySaved.get(key) ?? 0) + (r.total_saved ?? 0));
+          bySaved.set(key, (bySaved.get(key) ?? 0) + receiptSavedRub(r));
+          byCashback.set(key, (byCashback.get(key) ?? 0) + (r.cashback_applied_rub ?? 0));
           byBase.set(key, (byBase.get(key) ?? 0) + (r.total_base ?? 0));
         }
 
@@ -54,6 +60,7 @@ export function useMonthlyEconomy(token: string) {
 
         const currentKey = monthKey(now);
         const currentMonthSaved = Math.round(bySaved.get(currentKey) ?? 0);
+        const currentMonthCashbackRub = Math.round(byCashback.get(currentKey) ?? 0);
         const currentMonthBase = Math.round(byBase.get(currentKey) ?? 0);
 
         let streak = 0;
@@ -62,7 +69,13 @@ export function useMonthlyEconomy(token: string) {
           else break;
         }
 
-        setData({ months, currentMonthSaved, currentMonthBase, consecutiveGrowthMonths: streak });
+        setData({
+          months,
+          currentMonthSaved,
+          currentMonthCashbackRub,
+          currentMonthBase,
+          consecutiveGrowthMonths: streak,
+        });
       })
       .catch(() => {})
       .finally(() => setLoading(false));

@@ -1,7 +1,7 @@
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { BrandColors } from '@/constants/theme';
-import type { ReceiptListItem as ReceiptListItemType } from '@/hooks/useReceipts';
+import { receiptSavedRub, type ReceiptListItem as ReceiptListItemType } from '@/hooks/useReceipts';
 
 function _formatDate(iso: string): string {
   const d = new Date(iso);
@@ -25,6 +25,7 @@ interface Props {
 
 export function ReceiptListItem({ item, onPress }: Props) {
   const label = [item.store_format_name, item.store_geo_cluster].filter(Boolean).join(', ') || 'Магазин';
+  const saved = receiptSavedRub(item);
 
   return (
     <TouchableOpacity style={styles.card} activeOpacity={0.7} onPress={onPress}>
@@ -37,8 +38,8 @@ export function ReceiptListItem({ item, onPress }: Props) {
       </View>
       <View style={styles.right}>
         <Text style={styles.sum}>{_formatMoney(item.total_paid)}</Text>
-        {item.total_saved > 0 && (
-          <Text style={styles.saved}>−{_formatMoney(item.total_saved)}</Text>
+        {saved > 0 && (
+          <Text style={styles.saved}>−{_formatMoney(saved)}</Text>
         )}
       </View>
       <Text style={styles.chevron}>›</Text>

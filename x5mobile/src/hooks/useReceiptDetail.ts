@@ -21,6 +21,9 @@ export interface ReceiptDetail {
   total_base: number;
   total_paid: number;
   total_saved: number;
+  discount_saved_rub: number;
+  cashback_applied_points: number;
+  cashback_applied_rub: number;
 }
 
 export function useReceiptDetail(token: string | null, receiptId: string | null) {

@@ -33,7 +33,6 @@ export function HomeView({ token, onHistory, onChallenges, onPoints }: HomeViewP
   const { monthlyEconomy } = useMonthlyEconomy(token);
 
   const totalSaved = economy?.total_saved ?? 0;
-  const totalPaid = economy?.total_paid ?? 0;
   const receiptsCount = economy?.receipts_count ?? 0;
 
   const points = pointsBalance?.balance ?? 0;
@@ -43,7 +42,11 @@ export function HomeView({ token, onHistory, onChallenges, onPoints }: HomeViewP
   const currentMonthSaved = monthlyEconomy?.currentMonthSaved ?? 0;
   const currentMonthBase = monthlyEconomy?.currentMonthBase ?? 0;
   const streak = monthlyEconomy?.consecutiveGrowthMonths ?? 0;
-  const savingsPct = currentMonthBase > 0 ? Math.round((currentMonthSaved / currentMonthBase) * 100) : 0;
+
+  const spentBonusesRub = monthlyEconomy?.currentMonthCashbackRub ?? 0;
+  const spentPct = currentMonthBase > 0 && spentBonusesRub > 0
+    ? Math.round((spentBonusesRub / currentMonthBase) * 100)
+    : 0;
 
   const monthName = RU_MONTHS[new Date().getMonth()];
 
@@ -225,14 +228,14 @@ export function HomeView({ token, onHistory, onChallenges, onPoints }: HomeViewP
                 </View>
               )}
 
-              {currentMonthSaved > 0 && currentMonthBase > 0 && (
+              {spentBonusesRub > 0 && (
                 <View style={styles.challengesBlock}>
                   <View style={styles.challengesRow}>
                     <Text style={styles.challengesLabel}>Потрачено бонусов в этом месяце</Text>
-                    <Text style={styles.challengesAmount}>+{fmt(currentMonthSaved)} ₽</Text>
+                    <Text style={styles.challengesAmount}>+{fmt(spentBonusesRub)} ₽</Text>
                   </View>
                   <Text style={styles.challengesHint}>
-                    Бонусы снизили стоимость покупок на {savingsPct}% — продолжайте в том же темпе
+                    Бонусы снизили стоимость покупок на {spentPct}% — продолжайте в том же темпе
                   </Text>
                 </View>
               )}
