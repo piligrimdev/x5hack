@@ -24,6 +24,9 @@ class CatalogRepository:
     def get_product_by_sku(self, session: Session, sku_id: str) -> Product | None:
         return session.scalars(select(Product).where(Product.sku_id == sku_id)).first()
 
+    def get_category_by_name(self, session: Session, name: str) -> Category | None:
+        return session.scalars(select(Category).where(Category.name == name)).first()
+
     def get_or_create_category_by_name(self, session: Session, name: str) -> Category:
         category = session.scalars(select(Category).where(Category.name == name)).first()
         if category is None:

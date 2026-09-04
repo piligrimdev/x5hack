@@ -2,6 +2,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from webx5.crud.user import UserRepository
+from webx5.entities.loyalty import LoyaltyCard
 from webx5.schemas.auth import PhoneRequest, RefreshRequest, TokenPairResponse
 from webx5.utils.auth import (
     decode_refresh_jwt,
@@ -25,6 +26,9 @@ class AuthService:
         if existing:
             raise HTTPException(status_code=409, detail="Phone already registered")
         user = self.user_repo.create(session, form.phone)
+        card = LoyaltyCard(id=user.id, phone=form.phone)
+        session.add(card)
+        session.commit()
         return self._issue_pair(user.id)
 
     def login(self, form: PhoneRequest, session: Session) -> TokenPairResponse:

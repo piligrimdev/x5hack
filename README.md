@@ -70,17 +70,75 @@ docker compose build          # Пересобрать образ без зап�
 
 > Миграции БД применяются автоматически при каждом старте контейнера.
 
-### Заполнение каталога товарами
+### Заполнение данными (seed-скрипты)
+
+Все скрипты идемпотентны: повторный запуск не создаёт дубликатов.
+
+#### 1. Товары (из JSON/JSONL файла)
 
 ```bash
-# Запустить seed-скрипт с файлом данных (JSON array или JSONL)
 docker compose run --rm --entrypoint python \
   -v "/абсолютный/путь/к/unique_products.json:/tmp/products_data.json" \
   -e SEED_FILE_PATH=/tmp/products_data.json \
   web scripts/seed_products.py
 ```
 
-> Скрипт идемпотентен: повторный запуск обновит существующие товары без дублирования.
+#### 2. Магазины (из датасета)
+
+```bash
+docker compose run --rm --entrypoint python \
+  -e SEED_FILE_PATH=/data/dataset \
+  web scripts/seed_stores.py
+```
+
+> Сканирует датасет и создаёт StoreFormat на каждую сеть и Store на каждую (сеть, район) пару.
+
+#### 3. Скидки (синтетические, из датасета)
+
+```bash
+docker compose run --rm --entrypoint python \
+  -e SEED_FILE_PATH=/data/dataset \
+  web scripts/seed_discounts.py
+```
+
+> Создаёт Discount записи для каждой уникальной пары (категория, процент скидки) из промо-товаров.
+
+#### 4. Чеки и карты лояльности (из датасета)
+
+```bash
+# Все пользователи (10 000, медленно)
+docker compose run --rm --entrypoint python \
+  -e SEED_FILE_PATH=/data/dataset \
+  web scripts/seed_receipts.py
+
+# Ограниченная выборка (рекомендуется для теста)
+docker compose run --rm --entrypoint python \
+  -e SEED_FILE_PATH=/data/dataset \
+  -e SEED_LIMIT=100 \
+  web scripts/seed_receipts.py
+```
+
+> Требует предварительного запуска seed_products.py, seed_stores.py и seed_discounts.py.
+
+#### Генерация демо-данных без датасета
+
+```bash
+# Магазины: X5-сети × московские округа (24 магазина)
+docker compose exec web python scripts/generate_stores.py
+
+# Скидки: акции / лояльность / персональные / уценки (47 записей)
+docker compose exec web python scripts/generate_discounts.py
+```
+
+> Скрипты идемпотентны и не требуют файла датасета — данные захардкожены.
+> Запускать в порядке: сначала `generate_stores`, затем `generate_discounts`
+> (скидки типа `by_format` ссылаются на форматы магазинов).
+
+#### Порядок запуска для полного сидирования из датасета
+
+```bash
+seed_products → seed_stores → seed_discounts → seed_receipts
+```
 
 ---
 
