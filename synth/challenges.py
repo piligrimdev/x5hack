@@ -12,9 +12,18 @@ from pathlib import Path
 
 import requests
 
+from synth.catalog import SKU, build_catalog, skus_by_category
 from synth.config import SynthConfig
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+
+# Default target_quantity for paths that only name a category, not a
+# specific item (generic pool + personal/LLM) — the LLM prompt doesn't ask
+# for a unit count, and the generic pool's mechanics are worded as
+# spend-threshold/percentage offers rather than "buy N", so this is a
+# deliberate simplification to fit the single sku_id+quantity progress
+# model, not a value derived from the offer's own text.
+PERSONAL_TARGET_QUANTITY = 2
 
 # Fixed pool of non-personalized "partner brand" offers for users where no
 # reliable purchase pattern was detected. None of these target a
@@ -28,6 +37,7 @@ GENERIC_CHALLENGES: list[dict] = [
         "target_categories": ["молочные продукты и яйца"],
         "mechanic": "партнёрский кэшбэк",
         "reward_rub": 50.0,
+        "target_quantity": PERSONAL_TARGET_QUANTITY,
     },
     {
         "challenge_title": "Бонус за покупку свежих овощей и фруктов",
@@ -35,6 +45,7 @@ GENERIC_CHALLENGES: list[dict] = [
         "target_categories": ["овощи", "фрукты"],
         "mechanic": "бонусные баллы",
         "reward_rub": 40.0,
+        "target_quantity": PERSONAL_TARGET_QUANTITY,
     },
     {
         "challenge_title": "Скидка на хозтовары от партнёра",
@@ -42,6 +53,7 @@ GENERIC_CHALLENGES: list[dict] = [
         "target_categories": ["бытовая химия", "товары для дома"],
         "mechanic": "партнёрская скидка",
         "reward_rub": 60.0,
+        "target_quantity": PERSONAL_TARGET_QUANTITY,
     },
     {
         "challenge_title": "Кэшбэк за готовую еду",
@@ -49,6 +61,7 @@ GENERIC_CHALLENGES: list[dict] = [
         "target_categories": ["готовая еда"],
         "mechanic": "кэшбэк",
         "reward_rub": 55.0,
+        "target_quantity": PERSONAL_TARGET_QUANTITY,
     },
     {
         "challenge_title": "Бонус за покупку рыбы и морепродуктов",
@@ -56,6 +69,7 @@ GENERIC_CHALLENGES: list[dict] = [
         "target_categories": ["рыба и морепродукты"],
         "mechanic": "бонусные баллы",
         "reward_rub": 70.0,
+        "target_quantity": PERSONAL_TARGET_QUANTITY,
     },
     {
         "challenge_title": "Скидка на личную гигиену от партнёра",
@@ -63,6 +77,7 @@ GENERIC_CHALLENGES: list[dict] = [
         "target_categories": ["личная гигиена"],
         "mechanic": "партнёрская скидка",
         "reward_rub": 45.0,
+        "target_quantity": PERSONAL_TARGET_QUANTITY,
     },
     {
         "challenge_title": "Бонус за сладости и снеки",
@@ -70,6 +85,7 @@ GENERIC_CHALLENGES: list[dict] = [
         "target_categories": ["сладости и снеки"],
         "mechanic": "бонусные баллы",
         "reward_rub": 35.0,
+        "target_quantity": PERSONAL_TARGET_QUANTITY,
     },
     {
         "challenge_title": "Кэшбэк за товары для животных",
@@ -77,6 +93,7 @@ GENERIC_CHALLENGES: list[dict] = [
         "target_categories": ["товары для животных"],
         "mechanic": "кэшбэк",
         "reward_rub": 50.0,
+        "target_quantity": PERSONAL_TARGET_QUANTITY,
     },
 ]
 
@@ -157,9 +174,61 @@ def compute_receptiveness(
     }
 
 
-def pick_generic_challenge(user_id: str) -> dict:
-    idx = int(hashlib.sha256(user_id.encode("utf-8")).hexdigest(), 16) % len(GENERIC_CHALLENGES)
-    return dict(GENERIC_CHALLENGES[idx])
+def _hash_index(seed_key: str, n: int) -> int:
+    return int(hashlib.sha256(seed_key.encode("utf-8")).hexdigest(), 16) % n
+
+
+def pick_sku_in_category(config: SynthConfig, category: str, seed_key: str) -> SKU | None:
+    """Deterministically pick one SKU from `category` — same seed_key always
+    picks the same SKU. Used for paths that only name a category (generic
+    pool, personal/LLM), which never chose a specific item."""
+    by_category = skus_by_category(build_catalog(config))
+    skus = by_category.get(category)
+    if not skus:
+        return None
+    return skus[_hash_index(seed_key, len(skus))]
+
+
+def find_sku_id_for_item(config: SynthConfig, category: str, item: str) -> str | None:
+    """Resolve a (category, item) text pair — already chosen by a
+    deterministic builder (spend_threshold's favorite_item, category_expansion's
+    novel_item) — to its stable catalog sku_id."""
+    catalog = build_catalog(config)
+    for sku in catalog.values():
+        if sku.category == category and sku.item == item:
+            return sku.sku_id
+    return None
+
+
+def _pluralize_times(n: int) -> str:
+    """Russian plural of "раз" (time/times) for a count — e.g. 1 раз,
+    2/3/4 раза, 5-20 раз."""
+    if n % 10 == 1 and n % 100 != 11:
+        return f"{n} раз"
+    if n % 10 in (2, 3, 4) and n % 100 not in (12, 13, 14):
+        return f"{n} раза"
+    return f"{n} раз"
+
+
+def item_action_description(item: str, quantity: int, reward_rub: float) -> str:
+    """The concrete, trackable action behind a challenge — names the exact
+    item and count progress is measured against (target_sku_id/
+    target_quantity), so the copy never promises more than that (a whole
+    category, a spend threshold) when the tracking can't actually honor it.
+    Used for generic-pool and personal/llm offers, which only ever named a
+    category — spend_threshold/category_expansion already name their own
+    specific item in their description and don't need this."""
+    return f"Купи «{item}» {_pluralize_times(quantity)} и получи {reward_rub:.0f} ₽."
+
+
+def pick_generic_challenge(user_id: str, config: SynthConfig) -> dict:
+    idx = _hash_index(user_id, len(GENERIC_CHALLENGES))
+    offer = dict(GENERIC_CHALLENGES[idx])
+    sku = pick_sku_in_category(config, offer["target_categories"][0], seed_key=f"{user_id}:sku")
+    offer["target_sku_id"] = sku.sku_id if sku else None
+    if sku is not None:
+        offer["description"] = item_action_description(sku.item, offer["target_quantity"], offer["reward_rub"])
+    return offer
 
 
 def estimate_max_reward_rub(profile: dict, min_reward: float = 20.0, multiplier: float = 4.0) -> float:
@@ -257,6 +326,8 @@ def build_spend_threshold_challenge(
         "spend_threshold_rub": threshold_rub,
         "favorite_item": fav_item,
         "baseline_mean_receipt_rub": round(mean_receipt_total, 2),
+        "target_sku_id": find_sku_id_for_item(config, fav_category, fav_item),
+        "target_quantity": 1,
     }
 
 
@@ -354,6 +425,8 @@ def build_category_expansion_challenge(
         ),
         "novel_category": target_category,
         "novel_item": target_item,
+        "target_sku_id": find_sku_id_for_item(config, target_category, target_item),
+        "target_quantity": 1,
     }
 
 
@@ -523,110 +596,146 @@ def compute_frequency_saturation(
     return saturated, {"n_receipts_train": n_receipts_train, "threshold": min_receipts_for_no_challenge}
 
 
+# The three independent "personal" challenge slots every non-saturated user
+# now gets a shot at, one attempt each — not a single either/or choice
+# between them like the old `challenge_type` CLI flag was.
+PERSONAL_CHALLENGE_SLOTS = ("llm", "spend_threshold", "category_expansion")
+
+
+def _pick_distinct_generic_offer(user_id: str, config: SynthConfig, used_indices: list[int]) -> dict:
+    """Like `pick_generic_challenge`, but skips any offer index already used
+    for this user's other slots — so a user who falls back to generic on
+    more than one slot gets distinct offers, not duplicate cards."""
+    idx = _hash_index(f"{user_id}:generic", len(GENERIC_CHALLENGES))
+    while idx in used_indices:
+        idx = (idx + 1) % len(GENERIC_CHALLENGES)
+    used_indices.append(idx)
+    offer = dict(GENERIC_CHALLENGES[idx])
+    sku = pick_sku_in_category(config, offer["target_categories"][0], seed_key=f"{user_id}:sku:{idx}")
+    offer["target_sku_id"] = sku.sku_id if sku else None
+    if sku is not None:
+        offer["description"] = item_action_description(sku.item, offer["target_quantity"], offer["reward_rub"])
+    return offer
+
+
 def generate_challenge_for_user(
     profile: dict,
     config: SynthConfig,
     model: str,
     api_key: str | None = None,
     dry_run: bool = False,
-    challenge_type: str = "llm",
-) -> dict:
-    """Route one profile to no-challenge, personal, or generic (catalog).
+) -> list[dict]:
+    """Route one profile to no-challenge, or up to `PERSONAL_CHALLENGE_SLOTS`
+    challenges (one per slot: `llm`, `spend_threshold`, `category_expansion`).
 
-    `challenge_type` picks how a "personal" challenge gets built once a
-    profile is receptive:
-    - `"llm"` (default): free-form challenge generated via OpenRouter (see
-      `build_personal_prompt`/`call_openrouter`).
-    - `"spend_threshold"`: deterministic "spend >= N rub, get a discount on
-      your favorite product" (see `build_spend_threshold_challenge`) — no
-      API call, no cost, always the same shape. Falls back to generic if
-      there isn't enough train-period history to identify a favorite
-      product (same as any other "can't build this" case).
-    - `"category_expansion"`: deterministic discount on a category this
-      user essentially never buys (see `build_category_expansion_challenge`)
-      — targets incrementality (a genuinely new purchase) over relevance
-      (a habitual one, likely to happen regardless of the reward). Falls
-      back to generic on the same "not enough history" condition.
+    Saturated users (`compute_frequency_saturation`) get a single
+    `no_challenge` record and nothing else — an additional challenge isn't
+    worth its reward cost for someone already buying at max frequency.
 
-    Any failure on the LLM path (network error, invalid/forbidden model
-    output) falls back to a generic challenge rather than shipping an
-    unvalidated result — `path` records what actually happened
-    (`no_challenge`, `personal`, `generic`, or `generic_fallback`).
+    Everyone else gets exactly `len(PERSONAL_CHALLENGE_SLOTS)` records, one
+    per slot. If the user isn't `receptive` (`compute_receptiveness`), none
+    of the three builders are even attempted — all three slots fall back to
+    a distinct generic offer (`path="generic"`). If receptive, each slot's
+    builder is attempted independently; a slot whose builder fails on its
+    own criteria (thin favorite-item history for `spend_threshold`, an LLM
+    network/validation error for `llm` — `category_expansion` has no
+    additional failure mode once there's any purchase history) falls back
+    to its own distinct generic offer (`path="generic_fallback"`,
+    `challenge_slot` still names which slot it's replacing) rather than
+    dropping the slot or shipping an unvalidated result. So the mix a user
+    ends up with ranges from 3 personal (strong pattern) through 2
+    generic + 1 personal down to 3 generic (weak pattern / everything
+    failed) — never fewer than 3 records for a non-saturated user.
     """
-    if challenge_type not in ("llm", "spend_threshold", "category_expansion"):
-        raise ValueError(f"unknown challenge_type: {challenge_type!r}")
-
     saturated, frequency_signal = compute_frequency_saturation(profile, config)
     if saturated:
-        return {
+        return [{
             "user_id": profile["user_id"],
             "path": "no_challenge",
             "frequency_signal": frequency_signal,
             "model": None,
             "reasoning": "Purchase frequency is already unusually high — an additional challenge is unlikely to be worth its reward cost.",
-        }
+        }]
 
     receptive, signal = compute_receptiveness(profile, config)
+    used_generic_indices: list[int] = []
+
+    def _generic(slot: str, path: str, error: str | None = None, model_attempted: str | None = None) -> dict:
+        offer = _pick_distinct_generic_offer(profile["user_id"], config, used_generic_indices)
+        record = {
+            "user_id": profile["user_id"], "path": path, "receptiveness_signal": signal,
+            "model": model_attempted, "challenge_slot": slot, **offer,
+        }
+        if error is not None:
+            record["error"] = error
+        return record
+
+    results: list[dict] = []
 
     if not receptive:
-        offer = pick_generic_challenge(profile["user_id"])
-        return {"user_id": profile["user_id"], "path": "generic", "receptiveness_signal": signal, "model": None, **offer}
+        for slot in PERSONAL_CHALLENGE_SLOTS:
+            results.append(_generic(slot, "generic"))
+        return results
 
-    if challenge_type == "spend_threshold":
-        challenge = build_spend_threshold_challenge(profile, config)
-        if challenge is None:
-            offer = pick_generic_challenge(profile["user_id"])
-            return {
-                "user_id": profile["user_id"],
-                "path": "generic_fallback",
-                "receptiveness_signal": signal,
-                "model": None,
-                "error": "not enough train-period history to identify a favorite product",
-                **offer,
-            }
-        return {"user_id": profile["user_id"], "path": "personal", "receptiveness_signal": signal, "model": None, **challenge}
+    # slot: spend_threshold — deterministic, no API call
+    challenge = build_spend_threshold_challenge(profile, config)
+    if challenge is None:
+        results.append(_generic(
+            "spend_threshold", "generic_fallback",
+            error="not enough train-period history to identify a favorite product",
+        ))
+    else:
+        results.append({
+            "user_id": profile["user_id"], "path": "personal", "receptiveness_signal": signal,
+            "model": None, "challenge_slot": "spend_threshold", **challenge,
+        })
 
-    if challenge_type == "category_expansion":
-        challenge = build_category_expansion_challenge(profile, config)
-        if challenge is None:
-            offer = pick_generic_challenge(profile["user_id"])
-            return {
-                "user_id": profile["user_id"],
-                "path": "generic_fallback",
-                "receptiveness_signal": signal,
-                "model": None,
-                "error": "not enough train-period history to compute category counts",
-                **offer,
-            }
-        return {"user_id": profile["user_id"], "path": "personal", "receptiveness_signal": signal, "model": None, **challenge}
+    # slot: category_expansion — deterministic, no API call
+    challenge = build_category_expansion_challenge(profile, config)
+    if challenge is None:
+        results.append(_generic(
+            "category_expansion", "generic_fallback",
+            error="not enough train-period history to compute category counts",
+        ))
+    else:
+        results.append({
+            "user_id": profile["user_id"], "path": "personal", "receptiveness_signal": signal,
+            "model": None, "challenge_slot": "category_expansion", **challenge,
+        })
 
+    # slot: llm
     max_reward = estimate_max_reward_rub(profile)
-
     if dry_run:
-        return {
-            "user_id": profile["user_id"],
-            "path": "personal_dry_run",
-            "receptiveness_signal": signal,
-            "model": model,
-            "max_reward_rub": max_reward,
+        results.append({
+            "user_id": profile["user_id"], "path": "personal_dry_run", "receptiveness_signal": signal,
+            "model": model, "challenge_slot": "llm", "max_reward_rub": max_reward,
             "note": "dry run — no LLM call made",
-        }
+        })
+    else:
+        system, user_msg = build_personal_prompt(profile, config, max_reward)
+        try:
+            raw = call_openrouter(model, system, user_msg, api_key)
+            challenge = parse_and_validate_challenge(raw, config, max_reward)
+            # The LLM only names a category, never a specific item — pick one
+            # deterministically so progress can be tracked against a single SKU.
+            challenge["target_quantity"] = PERSONAL_TARGET_QUANTITY
+            sku = pick_sku_in_category(config, challenge["target_categories"][0], seed_key=f"{profile['user_id']}:sku:llm")
+            challenge["target_sku_id"] = sku.sku_id if sku else None
+            if sku is not None:
+                # The LLM's description talks about the whole category —
+                # replace it with the concrete item/count actually tracked,
+                # keeping the LLM's own (personalized) challenge_title.
+                challenge["description"] = item_action_description(
+                    sku.item, PERSONAL_TARGET_QUANTITY, challenge["reward_rub"]
+                )
+            results.append({
+                "user_id": profile["user_id"], "path": "personal", "receptiveness_signal": signal,
+                "model": model, "challenge_slot": "llm", **challenge,
+            })
+        except Exception as e:  # noqa: BLE001 — deliberately broad: any failure must fall back, not propagate
+            results.append(_generic("llm", "generic_fallback", error=str(e), model_attempted=model))
 
-    system, user_msg = build_personal_prompt(profile, config, max_reward)
-    try:
-        raw = call_openrouter(model, system, user_msg, api_key)
-        challenge = parse_and_validate_challenge(raw, config, max_reward)
-        return {"user_id": profile["user_id"], "path": "personal", "receptiveness_signal": signal, "model": model, **challenge}
-    except Exception as e:  # noqa: BLE001 — deliberately broad: any failure must fall back, not propagate
-        offer = pick_generic_challenge(profile["user_id"])
-        return {
-            "user_id": profile["user_id"],
-            "path": "generic_fallback",
-            "receptiveness_signal": signal,
-            "model": model,
-            "error": str(e),
-            **offer,
-        }
+    return results
 
 
 def generate_challenges(
@@ -636,14 +745,80 @@ def generate_challenges(
     api_key: str | None = None,
     dry_run: bool = False,
     delay_seconds: float = 0.0,
-    challenge_type: str = "llm",
 ) -> list[dict]:
-    results = []
+    results: list[dict] = []
     for i, profile in enumerate(profiles):
-        results.append(generate_challenge_for_user(profile, config, model, api_key, dry_run, challenge_type))
-        if not dry_run and challenge_type == "llm" and delay_seconds > 0 and i < len(profiles) - 1:
+        results.extend(generate_challenge_for_user(profile, config, model, api_key, dry_run))
+        if not dry_run and delay_seconds > 0 and i < len(profiles) - 1:
             time.sleep(delay_seconds)
     return results
+
+
+def backfill_target_sku(challenges: list[dict], config: SynthConfig) -> list[dict]:
+    """Add target_sku_id/target_quantity to challenge records written before
+    these fields existed, without re-calling the LLM.
+
+    Uses whatever item-level info the record already carries
+    (favorite_item/novel_item from the deterministic spend_threshold/
+    category_expansion paths) when present; otherwise falls back to the
+    same category-hash pick used for newly-generated generic/personal
+    records (`pick_sku_in_category`). Records that already have
+    target_sku_id, or that carry no target_categories at all
+    (`no_challenge`), pass through unchanged.
+    """
+    result: list[dict] = []
+    for original in challenges:
+        c = dict(original)
+        if "target_sku_id" in c or not c.get("target_categories"):
+            result.append(c)
+            continue
+
+        category = c["target_categories"][0]
+        item = c.get("favorite_item") or c.get("novel_item")
+        sku_id = find_sku_id_for_item(config, category, item) if item else None
+        if sku_id is not None:
+            c["target_quantity"] = 1
+        else:
+            sku = pick_sku_in_category(config, category, seed_key=f"{c['user_id']}:sku")
+            sku_id = sku.sku_id if sku else None
+            c["target_quantity"] = PERSONAL_TARGET_QUANTITY
+
+        c["target_sku_id"] = sku_id
+        result.append(c)
+    return result
+
+
+def rewrite_descriptions_for_tracked_item(challenges: list[dict], config: SynthConfig) -> list[dict]:
+    """Rewrite `description` to name the exact target_sku_id/target_quantity
+    a record tracks, for records whose original copy described a whole
+    category instead — generic-pool offers and llm-slot personal
+    challenges. No LLM call needed: the item is looked up from the
+    already-resolved target_sku_id.
+
+    A record already names its own specific item — and is left untouched —
+    only if it carries `favorite_item`/`novel_item`, set exclusively by
+    `build_spend_threshold_challenge`/`build_category_expansion_challenge`
+    when they actually succeed. `challenge_slot` alone is NOT a reliable
+    signal here: a `generic_fallback` record still carries
+    `challenge_slot="spend_threshold"` (naming which slot it's replacing)
+    while its actual copy came from `GENERIC_CHALLENGES` — category-level,
+    same as any other generic offer — so it must still be rewritten.
+    `no_challenge` records and any record whose target_sku_id didn't
+    resolve to a real catalog SKU are left untouched.
+    """
+    catalog = build_catalog(config)
+    result: list[dict] = []
+    for original in challenges:
+        c = dict(original)
+        sku_id = c.get("target_sku_id")
+        already_item_specific = c.get("favorite_item") or c.get("novel_item")
+        needs_rewrite = sku_id in catalog and not already_item_specific
+        if needs_rewrite:
+            c["description"] = item_action_description(
+                catalog[sku_id].item, c.get("target_quantity", PERSONAL_TARGET_QUANTITY), c.get("reward_rub", 0.0)
+            )
+        result.append(c)
+    return result
 
 
 def write_challenges_json(path: str | Path, challenges: list[dict]) -> None:

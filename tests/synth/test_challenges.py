@@ -4,15 +4,23 @@ import pytest
 
 from synth.challenges import (
     GENERIC_CHALLENGES,
+    PERSONAL_CHALLENGE_SLOTS,
+    PERSONAL_TARGET_QUANTITY,
+    backfill_target_sku,
+    build_category_expansion_challenge,
     build_personal_prompt,
     build_spend_threshold_challenge,
     compute_frequency_saturation,
     compute_receptiveness,
     estimate_max_reward_rub,
+    find_sku_id_for_item,
     generate_challenge_for_user,
+    item_action_description,
     load_profiles,
     parse_and_validate_challenge,
     pick_generic_challenge,
+    pick_sku_in_category,
+    rewrite_descriptions_for_tracked_item,
     score_against_answer_key,
 )
 from synth.config import load_config
@@ -32,14 +40,64 @@ def test_generic_challenges_never_target_a_forbidden_category():
 
 
 def test_pick_generic_challenge_is_deterministic():
-    a = pick_generic_challenge("some-uuid-1")
-    b = pick_generic_challenge("some-uuid-1")
+    a = pick_generic_challenge("some-uuid-1", _config)
+    b = pick_generic_challenge("some-uuid-1", _config)
     assert a == b
 
 
 def test_pick_generic_challenge_varies_by_user():
-    offers = {pick_generic_challenge(f"user-{i}")["challenge_title"] for i in range(20)}
+    offers = {pick_generic_challenge(f"user-{i}", _config)["challenge_title"] for i in range(20)}
     assert len(offers) > 1
+
+
+def test_pick_generic_challenge_attaches_sku_in_target_category():
+    offer = pick_generic_challenge("some-uuid-1", _config)
+    assert offer["target_quantity"] == PERSONAL_TARGET_QUANTITY
+    sku = pick_sku_in_category(_config, offer["target_categories"][0], seed_key="some-uuid-1:sku")
+    assert offer["target_sku_id"] == sku.sku_id
+
+
+def test_pick_generic_challenge_description_names_the_tracked_item_not_the_category():
+    offer = pick_generic_challenge("some-uuid-1", _config)
+    sku = pick_sku_in_category(_config, offer["target_categories"][0], seed_key="some-uuid-1:sku")
+    assert sku.item in offer["description"]
+    assert offer["description"] == item_action_description(sku.item, offer["target_quantity"], offer["reward_rub"])
+
+
+def test_item_action_description_pluralizes_raz_correctly():
+    assert item_action_description("морковь", 1, 50.0).startswith("Купи «морковь» 1 раз ")
+    assert item_action_description("морковь", 2, 50.0).startswith("Купи «морковь» 2 раза ")
+    assert item_action_description("морковь", 5, 50.0).startswith("Купи «морковь» 5 раз ")
+    assert item_action_description("морковь", 11, 50.0).startswith("Купи «морковь» 11 раз ")
+    assert item_action_description("морковь", 21, 50.0).startswith("Купи «морковь» 21 раз ")
+
+
+def test_pick_sku_in_category_is_deterministic_and_within_category():
+    sku = pick_sku_in_category(_config, "овощи", seed_key="user-x")
+    assert sku is not None
+    assert sku.category == "овощи"
+    assert pick_sku_in_category(_config, "овощи", seed_key="user-x").sku_id == sku.sku_id
+
+
+def test_pick_sku_in_category_varies_by_seed():
+    skus = {pick_sku_in_category(_config, "овощи", seed_key=f"user-{i}").sku_id for i in range(20)}
+    assert len(skus) > 1
+
+
+def test_pick_sku_in_category_unknown_category_returns_none():
+    assert pick_sku_in_category(_config, "not-a-real-category", seed_key="user-x") is None
+
+
+def test_find_sku_id_for_item_resolves_known_pair():
+    category = _config.categories[0].name
+    item = _config.categories[0].items[0]
+    sku_id = find_sku_id_for_item(_config, category, item)
+    assert sku_id is not None
+    assert sku_id.startswith("sku_")
+
+
+def test_find_sku_id_for_item_returns_none_for_unknown_pair():
+    assert find_sku_id_for_item(_config, "овощи", "not-a-real-item") is None
 
 
 def test_compute_receptiveness_true_for_strong_habitual_pattern():
@@ -189,8 +247,9 @@ def test_compute_frequency_saturation_false_for_ordinary_frequency():
 
 def test_generate_challenge_for_user_routes_already_optimal_to_no_challenge():
     profile = _profile("already_optimal_no_challenge", seed=1)
-    result = generate_challenge_for_user(profile, _config, model="fake/model", dry_run=True)
-    assert result["path"] == "no_challenge"
+    results = generate_challenge_for_user(profile, _config, model="fake/model", dry_run=True)
+    assert len(results) == 1
+    assert results[0]["path"] == "no_challenge"
 
 
 def test_build_spend_threshold_challenge_targets_the_most_bought_item():
@@ -201,6 +260,10 @@ def test_build_spend_threshold_challenge_targets_the_most_bought_item():
     assert challenge["target_categories"][0] not in _config.forbidden_categories
     assert challenge["spend_threshold_rub"] >= 100.0
     assert challenge["reward_rub"] > 0
+    assert challenge["target_quantity"] == 1
+    expected_sku = find_sku_id_for_item(_config, challenge["target_categories"][0], challenge["favorite_item"])
+    assert challenge["target_sku_id"] == expected_sku
+    assert expected_sku is not None
 
 
 def test_build_spend_threshold_challenge_rejects_weak_signal():
@@ -229,33 +292,54 @@ def test_build_spend_threshold_challenge_returns_none_without_train_receipts():
     assert build_spend_threshold_challenge(profile, _config) is None
 
 
-def test_generate_challenge_for_user_spend_threshold_type_makes_no_network_call(monkeypatch):
+def _by_slot(results: list[dict]) -> dict[str, dict]:
+    return {r["challenge_slot"]: r for r in results if "challenge_slot" in r}
+
+
+def test_generate_challenge_for_user_returns_one_record_per_slot(monkeypatch):
     def fail_if_called(*args, **kwargs):
-        raise AssertionError("call_openrouter should not be called for challenge_type=spend_threshold")
+        raise AssertionError("call_openrouter should not be called under dry_run")
 
     monkeypatch.setattr("synth.challenges.call_openrouter", fail_if_called)
     profile = _profile("bakes_on_weekends", seed=4)
-    result = generate_challenge_for_user(
-        profile, _config, model="fake/model", challenge_type="spend_threshold"
-    )
-    assert result["path"] == "personal"
-    assert "spend_threshold_rub" in result
+    results = generate_challenge_for_user(profile, _config, model="fake/model", dry_run=True)
+    assert len(results) == len(PERSONAL_CHALLENGE_SLOTS)
+    by_slot = _by_slot(results)
+    assert set(by_slot) == set(PERSONAL_CHALLENGE_SLOTS)
+    # deterministic, no-network slots build for real even under dry_run
+    assert by_slot["spend_threshold"]["path"] == "personal"
+    assert "spend_threshold_rub" in by_slot["spend_threshold"]
+    assert by_slot["category_expansion"]["path"] == "personal"
+    # only the llm slot is short-circuited by dry_run
+    assert by_slot["llm"]["path"] == "personal_dry_run"
 
 
-def test_generate_challenge_for_user_dry_run_makes_no_network_call():
-    profile = _profile("bakes_on_weekends", seed=4)
-    result = generate_challenge_for_user(profile, _config, model="fake/model", dry_run=True)
-    assert result["path"] in ("personal_dry_run", "generic", "no_challenge")
+def test_generate_challenge_for_user_non_receptive_uses_generic_for_every_slot_without_network(monkeypatch):
+    def fail_if_called(*args, **kwargs):
+        raise AssertionError("call_openrouter should not be called for a non-receptive user")
 
-
-def test_generate_challenge_for_user_non_receptive_uses_generic_without_network():
+    monkeypatch.setattr("synth.challenges.call_openrouter", fail_if_called)
     profile = _profile("promo_hunter", seed=1)
     profile = {**profile, "receipts": [
         r for r in profile["receipts"] if r["purchase_date"] > _config.temporal_split.train_end.isoformat()
     ]}
-    result = generate_challenge_for_user(profile, _config, model="fake/model")
-    assert result["path"] == "generic"
-    assert "challenge_title" in result
+    results = generate_challenge_for_user(profile, _config, model="fake/model")
+    assert len(results) == len(PERSONAL_CHALLENGE_SLOTS)
+    assert all(r["path"] == "generic" for r in results)
+    assert all("challenge_title" in r for r in results)
+    # distinct offers, not the same generic card three times
+    assert len({r["challenge_title"] for r in results}) == len(PERSONAL_CHALLENGE_SLOTS)
+    assert len({r["target_sku_id"] for r in results}) == len(PERSONAL_CHALLENGE_SLOTS)
+
+
+def test_build_category_expansion_challenge_targets_least_bought_category():
+    profile = _profile("bakes_on_weekends", seed=4)
+    challenge = build_category_expansion_challenge(profile, _config)
+    assert challenge is not None
+    assert challenge["target_quantity"] == 1
+    expected_sku = find_sku_id_for_item(_config, challenge["novel_category"], challenge["novel_item"])
+    assert challenge["target_sku_id"] == expected_sku
+    assert expected_sku is not None
 
 
 def test_generate_challenge_for_user_personal_path_with_mocked_llm(monkeypatch):
@@ -272,9 +356,18 @@ def test_generate_challenge_for_user_personal_path_with_mocked_llm(monkeypatch):
         })
 
     monkeypatch.setattr("synth.challenges.call_openrouter", fake_call)
-    result = generate_challenge_for_user(profile, _config, model="fake/model", api_key="fake-key")
-    assert result["path"] == "personal"
-    assert result["target_categories"] == ["бакалея"]
+    results = generate_challenge_for_user(profile, _config, model="fake/model", api_key="fake-key")
+    llm_result = _by_slot(results)["llm"]
+    assert llm_result["path"] == "personal"
+    assert llm_result["target_categories"] == ["бакалея"]
+    assert llm_result["target_quantity"] == PERSONAL_TARGET_QUANTITY
+    sku = pick_sku_in_category(_config, "бакалея", seed_key=f"{profile['user_id']}:sku:llm")
+    assert llm_result["target_sku_id"] == sku.sku_id
+    # title stays the LLM's own (personalized) copy; description is rewritten
+    # to name the concrete item/count actually tracked
+    assert llm_result["challenge_title"] == "Допеки выходные"
+    assert sku.item in llm_result["description"]
+    assert llm_result["description"] == item_action_description(sku.item, PERSONAL_TARGET_QUANTITY, 40)
 
 
 def test_generate_challenge_for_user_falls_back_on_bad_llm_output(monkeypatch):
@@ -284,9 +377,29 @@ def test_generate_challenge_for_user_falls_back_on_bad_llm_output(monkeypatch):
         return "not valid json"
 
     monkeypatch.setattr("synth.challenges.call_openrouter", fake_call)
-    result = generate_challenge_for_user(profile, _config, model="fake/model", api_key="fake-key")
-    assert result["path"] == "generic_fallback"
-    assert "error" in result
+    results = generate_challenge_for_user(profile, _config, model="fake/model", api_key="fake-key")
+    llm_result = _by_slot(results)["llm"]
+    assert llm_result["path"] == "generic_fallback"
+    assert "error" in llm_result
+    # model must still record which model was actually attempted, even
+    # though the record's content is the generic fallback offer
+    assert llm_result["model"] == "fake/model"
+    # the other two slots are unaffected by the llm failure
+    assert len(results) == len(PERSONAL_CHALLENGE_SLOTS)
+
+
+def test_generate_challenge_for_user_deterministic_fallbacks_never_record_a_model(monkeypatch):
+    # spend_threshold/category_expansion fallbacks never touched any model —
+    # model must stay None for those, unlike the llm-slot fallback above.
+    monkeypatch.setattr("synth.challenges.build_spend_threshold_challenge", lambda *a, **k: None)
+    monkeypatch.setattr("synth.challenges.build_category_expansion_challenge", lambda *a, **k: None)
+    profile = _profile("bakes_on_weekends", seed=4)
+    results = generate_challenge_for_user(profile, _config, model="fake/model", dry_run=True)
+    by_slot = _by_slot(results)
+    assert by_slot["spend_threshold"]["path"] == "generic_fallback"
+    assert by_slot["spend_threshold"]["model"] is None
+    assert by_slot["category_expansion"]["path"] == "generic_fallback"
+    assert by_slot["category_expansion"]["model"] is None
 
 
 def test_score_against_answer_key_basic():
@@ -315,3 +428,98 @@ def test_score_against_answer_key_personal_path_is_a_miss_for_abstain_profile():
     answer_key = [{"user_id": "d", "acceptable_target_categories": [], "acceptable_mechanics": [], "abstain_is_correct": True}]
     result = score_against_answer_key(challenges, answer_key)
     assert result["hit_rate"] == 0.0
+
+
+def test_backfill_target_sku_resolves_generic_and_personal_records_via_hash():
+    legacy = [
+        {"user_id": "u1", "path": "generic", "target_categories": ["овощи"], "mechanic": "бонусные баллы"},
+        {"user_id": "u2", "path": "personal", "target_categories": ["бакалея"], "mechanic": "скидка"},
+    ]
+    backfilled = backfill_target_sku(legacy, _config)
+    assert all(c["target_sku_id"] is not None for c in backfilled)
+    assert all(c["target_quantity"] == PERSONAL_TARGET_QUANTITY for c in backfilled)
+    # deterministic: matches the same hash-based pick a fresh generic offer would get
+    expected = pick_sku_in_category(_config, "овощи", seed_key="u1:sku")
+    assert backfilled[0]["target_sku_id"] == expected.sku_id
+
+
+def test_backfill_target_sku_resolves_deterministic_paths_via_named_item():
+    category = _config.categories[0].name
+    item = _config.categories[0].items[0]
+    legacy = [{
+        "user_id": "u3", "path": "personal", "target_categories": [category],
+        "mechanic": "порог трат + скидка на любимый товар", "favorite_item": item,
+    }]
+    backfilled = backfill_target_sku(legacy, _config)
+    assert backfilled[0]["target_sku_id"] == find_sku_id_for_item(_config, category, item)
+    assert backfilled[0]["target_quantity"] == 1
+
+
+def test_backfill_target_sku_skips_no_challenge_and_already_backfilled_records():
+    legacy = [
+        {"user_id": "u4", "path": "no_challenge", "target_categories": [], "mechanic": ""},
+        {"user_id": "u5", "path": "generic", "target_categories": ["овощи"], "mechanic": "", "target_sku_id": "sku_9999"},
+    ]
+    backfilled = backfill_target_sku(legacy, _config)
+    assert "target_sku_id" not in backfilled[0]
+    assert backfilled[1]["target_sku_id"] == "sku_9999"
+    assert "target_quantity" not in backfilled[1]
+
+
+def test_rewrite_descriptions_for_tracked_item_rewrites_generic_and_llm_slot():
+    category = _config.categories[0].name
+    item = _config.categories[0].items[0]
+    sku_id = find_sku_id_for_item(_config, category, item)
+    records = [
+        {
+            "user_id": "u1", "path": "generic", "target_categories": [category],
+            "description": "старое описание про категорию", "target_sku_id": sku_id,
+            "target_quantity": 2, "reward_rub": 30.0,
+        },
+        {
+            "user_id": "u2", "path": "personal", "challenge_slot": "llm", "target_categories": [category],
+            "description": "старое описание про категорию", "target_sku_id": sku_id,
+            "target_quantity": 2, "reward_rub": 40.0,
+        },
+    ]
+    rewritten = rewrite_descriptions_for_tracked_item(records, _config)
+    expected = item_action_description(item, 2, 30.0)
+    assert rewritten[0]["description"] == expected
+    assert rewritten[1]["description"] == item_action_description(item, 2, 40.0)
+
+
+def test_rewrite_descriptions_for_tracked_item_rewrites_generic_fallback_despite_slot_name():
+    # A generic_fallback for the spend_threshold slot carries
+    # challenge_slot="spend_threshold" (naming what it's replacing) but its
+    # actual copy is a GENERIC_CHALLENGES offer, not favorite_item-specific
+    # text — challenge_slot alone must not be read as "already item-specific".
+    category = _config.categories[0].name
+    item = _config.categories[0].items[0]
+    sku_id = find_sku_id_for_item(_config, category, item)
+    record = {
+        "user_id": "u9", "path": "generic_fallback", "challenge_slot": "spend_threshold",
+        "target_categories": [category], "description": "10% скидка на бытовую химию у партнёра сети.",
+        "target_sku_id": sku_id, "target_quantity": 2, "reward_rub": 60.0,
+    }
+    rewritten = rewrite_descriptions_for_tracked_item([record], _config)
+    assert rewritten[0]["description"] == item_action_description(item, 2, 60.0)
+
+
+def test_rewrite_descriptions_for_tracked_item_leaves_item_specific_records_untouched():
+    category = _config.categories[0].name
+    item = _config.categories[0].items[0]
+    sku_id = find_sku_id_for_item(_config, category, item)
+    records = [
+        # already names its own item via favorite_item — must not be touched
+        {
+            "user_id": "u3", "path": "personal", "challenge_slot": "spend_threshold",
+            "target_categories": [category], "favorite_item": item,
+            "description": "Потрать от 500 ₽ и получи скидку", "target_sku_id": sku_id,
+            "target_quantity": 1, "reward_rub": 20.0,
+        },
+        # no_challenge record — nothing to rewrite
+        {"user_id": "u4", "path": "no_challenge", "description": "n/a"},
+    ]
+    rewritten = rewrite_descriptions_for_tracked_item(records, _config)
+    assert rewritten[0]["description"] == "Потрать от 500 ₽ и получи скидку"
+    assert rewritten[1]["description"] == "n/a"

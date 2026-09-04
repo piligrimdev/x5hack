@@ -7,8 +7,10 @@ import os
 from dotenv import load_dotenv
 
 from synth.challenges import (
+    backfill_target_sku,
     generate_challenges,
     load_profiles,
+    rewrite_descriptions_for_tracked_item,
     score_against_answer_key,
     write_challenges_json,
 )
@@ -72,7 +74,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     chal_parser = subparsers.add_parser(
         "challenges",
-        help="Generate personal (LLM via OpenRouter) or generic (partner catalog) challenges for a set of profiles.",
+        help="Generate up to 3 challenges per profile (llm, spend_threshold, category_expansion slots — "
+             "each falls back to a distinct generic/partner-catalog offer on its own criteria).",
     )
     chal_parser.add_argument(
         "--profiles", required=True,
@@ -84,14 +87,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     chal_parser.add_argument("--api-key-env", default="OPENROUTER_API_KEY")
     chal_parser.add_argument(
-        "--challenge-type", choices=["llm", "spend_threshold", "category_expansion"], default="llm",
-        help="'llm': free-form challenge via OpenRouter. "
-             "'spend_threshold': deterministic 'spend >= N rub, get a discount on your favorite product' — no API call, no cost. "
-             "'category_expansion': deterministic discount on a category the user essentially never buys — no API call, no cost.",
-    )
-    chal_parser.add_argument(
         "--dry-run", action="store_true",
-        help="Classify receptiveness and pick generic offers, but make no real LLM calls (ignored for --challenge-type spend_threshold/category_expansion, which never call an LLM).",
+        help="Classify receptiveness and build the spend_threshold/category_expansion/generic slots, but make no real LLM call for the llm slot.",
     )
     chal_parser.add_argument("--delay", type=float, default=0.0, help="Seconds to sleep between LLM calls.")
     chal_parser.add_argument("--limit", type=int, default=None, help="Only process the first N profiles.")
@@ -102,6 +99,31 @@ def build_parser() -> argparse.ArgumentParser:
     )
     score_parser.add_argument("--challenges", required=True)
     score_parser.add_argument("--answer-key", required=True)
+
+    backfill_parser = subparsers.add_parser(
+        "backfill-challenge-skus",
+        help="Add target_sku_id/target_quantity to a challenges.json written before those fields existed. "
+             "No LLM calls — reuses each record's own target_categories/favorite_item/novel_item.",
+    )
+    backfill_parser.add_argument("--challenges", required=True, help="Path to an existing challenges*.json.")
+    backfill_parser.add_argument(
+        "--out", default=None, help="Output path (default: overwrite --challenges in place)."
+    )
+
+    rewrite_desc_parser = subparsers.add_parser(
+        "rewrite-challenge-descriptions",
+        help="Rewrite `description` on generic/llm-slot records to name the exact target_sku_id/target_quantity "
+             "they track, instead of the whole category their original copy described. No LLM calls — the item "
+             "is looked up from the already-resolved target_sku_id.",
+    )
+    rewrite_desc_parser.add_argument(
+        "--challenges", required=True,
+        help="Path to an existing challenges*.json (records must already have target_sku_id — run "
+             "backfill-challenge-skus first if not).",
+    )
+    rewrite_desc_parser.add_argument(
+        "--out", default=None, help="Output path (default: overwrite --challenges in place)."
+    )
 
     sim_parser = subparsers.add_parser(
         "simulate",
@@ -159,25 +181,26 @@ def main(argv: list[str] | None = None) -> None:
         if args.limit:
             profiles = profiles[: args.limit]
         api_key = os.environ.get(args.api_key_env)
-        if args.challenge_type == "llm" and not args.dry_run and not api_key:
+        if not args.dry_run and not api_key:
             raise SystemExit(
                 f"{args.api_key_env} is not set and --dry-run was not passed — "
-                "either export the key, add --dry-run, or use --challenge-type spend_threshold / "
-                "category_expansion (no API call needed)."
+                "every non-saturated, receptive profile attempts an llm-slot call, so "
+                "either export the key or add --dry-run."
             )
         challenges = generate_challenges(
             profiles, config, model=args.model, api_key=api_key, dry_run=args.dry_run,
-            delay_seconds=args.delay, challenge_type=args.challenge_type,
+            delay_seconds=args.delay,
         )
         write_challenges_json(args.out, challenges)
+        n_users = len(profiles)
         n_none = sum(1 for c in challenges if c["path"] == "no_challenge")
         n_personal = sum(1 for c in challenges if c["path"] in ("personal", "personal_dry_run"))
         n_generic = sum(1 for c in challenges if c["path"] in ("generic", "generic_fallback"))
         n_fallback = sum(1 for c in challenges if c["path"] == "generic_fallback")
         print(
-            f"Wrote {len(challenges)} challenges to {args.out} "
-            f"({n_none} no-challenge, {n_personal} personal-path, {n_generic} generic-path, "
-            f"{n_fallback} of those were fallbacks)"
+            f"Wrote {len(challenges)} challenge records for {n_users} users to {args.out} "
+            f"({n_none} saturated users with no challenge, {n_personal} personal-slot, "
+            f"{n_generic} generic-slot, {n_fallback} of those were fallbacks from a failed personal slot)"
         )
     elif args.command == "score-challenges":
         with open(args.challenges, encoding="utf-8") as f:
@@ -186,6 +209,24 @@ def main(argv: list[str] | None = None) -> None:
             answer_key = json.load(f)
         result = score_against_answer_key(challenges, answer_key)
         print(f"Hit rate: {result['hit_rate']:.1%} ({result['hits']}/{result['scored']})")
+    elif args.command == "backfill-challenge-skus":
+        with open(args.challenges, encoding="utf-8") as f:
+            challenges = json.load(f)
+        backfilled = backfill_target_sku(challenges, config)
+        out_path = args.out or args.challenges
+        write_challenges_json(out_path, backfilled)
+        n_resolved = sum(1 for c in backfilled if c.get("target_sku_id"))
+        print(f"Wrote {len(backfilled)} challenges to {out_path} ({n_resolved} with a resolved target_sku_id)")
+    elif args.command == "rewrite-challenge-descriptions":
+        with open(args.challenges, encoding="utf-8") as f:
+            challenges = json.load(f)
+        rewritten = rewrite_descriptions_for_tracked_item(challenges, config)
+        out_path = args.out or args.challenges
+        write_challenges_json(out_path, rewritten)
+        n_changed = sum(
+            1 for old, new in zip(challenges, rewritten) if old.get("description") != new.get("description")
+        )
+        print(f"Wrote {len(rewritten)} challenges to {out_path} ({n_changed} descriptions rewritten)")
     elif args.command == "simulate":
         users = load_profiles(args.population)
         truth_records = load_profiles(args.truth)

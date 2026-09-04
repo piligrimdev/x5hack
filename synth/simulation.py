@@ -60,20 +60,23 @@ class UserSimulationResult:
 
 
 def route_for_simulation(profile: dict, config: SynthConfig, challenge_type: str = "llm") -> dict:
-    """The same no_challenge/personal/generic routing decision
-    `generate_challenge_for_user` makes, WITHOUT calling any LLM — routing
-    itself never depended on the model, only the creative TEXT of a
-    "personal" challenge does (and the simulation doesn't need that text,
-    only which path a user landed on and what reward/mechanic it implies).
-    Lets the simulation run over the full population without an API call
-    per user.
+    """The same no_challenge/personal/generic routing decision one slot of
+    `generate_challenge_for_user` makes (that function now builds all three
+    slots — `llm`, `spend_threshold`, `category_expansion` — per user;
+    `route_for_simulation` still evaluates a single channel at a time, via
+    `challenge_type`), WITHOUT calling any LLM — routing itself never
+    depended on the model, only the creative TEXT of a "personal" challenge
+    does (and the simulation doesn't need that text, only which path a user
+    landed on and what reward/mechanic it implies). Lets the simulation run
+    over the full population without an API call per user.
 
     `challenge_type="spend_threshold"` routes a receptive user through
     `build_spend_threshold_challenge` instead of the flat LLM reward
     ceiling. `challenge_type="category_expansion"` routes through
     `build_category_expansion_challenge` instead. Both fall back to
-    generic the same way `generate_challenge_for_user` does when there
-    isn't enough train-period history to build the deterministic offer.
+    generic the same way `generate_challenge_for_user`'s matching slot does
+    when there isn't enough train-period history to build the deterministic
+    offer.
     """
     saturated, _ = compute_frequency_saturation(profile, config)
     if saturated:
@@ -81,13 +84,13 @@ def route_for_simulation(profile: dict, config: SynthConfig, challenge_type: str
 
     receptive, _ = compute_receptiveness(profile, config)
     if not receptive:
-        offer = pick_generic_challenge(profile["user_id"])
+        offer = pick_generic_challenge(profile["user_id"], config)
         return {"path": "generic", "reward_rub": offer["reward_rub"], "challenge_type": challenge_type}
 
     if challenge_type == "spend_threshold":
         challenge = build_spend_threshold_challenge(profile, config)
         if challenge is None:
-            offer = pick_generic_challenge(profile["user_id"])
+            offer = pick_generic_challenge(profile["user_id"], config)
             return {"path": "generic_fallback", "reward_rub": offer["reward_rub"], "challenge_type": challenge_type}
         return {
             "path": "personal",
@@ -100,7 +103,7 @@ def route_for_simulation(profile: dict, config: SynthConfig, challenge_type: str
     if challenge_type == "category_expansion":
         challenge = build_category_expansion_challenge(profile, config)
         if challenge is None:
-            offer = pick_generic_challenge(profile["user_id"])
+            offer = pick_generic_challenge(profile["user_id"], config)
             return {"path": "generic_fallback", "reward_rub": offer["reward_rub"], "challenge_type": challenge_type}
         return {
             "path": "personal",

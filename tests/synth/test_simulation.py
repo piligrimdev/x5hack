@@ -14,12 +14,16 @@ _config = load_config("config/synth_schema.yaml")
 
 
 def test_route_for_simulation_matches_generate_challenge_for_user_routing():
+    # generate_challenge_for_user now returns up to 3 records (one per
+    # PERSONAL_CHALLENGE_SLOTS entry) — route_for_simulation still models
+    # one channel at a time, so compare against the matching slot.
     from synth.challenges import generate_challenge_for_user
 
     users, truth = population(n=30, seed=1, config=_config)
     for u in users:
         expected = generate_challenge_for_user(u, _config, model="fake/model", dry_run=True)
-        expected_path = "personal" if expected["path"] == "personal_dry_run" else expected["path"]
+        expected_llm = next((r for r in expected if r.get("challenge_slot") == "llm"), expected[0])
+        expected_path = "personal" if expected_llm["path"] == "personal_dry_run" else expected_llm["path"]
         actual = route_for_simulation(u, _config)
         assert actual["path"] == expected_path
 
@@ -99,9 +103,10 @@ def test_route_for_simulation_spend_threshold_matches_generate_challenge_for_use
 
     users, truth = population(n=100, seed=9, config=_config)
     for u in users:
-        expected = generate_challenge_for_user(u, _config, model="fake/model", challenge_type="spend_threshold")
+        expected = generate_challenge_for_user(u, _config, model="fake/model", dry_run=True)
+        expected_slot = next((r for r in expected if r.get("challenge_slot") == "spend_threshold"), expected[0])
         actual = route_for_simulation(u, _config, challenge_type="spend_threshold")
-        assert actual["path"] == expected["path"]
+        assert actual["path"] == expected_slot["path"]
 
 
 def test_simulate_user_response_spend_threshold_uses_basket_channel_when_responded():
