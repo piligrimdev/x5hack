@@ -73,3 +73,10 @@
 
 ### Adapter unit-tests
 - `web/tests/webx5/services/test_challenge_adapter.py` — детально проверить `build_profile` (margin из config), `_lookup_product` (ILIKE + ordering), `persist_challenge` для всех известных `SCRIPT_FIELD_TO_CRITERION_KIND`
+
+### Defensive null-check в BasketService.checkout()
+- `store_repo.get_by_id(session, receipts[0].store_id)` используется без проверки на `None`
+- Сейчас недостижимо: `Receipt.store_id` — `ForeignKey("stores.id", ondelete="RESTRICT")`, БД не даст удалить
+  магазин, на который ссылается существующий чек
+- Стоит добавить `if store is None: raise HTTPException(422, ...)` как страховку на случай, если политика FK
+  изменится (например, на `SET NULL`/`CASCADE`)
