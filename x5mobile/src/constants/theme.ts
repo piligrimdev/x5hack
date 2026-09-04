@@ -63,3 +63,20 @@ export const Spacing = {
 
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
 export const MaxContentWidth = 800;
+
+export const BrandColors = {
+  red: '#D6362E',
+  green: '#1E9E5A',
+  greenLight: '#EAF7EE',
+  dark: '#17171A',
+  gold: '#C99A3E',
+  goldLight: '#E8C77A',
+  appBg: '#F6F4F1',
+  cardBg: '#fff',
+  cardBorder: 'rgba(0,0,0,0.06)',
+  elementBg: '#F1F0ED',
+  textPrimary: '#17171A',
+  textSecondary: '#8A8A8E',
+  textTertiary: '#5B5B60',
+  rewardOrangeBg: '#F6F1E9',
+} as const;
