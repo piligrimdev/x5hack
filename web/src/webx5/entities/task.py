@@ -53,6 +53,7 @@ class Task(Base):
     model: Mapped[str | None] = mapped_column(String(100), nullable=True)
     reward_type: Mapped[str] = mapped_column(String(20), nullable=False, default="discount", server_default="discount")
     reward_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True)
+    challenge_slot: Mapped[str | None] = mapped_column(String(30), nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     status: Mapped[TaskStatus] = relationship(lazy="joined")

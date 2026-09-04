@@ -1,16 +1,17 @@
 """Unit tests for ChallengeService.generate_batch — orchestration only.
 
-Mocks the synth.challenges.generate_challenge_for_user call to return
-canned dicts; asserts:
-  * batch mix uses 3 different challenge_types (FR-005a)
-  * no_challenge path skips persistence but still logs (FR-022, FR-018)
-  * script exception is caught & logged (FR-018 error path)
+The new synth API returns a list of up to 3 records with `challenge_slot`
+in one call. Tests mock that call and assert:
+  * every returned record is audit-logged (FR-018)
+  * `no_challenge` path skips persistence (FR-022)
+  * script exception is caught & logged
+  * invariant "no more than 3 active tasks" is respected (FR-001)
+  * slots already active are skipped
 """
 
 from __future__ import annotations
 
 import uuid
-from decimal import Decimal
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -20,7 +21,7 @@ from webx5.services.challenge import ChallengeService
 
 def _service_with_mocks():
     task_repo = MagicMock()
-    task_repo.get_active_for_user.return_value = []  # fresh user
+    task_repo.get_active_for_user.return_value = []
     log_repo = MagicMock()
     log_repo.record.return_value = uuid.uuid4()
     adapter = MagicMock()
@@ -39,54 +40,58 @@ def _service_with_mocks():
     return service, task_repo, log_repo, adapter
 
 
-def _canned(path: str = "personal") -> dict:
+def _canned(slot: str, path: str = "personal") -> dict:
     return {
         "user_id": "u",
         "path": path,
-        "challenge_title": "T",
+        "challenge_slot": slot,
+        "challenge_title": f"{slot} title",
         "description": "D",
         "target_categories": ["cat"],
-        "mechanic": "порог трат + скидка на любимый товар",
+        "mechanic": f"mech {slot}",
         "reward_rub": 45.0,
-        "model": "test-model",
+        "target_quantity": 2,
+        "model": "test-model" if slot == "llm" else None,
         "reasoning": "test",
     }
 
 
-def test_generate_batch_mix_calls_three_types_in_order():
+def _batch_all_three() -> list[dict]:
+    return [
+        _canned("spend_threshold"),
+        _canned("category_expansion"),
+        _canned("llm"),
+    ]
+
+
+def test_generate_batch_persists_all_three_slots():
     service, task_repo, log_repo, adapter = _service_with_mocks()
 
-    call_types: list[str] = []
-
-    def fake_gen(*args, **kwargs):
-        call_types.append(kwargs["challenge_type"])
-        return _canned()
-
-    with patch("webx5.services.challenge.generate_challenge_for_user", side_effect=fake_gen), \
+    with patch("webx5.services.challenge.generate_challenge_for_user", return_value=_batch_all_three()), \
          patch("webx5.services.challenge.capture_openrouter_io") as mock_capture:
         mock_capture.return_value.__enter__.return_value = {}
         created = service.generate_batch(MagicMock(), uuid.uuid4(), count=3)
 
-    assert call_types == ["spend_threshold", "category_expansion", "llm"]
     assert len(created) == 3
     assert log_repo.record.call_count == 3
+    assert adapter.persist_challenge.call_count == 3
 
 
-def test_generate_batch_no_challenge_path_skips_persist_but_logs():
+def test_generate_batch_no_challenge_returns_empty_but_logs():
     service, task_repo, log_repo, adapter = _service_with_mocks()
 
-    with patch("webx5.services.challenge.generate_challenge_for_user", return_value=_canned("no_challenge")), \
+    no_challenge_batch = [{"user_id": "u", "path": "no_challenge", "challenge_slot": None, "reasoning": "sat"}]
+    with patch("webx5.services.challenge.generate_challenge_for_user", return_value=no_challenge_batch), \
          patch("webx5.services.challenge.capture_openrouter_io") as mock_capture:
         mock_capture.return_value.__enter__.return_value = {}
         created = service.generate_batch(MagicMock(), uuid.uuid4(), count=3)
 
     assert created == []
-    # 3 attempts × 1 log each = 3 log rows, no persistence
-    assert log_repo.record.call_count == 3
+    assert log_repo.record.call_count == 1
     adapter.persist_challenge.assert_not_called()
 
 
-def test_generate_batch_script_exception_still_logs_error():
+def test_generate_batch_script_exception_logs_and_returns_empty():
     service, task_repo, log_repo, adapter = _service_with_mocks()
 
     def raise_boom(*args, **kwargs):
@@ -98,18 +103,37 @@ def test_generate_batch_script_exception_still_logs_error():
         created = service.generate_batch(MagicMock(), uuid.uuid4(), count=3)
 
     assert created == []
-    # Error paths log too
-    assert log_repo.record.call_count == 3
-    call_args = log_repo.record.call_args_list[0].kwargs
-    assert call_args["script_result"]["path"] == "generic_fallback"
-    assert "simulated LLM outage" in call_args["script_result"]["error"]
+    log_repo.record.assert_called_once()
+    kwargs = log_repo.record.call_args.kwargs
+    assert kwargs["script_result"]["path"] == "generic_fallback"
+    assert "simulated LLM outage" in kwargs["script_result"]["error"]
 
 
-def test_generate_batch_respects_active_count_invariant():
-    """If user already has 3 active tasks — generate_batch does nothing (FR-001)."""
+def test_generate_batch_no_slots_when_3_active():
     service, task_repo, log_repo, adapter = _service_with_mocks()
     task_repo.get_active_for_user.return_value = [MagicMock(), MagicMock(), MagicMock()]
 
     created = service.generate_batch(MagicMock(), uuid.uuid4(), count=3)
     assert created == []
     log_repo.record.assert_not_called()
+
+
+def test_generate_batch_skips_slot_already_active():
+    """If user already has an 'llm' task active, the 'llm' record from the batch is skipped."""
+    service, task_repo, log_repo, adapter = _service_with_mocks()
+
+    llm_active_task = MagicMock()
+    llm_active_task.challenge_slot = "llm"
+    task_repo.get_active_for_user.return_value = [llm_active_task]
+
+    with patch("webx5.services.challenge.generate_challenge_for_user", return_value=_batch_all_three()), \
+         patch("webx5.services.challenge.capture_openrouter_io") as mock_capture:
+        mock_capture.return_value.__enter__.return_value = {}
+        created = service.generate_batch(MagicMock(), uuid.uuid4(), count=2)
+
+    assert len(created) == 2
+    persisted_slots = [
+        call.args[2]["challenge_slot"] for call in adapter.persist_challenge.call_args_list
+    ]
+    assert "llm" not in persisted_slots
+    assert set(persisted_slots) == {"spend_threshold", "category_expansion"}

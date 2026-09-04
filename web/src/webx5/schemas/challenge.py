@@ -35,3 +35,29 @@ class ChallengeItem(BaseModel):
 class ChallengeListResponse(BaseModel):
     items: list[ChallengeItem]
     empty_reason: EmptyReason
+
+
+class PastChallengeItem(BaseModel):
+    id: uuid.UUID
+    title: str
+    description: str
+    mechanic: str
+    reward_rub: JsonDecimal
+    criterion_type: str
+    criterion_entity_id: uuid.UUID
+    quantity_target: int = Field(ge=1)
+    quantity_current: int = Field(ge=0)
+    issued_at: datetime
+    deadline: datetime
+    completed_at: datetime | None = None
+    status: str
+    reward_id: uuid.UUID | None = None
+
+    model_config = {"from_attributes": True}
+
+
+class ChallengeHistoryResponse(BaseModel):
+    items: list[PastChallengeItem]
+    total: int
+    limit: int
+    offset: int

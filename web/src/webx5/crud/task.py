@@ -43,6 +43,36 @@ class TaskRepository:
             )
         ).scalar_one()
 
+    def get_history_for_user(
+        self,
+        session: Session,
+        user_id: uuid.UUID,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[Task]:
+        """Non-open tasks (выполнено / провалено / истекло) — most recent first.
+        Sorted by completed_at desc then issued_at desc (completed rows have
+        completed_at set; expired/failed use issued_at as the tiebreaker).
+        """
+        open_id = self.get_status_id(session, STATUS_OPEN)
+        return list(
+            session.execute(
+                select(Task)
+                .where(Task.loyalty_card_id == user_id, Task.task_status_id != open_id)
+                .order_by(Task.completed_at.desc().nulls_last(), Task.issued_at.desc())
+                .limit(limit)
+                .offset(offset)
+            ).scalars().all()
+        )
+
+    def count_history_for_user(self, session: Session, user_id: uuid.UUID) -> int:
+        open_id = self.get_status_id(session, STATUS_OPEN)
+        return session.execute(
+            select(func.count(Task.id)).where(
+                Task.loyalty_card_id == user_id, Task.task_status_id != open_id
+            )
+        ).scalar_one()
+
     def get_by_id(self, session: Session, task_id: uuid.UUID) -> Task | None:
         return session.get(Task, task_id)
 
@@ -67,6 +97,7 @@ class TaskRepository:
         reasoning: str | None,
         path: str,
         model: str | None,
+        challenge_slot: str | None = None,
         deadline: datetime | None = None,
     ) -> Task:
         open_status_id = self.get_status_id(session, STATUS_OPEN)
@@ -87,6 +118,7 @@ class TaskRepository:
             reasoning=reasoning,
             path=path,
             model=model,
+            challenge_slot=challenge_slot,
             reward_type="discount",
         )
         session.add(task)
@@ -146,11 +178,13 @@ class TaskRepository:
     def expire_overdue(self, session: Session, batch_size: int = 100) -> list[Task]:
         open_id = self.get_status_id(session, STATUS_OPEN)
         expired_id = self.get_status_id(session, STATUS_EXPIRED)
+        # `of=Task` locks only task rows — Task.status is a joined-load relationship
+        # (LEFT OUTER JOIN), and Postgres cannot apply FOR UPDATE to nullable sides.
         overdue = (
             session.execute(
                 select(Task)
                 .where(Task.task_status_id == open_id, Task.deadline < func.now())
-                .with_for_update(skip_locked=True)
+                .with_for_update(skip_locked=True, of=Task)
                 .limit(batch_size)
             )
             .scalars()

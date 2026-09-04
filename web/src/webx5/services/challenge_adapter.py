@@ -133,6 +133,9 @@ class ChallengeAdapter:
     def _resolve_category(self, session: Session, name: str) -> Category | None:
         return session.execute(select(Category).where(Category.name == name)).scalar_one_or_none()
 
+    def _lookup_product_by_sku(self, session: Session, sku_id: str) -> Product | None:
+        return session.execute(select(Product).where(Product.sku_id == sku_id)).scalar_one_or_none()
+
     # ------- dict-result → Task + TaskCriterion rows -------
     def persist_challenge(
         self,
@@ -153,11 +156,18 @@ class ChallengeAdapter:
         if category is None:
             raise ValueError(f"Category not found in DB: {primary_category_name}")
 
-        # Try product-level criterion if favorite_item / novel_item exists.
-        item_name = script_result.get("favorite_item") or script_result.get("novel_item")
-        product = None
-        if item_name:
-            product = self._lookup_product(session, item_name, category.id)
+        # Prefer target_sku_id (deterministic SKU picked by the script);
+        # fall back to fuzzy item-name lookup (favorite_item / novel_item);
+        # finally fall back to category-level criterion.
+        product: Product | None = None
+        target_sku_id = script_result.get("target_sku_id")
+        if target_sku_id:
+            product = self._lookup_product_by_sku(session, str(target_sku_id))
+
+        if product is None:
+            item_name = script_result.get("favorite_item") or script_result.get("novel_item")
+            if item_name:
+                product = self._lookup_product(session, item_name, category.id)
 
         if product is not None:
             criterion_type = "product"
@@ -171,12 +181,27 @@ class ChallengeAdapter:
         if reward_rub < Decimal("0"):
             reward_rub = Decimal("0")
 
+        # Quantity from the script (LLM extension: `quantity`; older name: `quantity_target`;
+        # new deterministic paths / LLM slot: `target_quantity` — accept any).
+        raw_qty = (
+            script_result.get("quantity")
+            or script_result.get("target_quantity")
+            or script_result.get("quantity_target")
+            or 1
+        )
+        try:
+            qty_target = int(raw_qty)
+        except (TypeError, ValueError):
+            qty_target = 1
+        if qty_target < 1:
+            qty_target = 1
+
         task = self.task_repo.create(
             session,
             loyalty_card_id=user_id,
             criterion_type=criterion_type,
             criterion_entity_id=criterion_entity_id,
-            quantity_target=1,
+            quantity_target=qty_target,
             title=str(script_result.get("challenge_title", "Challenge")),
             description=str(script_result.get("description", "")),
             mechanic=str(script_result.get("mechanic", "")),
@@ -184,14 +209,15 @@ class ChallengeAdapter:
             reasoning=script_result.get("reasoning"),
             path=str(script_result.get("path", "personal")),
             model=script_result.get("model"),
+            challenge_slot=script_result.get("challenge_slot"),
         )
 
-        # Base criterion: item_quantity
+        # Base criterion: item_quantity mirrors task.quantity_target.
         self.task_repo.create_criterion(
             session,
             task_id=task.id,
             kind="item_quantity",
-            value_num=Decimal("1"),
+            value_num=Decimal(qty_target),
         )
 
         # Additional criteria — from script fields via the extension map.
