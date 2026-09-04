@@ -13,6 +13,12 @@ class Receipt(Base):
     __tablename__ = "receipts"
     __table_args__ = (
         CheckConstraint("channel IN ('online', 'offline')", name="ck_receipts_channel"),
+        CheckConstraint(
+            "cashback_applied_points >= 0", name="ck_receipts_cashback_points_nonneg"
+        ),
+        CheckConstraint(
+            "cashback_applied_rub >= 0", name="ck_receipts_cashback_rub_nonneg"
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
@@ -29,6 +35,13 @@ class Receipt(Base):
         ForeignKey("stores.id", ondelete="RESTRICT"), nullable=False, index=True
     )
     channel: Mapped[str] = mapped_column(String(20), nullable=False, default="offline")
+    cashback_applied_points: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
+    cashback_applied_rub: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
+    points_rate_at_purchase: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     items: Mapped[list[ReceiptItem]] = relationship(back_populates="receipt", lazy="select")
 

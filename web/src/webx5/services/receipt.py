@@ -108,6 +108,14 @@ class ReceiptService:
                 detail={"detail": "Discount expired or not applicable", "invalid_items": invalid_items},
             )
 
+        # Anonymous receipts cannot spend points (FR-011).
+        wants_points = data.points_to_spend not in (None, 0)
+        if wants_points and data.loyalty_card_id is None:
+            raise HTTPException(
+                status_code=422,
+                detail="Cashback points can only be spent with a loyalty card",
+            )
+
         receipt, is_new = self.receipt_repo.create(
             session,
             receipt_id=receipt_id,
@@ -117,6 +125,33 @@ class ReceiptService:
             payment_card_uid=data.payment_card_uid,
             items=items_data,
         )
+
+        # Spend cashback points atomically with the receipt insert (FR-008, FR-010).
+        # Skip on idempotent replay (is_new=False) — the original amount is already stored.
+        if is_new and wants_points and data.loyalty_card_id is not None:
+            from webx5.core.points import points_service
+
+            subtotal_rub = int(
+                sum(
+                    Decimal(str(item["paid_price"])) * item["quantity"]
+                    for item in items_data
+                )
+            )
+            applied_points, cashback_rub, rate = points_service.spend_for_receipt(
+                session,
+                loyalty_card_id=data.loyalty_card_id,
+                points_requested_raw=data.points_to_spend,
+                receipt_subtotal_rub=subtotal_rub,
+                receipt_id=receipt.id,
+            )
+            if applied_points > 0:
+                receipt.cashback_applied_points = applied_points
+                receipt.cashback_applied_rub = cashback_rub
+                receipt.points_rate_at_purchase = rate
+                session.flush()
+
+        session.commit()
+        session.refresh(receipt)
 
         # Kick off background processing of this receipt (task progress + generation).
         # Fire-and-forget: does not block the API response (FR-012).

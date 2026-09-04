@@ -2,6 +2,8 @@ import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacit
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useEconomy } from '@/hooks/useEconomy';
+import { useMonthlyEconomy } from '@/hooks/useMonthlyEconomy';
+import { usePointsBalance } from '@/hooks/usePoints';
 import { useReceipts } from '@/hooks/useReceipts';
 
 const ORANGE = '#FF6D00';
@@ -18,32 +20,30 @@ function fmt(n: number) {
 interface HomeViewProps {
   token: string;
   onHistory: () => void;
+  onChallenges: () => void;
+  onPoints?: () => void;
 }
 
-export function HomeView({ token, onHistory }: HomeViewProps) {
+export function HomeView({ token, onHistory, onChallenges, onPoints }: HomeViewProps) {
   const insets = useSafeAreaInsets();
   const { economy, loading: eLoading } = useEconomy(token);
   const { receipts } = useReceipts(token);
+  const { balance: pointsBalance } = usePointsBalance(token);
+
+  const { monthlyEconomy } = useMonthlyEconomy(token);
 
   const totalSaved = economy?.total_saved ?? 0;
   const totalPaid = economy?.total_paid ?? 0;
   const receiptsCount = economy?.receipts_count ?? 0;
 
-  // Points = total_saved rounded (hackathon proxy for loyalty points)
-  const points = Math.round(totalSaved);
-  // Daily benefit: average per receipt
+  const points = pointsBalance?.balance ?? 0;
   const todayBenefit = receiptsCount > 0 ? Math.round(totalSaved / receiptsCount) : 0;
 
-  // Percentile: how much of paid was saved (higher = more economical)
-  const savingsRate = (totalPaid + totalSaved) > 0
-    ? totalSaved / (totalPaid + totalSaved)
-    : 0;
-  const percentile = Math.min(99, Math.round(savingsRate * 100 * 8));
-
-  // Progress to next cashback level (every 1000 saved = new level)
-  const levelThreshold = 1000;
-  const levelProgress = (totalSaved % levelThreshold) / levelThreshold;
-  const toNextLevel = Math.round(levelThreshold - (totalSaved % levelThreshold));
+  const months = monthlyEconomy?.months ?? [];
+  const currentMonthSaved = monthlyEconomy?.currentMonthSaved ?? 0;
+  const currentMonthBase = monthlyEconomy?.currentMonthBase ?? 0;
+  const streak = monthlyEconomy?.consecutiveGrowthMonths ?? 0;
+  const savingsPct = currentMonthBase > 0 ? Math.round((currentMonthSaved / currentMonthBase) * 100) : 0;
 
   const monthName = RU_MONTHS[new Date().getMonth()];
 
@@ -100,7 +100,7 @@ export function HomeView({ token, onHistory }: HomeViewProps) {
                 </Text>
               </>
             )}
-            <TouchableOpacity style={styles.openCardBtn} activeOpacity={0.8}>
+            <TouchableOpacity style={styles.openCardBtn} activeOpacity={0.8} onPress={onPoints}>
               <Text style={styles.openCardBtnText}>Открыть карту</Text>
             </TouchableOpacity>
           </View>
@@ -147,11 +147,11 @@ export function HomeView({ token, onHistory }: HomeViewProps) {
               <Text style={styles.quickSub}>{fmt(lastReceipt.total_paid)} ₽</Text>
             )}
           </TouchableOpacity>
-          <TouchableOpacity style={styles.quickItem} activeOpacity={0.7}>
+          <TouchableOpacity style={styles.quickItem} activeOpacity={0.7} onPress={onChallenges}>
             <View style={styles.quickIconBox}>
-              <Text style={styles.quickIconChar}>%</Text>
+              <Text style={styles.quickIconChar}>📋</Text>
             </View>
-            <Text style={styles.quickLabel}>Скидки</Text>
+            <Text style={styles.quickLabel}>Задания</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.quickItem} activeOpacity={0.7}>
             <View style={styles.quickIconBox}>
@@ -167,47 +167,78 @@ export function HomeView({ token, onHistory }: HomeViewProps) {
           </TouchableOpacity>
         </View>
 
-        {/* Ваша экономия */}
+        {/* Ваша экономия растёт */}
         <View style={styles.savingsCard}>
-          <Text style={styles.savingsTitle}>Ваша экономия</Text>
+          <Text style={styles.savingsTitle}>
+            Ваша экономия{streak >= 1 ? ' растёт' : ''}
+          </Text>
+
           {eLoading ? (
             <ActivityIndicator color={GREEN_ACTIVE} style={{ marginVertical: 12 }} />
           ) : (
             <>
               <View style={styles.savingsAmountRow}>
-                <Text style={styles.savingsAmount}>{fmt(totalSaved)} ₽</Text>
-                <Text style={styles.savingsMonth}>  за {monthName}</Text>
+                <Text style={styles.savingsAmount}>{fmt(currentMonthSaved)}</Text>
+                <Text style={styles.savingsCurrency}> ₽</Text>
               </View>
+              <Text style={styles.savingsMonth}>за {monthName}</Text>
 
-              {/* Progress bar */}
-              <View style={styles.progressBarRow}>
-                <Text style={styles.progressLabel}>обычно</Text>
-                <View style={styles.progressTrack}>
-                  <View style={[styles.progressFill, { width: `${Math.min(100, percentile)}%` }]} />
-                  <View style={[styles.percentileBadge, { left: `${Math.min(90, Math.max(10, percentile))}%` }]}>
-                    <Text style={styles.percentileBadgeText}>{percentile}%</Text>
-                  </View>
+              {streak >= 2 && (
+                <View style={styles.growthBadge}>
+                  <Text style={styles.growthBadgeText}>▲ {streak}-й месяц подряд экономите больше</Text>
                 </View>
-                <Text style={styles.progressLabel}>очень выгодно</Text>
-              </View>
+              )}
 
-              <Text style={styles.savingsPct}>
-                Вы экономнее{' '}
-                <Text style={styles.savingsPctHighlight}>{percentile}%</Text>
-                {' '}покупателей
-              </Text>
+              {/* Bar chart */}
+              {months.length === 4 && (
+                <View style={styles.barChart}>
+                  {(() => {
+                    const maxSaved = Math.max(...months.map(m => m.saved), 1);
+                    const BAR_MAX = 72;
+                    return (
+                      <>
+                        <View style={styles.barsRow}>
+                          {months.map((m, idx) => {
+                            const h = Math.max(4, Math.round((m.saved / maxSaved) * BAR_MAX));
+                            const isCurrent = idx === 3;
+                            return (
+                              <View
+                                key={m.key}
+                                style={[
+                                  styles.bar,
+                                  { height: h, backgroundColor: isCurrent ? GREEN_ACTIVE : '#E8E8E8' },
+                                ]}
+                              />
+                            );
+                          })}
+                        </View>
+                        <View style={styles.barLabelsRow}>
+                          {months.map(m => (
+                            <Text key={m.key} style={styles.barLabel}>
+                              {m.saved > 0 ? `${fmt(m.saved)} ₽` : '—'}
+                            </Text>
+                          ))}
+                        </View>
+                      </>
+                    );
+                  })()}
+                </View>
+              )}
 
-              <Text style={styles.nextLevelHint}>
-                Ещё {fmt(toNextLevel)} ₽ — и новый уровень кешбэка
-              </Text>
+              {currentMonthSaved > 0 && currentMonthBase > 0 && (
+                <View style={styles.challengesBlock}>
+                  <View style={styles.challengesRow}>
+                    <Text style={styles.challengesLabel}>Потрачено бонусов в этом месяце</Text>
+                    <Text style={styles.challengesAmount}>+{fmt(currentMonthSaved)} ₽</Text>
+                  </View>
+                  <Text style={styles.challengesHint}>
+                    Бонусы снизили стоимость покупок на {savingsPct}% — продолжайте в том же темпе
+                  </Text>
+                </View>
+              )}
 
-              {/* Next level bar */}
-              <View style={styles.nextLevelTrack}>
-                <View style={[styles.nextLevelFill, { width: `${Math.round(levelProgress * 100)}%` }]} />
-              </View>
-
-              <TouchableOpacity activeOpacity={0.7}>
-                <Text style={styles.howToSave}>Как сэкономить ещё ›</Text>
+              <TouchableOpacity onPress={onChallenges} activeOpacity={0.7}>
+                <Text style={styles.challengesLink}>Выполнить задание ›</Text>
               </TouchableOpacity>
             </>
           )}
@@ -362,39 +393,34 @@ const styles = StyleSheet.create({
   },
   savingsTitle: { fontSize: 20, fontWeight: '800', color: '#17171A' },
   savingsAmountRow: { flexDirection: 'row', alignItems: 'flex-end' },
-  savingsAmount: { fontSize: 28, fontWeight: '800', color: GREEN_ACTIVE },
-  savingsMonth: { fontSize: 15, color: '#8A8A8E', marginBottom: 4 },
+  savingsAmount: { fontSize: 36, fontWeight: '800', color: '#17171A', lineHeight: 42 },
+  savingsCurrency: { fontSize: 24, fontWeight: '800', color: '#17171A', marginBottom: 4 },
+  savingsMonth: { fontSize: 14, color: '#8A8A8E' },
 
-  progressBarRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4,
+  growthBadge: {
+    backgroundColor: '#EAF7EE', borderRadius: 100,
+    paddingVertical: 5, paddingHorizontal: 12, alignSelf: 'flex-start',
   },
-  progressLabel: { fontSize: 10, color: '#8A8A8E', flexShrink: 0 },
-  progressTrack: {
-    flex: 1, height: 8, backgroundColor: '#E8E8E8', borderRadius: 4, overflow: 'visible',
-    position: 'relative',
-  },
-  progressFill: {
-    height: '100%', backgroundColor: GREEN_ACTIVE, borderRadius: 4,
-  },
-  percentileBadge: {
-    position: 'absolute', top: -10,
-    backgroundColor: ORANGE, borderRadius: 100,
-    paddingHorizontal: 6, paddingVertical: 2,
-    transform: [{ translateX: -16 }],
-  },
-  percentileBadgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
+  growthBadgeText: { fontSize: 13, fontWeight: '600', color: GREEN_ACTIVE },
 
-  savingsPct: { fontSize: 14, color: '#17171A', marginTop: 8 },
-  savingsPctHighlight: { color: ORANGE, fontWeight: '700' },
+  barChart: { gap: 4, marginTop: 4 },
+  barsRow: {
+    flexDirection: 'row', alignItems: 'flex-end', gap: 6, height: 72,
+  },
+  bar: { flex: 1, borderRadius: 6 },
+  barLabelsRow: { flexDirection: 'row', gap: 6 },
+  barLabel: { flex: 1, fontSize: 10, color: '#8A8A8E', textAlign: 'center' },
 
-  nextLevelHint: { fontSize: 13, color: '#8A8A8E' },
-  nextLevelTrack: {
-    height: 6, backgroundColor: '#E8E8E8', borderRadius: 3,
+  challengesBlock: {
+    backgroundColor: '#F6F4F1', borderRadius: 12, padding: 12, gap: 6,
   },
-  nextLevelFill: {
-    height: '100%', backgroundColor: GREEN_ACTIVE, borderRadius: 3,
+  challengesRow: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
   },
-  howToSave: { fontSize: 14, color: GREEN_ACTIVE, fontWeight: '600' },
+  challengesLabel: { fontSize: 13, color: '#17171A', flex: 1 },
+  challengesAmount: { fontSize: 14, fontWeight: '700', color: GREEN_ACTIVE },
+  challengesHint: { fontSize: 12, color: '#8A8A8E', lineHeight: 17 },
+  challengesLink: { fontSize: 14, color: GREEN_ACTIVE, fontWeight: '600' },
 
   // For you
   forYouTitle: { fontSize: 20, fontWeight: '800', color: '#17171A' },

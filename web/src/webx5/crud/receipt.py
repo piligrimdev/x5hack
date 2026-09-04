@@ -56,8 +56,7 @@ class ReceiptRepository:
             )
             session.add(ri)
 
-        session.commit()
-        session.refresh(receipt)
+        session.flush()
         return receipt, True
 
     def get_by_id(self, session: Session, receipt_id: uuid.UUID) -> Receipt | None:
@@ -102,10 +101,16 @@ class ReceiptRepository:
     ) -> dict:
         row = session.execute(
             select(
-                func.coalesce(func.sum(ReceiptItem.discounted_amount * ReceiptItem.quantity), 0).label("total_saved"),
-                func.coalesce(func.sum(ReceiptItem.paid_price * ReceiptItem.quantity), 0).label("total_paid"),
+                func.coalesce(func.sum(ReceiptItem.discounted_amount * ReceiptItem.quantity), 0).label("total_saved_discounts"),
+                func.coalesce(func.sum(ReceiptItem.paid_price * ReceiptItem.quantity), 0).label("total_paid_before_cashback"),
             )
             .join(Receipt, ReceiptItem.receipt_id == Receipt.id)
+            .where(Receipt.loyalty_card_id == loyalty_card_id)
+        ).one()
+
+        # Feature 007: cashback also counts as savings (FR-013).
+        cashback_row = session.execute(
+            select(func.coalesce(func.sum(Receipt.cashback_applied_rub), 0).label("total_cashback"))
             .where(Receipt.loyalty_card_id == loyalty_card_id)
         ).one()
 
@@ -113,9 +118,18 @@ class ReceiptRepository:
             select(func.count(Receipt.id)).where(Receipt.loyalty_card_id == loyalty_card_id)
         ) or 0
 
+        total_saved = Decimal(str(row.total_saved_discounts)) + Decimal(
+            str(cashback_row.total_cashback)
+        )
+        total_paid = Decimal(str(row.total_paid_before_cashback)) - Decimal(
+            str(cashback_row.total_cashback)
+        )
+        if total_paid < 0:
+            total_paid = Decimal("0")
+
         return {
-            "total_saved": Decimal(str(row.total_saved)),
-            "total_paid": Decimal(str(row.total_paid)),
+            "total_saved": total_saved,
+            "total_paid": total_paid,
             "receipts_count": receipts_count,
         }
 

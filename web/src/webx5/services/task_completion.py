@@ -147,7 +147,10 @@ class TaskCompletionService:
             if not checker(session, task, crit, receipt):
                 return False
 
-        # 4) All criteria passed — create reward + mark completed atomically.
-        reward = self.task_repo.create_reward_discount(session, task)
-        self.task_repo.mark_completed(session, task, reward.id)
+        # 4) All criteria passed — award cashback points + mark completed atomically.
+        # Feature 007: reward = points (not Discount). Points awarded as-is: int(reward_rub).
+        from webx5.core.points import points_service
+
+        points_service.award_for_task(session, task)
+        self.task_repo.mark_completed_without_reward(session, task)
         return True

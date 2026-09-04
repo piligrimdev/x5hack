@@ -168,10 +168,22 @@ class TaskRepository:
     def mark_completed(
         self, session: Session, task: Task, reward_id: uuid.UUID
     ) -> Task:
+        # BACKLOG-cleanup: since feature 007 (cashback-points) reward is points, not Discount.
+        # Kept for backward compatibility with any external caller; new code path calls
+        # mark_completed_without_reward.
         completed_status_id = self.get_status_id(session, STATUS_COMPLETED)
         task.task_status_id = completed_status_id
         task.completed_at = datetime.now(timezone.utc)
         task.reward_id = reward_id
+        session.flush()
+        return task
+
+    def mark_completed_without_reward(
+        self, session: Session, task: Task
+    ) -> Task:
+        completed_status_id = self.get_status_id(session, STATUS_COMPLETED)
+        task.task_status_id = completed_status_id
+        task.completed_at = datetime.now(timezone.utc)
         session.flush()
         return task
 

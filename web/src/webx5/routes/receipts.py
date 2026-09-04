@@ -13,6 +13,7 @@ from webx5.schemas.receipt import (
     CalculateRequest,
     CalculateResponse,
     CalculatedItemOut,
+    CashbackBlock,
     EconomyResponse,
     PaginatedReceiptList,
     ReceiptCreate,
@@ -80,13 +81,36 @@ def calculate_discounts(
     total_base = sum(i.base_price * i.quantity for i in items_out)
     total_paid = sum(i.paid_price * i.quantity for i in items_out)
 
+    from webx5.core.points import points_service
+
+    cashback_block: CashbackBlock | None = None
+    preview = points_service.preview_for_calculate(
+        session,
+        loyalty_card_id=data.loyalty_card_id,
+        points_requested_raw=data.points_to_spend,
+        subtotal_rub=int(total_paid),
+    )
+    if preview is not None:
+        cashback_block = CashbackBlock(
+            points_available=preview.points_available,
+            points_to_apply=preview.points_to_apply,
+            cashback_rub=preview.cashback_rub,
+            total_paid_rub=preview.total_paid_rub,
+            points_balance_after=preview.points_balance_after,
+            points_capped_by=preview.points_capped_by,
+            rate_points_per_rub=preview.rate_points_per_rub,
+        )
+
     return CalculateResponse(
         store_id=data.store_id,
         loyalty_card_id=data.loyalty_card_id,
         items=items_out,
         total_base=total_base,
         total_paid=total_paid,
-        total_saved=total_base - total_paid,
+        total_saved=(total_base - total_paid) + (
+            cashback_block.cashback_rub if cashback_block else 0
+        ),
+        cashback=cashback_block,
     )
 
 
@@ -145,7 +169,14 @@ def create_receipt(
         items=item_responses,
         total_base=total_base,
         total_paid=total_paid,
-        total_saved=total_base - total_paid,
+        total_saved=(total_base - total_paid) + int(receipt.cashback_applied_rub),
+        cashback_applied_points=int(receipt.cashback_applied_points),
+        cashback_applied_rub=int(receipt.cashback_applied_rub),
+        points_rate_at_purchase=(
+            int(receipt.points_rate_at_purchase)
+            if receipt.points_rate_at_purchase is not None
+            else None
+        ),
     )
 
 
@@ -164,8 +195,11 @@ def list_receipts(
     for receipt in receipts:
         items_data = receipt_repo.get_items_with_products(session, receipt.id)
         total_base = sum(Decimal(str(ri.base_price_at_purchase)) * ri.quantity for ri, _ in items_data)
-        total_paid = sum(Decimal(str(ri.paid_price)) * ri.quantity for ri, _ in items_data)
-        total_saved = total_base - total_paid
+        total_paid_before_cashback = sum(Decimal(str(ri.paid_price)) * ri.quantity for ri, _ in items_data)
+        cashback_rub = Decimal(str(receipt.cashback_applied_rub))
+        # Feature 007: cashback reduces final paid amount and counts as savings (FR-013).
+        total_paid = max(total_paid_before_cashback - cashback_rub, Decimal("0"))
+        total_saved = (total_base - total_paid_before_cashback) + cashback_rub
 
         store = session.get(__import__("webx5.entities.store", fromlist=["Store"]).Store, receipt.store_id)
 
@@ -233,7 +267,10 @@ def get_receipt(
     ]
 
     total_base = sum(i.base_price_at_purchase * i.quantity for i in detail_items)
-    total_paid = sum(i.paid_price * i.quantity for i in detail_items)
+    total_paid_before_cashback = sum(i.paid_price * i.quantity for i in detail_items)
+    cashback_rub = Decimal(str(receipt.cashback_applied_rub))
+    total_paid = max(total_paid_before_cashback - cashback_rub, Decimal("0"))
+    total_saved = (total_base - total_paid_before_cashback) + cashback_rub
 
     return ReceiptDetailResponse(
         id=receipt.id,
@@ -247,5 +284,12 @@ def get_receipt(
         items=detail_items,
         total_base=total_base,
         total_paid=total_paid,
-        total_saved=total_base - total_paid,
+        total_saved=total_saved,
+        cashback_applied_points=int(receipt.cashback_applied_points),
+        cashback_applied_rub=int(receipt.cashback_applied_rub),
+        points_rate_at_purchase=(
+            int(receipt.points_rate_at_purchase)
+            if receipt.points_rate_at_purchase is not None
+            else None
+        ),
     )

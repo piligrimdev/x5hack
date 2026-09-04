@@ -57,7 +57,18 @@ docker compose up --build
 # Проверка: curl http://localhost:8000/health → {"status":"ok"}
 # Документация: http://localhost:8000/docs (Scalar UI)
 # GET /challenges/current → 3 персональных задания пользователя (Bearer JWT)
+# GET /points/balance → баланс кешбека (Bearer JWT)
+# POST /receipts с полем points_to_spend → списание баллов при оплате
 ```
+
+### Cashback flow (feature 007)
+
+Награда за выполненное задание начисляется в **баллах** (не в скидке): `points = int(task.reward_rub)`.
+Баллы можно тратить при оплате чека — их конвертация в рубли идёт по настраиваемому **курсу**
+(singleton `points_settings`, по умолчанию `10 баллов = 1 руб`). Курс применяется **только при
+списании и в `POST /receipts/calculate`**; начисление идёт as-is. Кешбек засчитывается как экономия
+и суммируется со скидочной экономией в `GET /receipts/economy`. Детали — в
+[`specs/007-cashback-points/`](specs/007-cashback-points/).
 
 ### Полезные команды
 

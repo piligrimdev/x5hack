@@ -4,14 +4,17 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 
 import { apiLogin, apiRegister } from '@/api/client';
 import { CustomTabBar, TabScreen } from '@/components/custom-tab-bar';
+import { ChallengesView } from '@/components/screens/challenges-view';
 import { HistoryView } from '@/components/screens/history-view';
 import { HomeView } from '@/components/screens/home-view';
+import { PointsView } from '@/components/screens/points-view';
+import { ReceiptDetailView } from '@/components/screens/receipt-detail-view';
 import { SavingsView } from '@/components/screens/savings-view';
 import { BrandColors } from '@/constants/theme';
 import { useEconomy } from '@/hooks/useEconomy';
 import { useMockData } from '@/mock-data';
 
-type Screen = 'home' | 'savings' | 'history' | 'catalog' | 'cart' | 'appi' | 'profile';
+type Screen = 'home' | 'savings' | 'history' | 'catalog' | 'cart' | 'appi' | 'profile' | 'challenges' | 'receipt-detail' | 'points';
 
 function LoginScreen({ onLogin }: { onLogin: (token: string) => void }) {
   const insets = useSafeAreaInsets();
@@ -84,6 +87,7 @@ function LoginScreen({ onLogin }: { onLogin: (token: string) => void }) {
 function AppContent({ token }: { token: string }) {
   const [screen, setScreen] = useState<Screen>('home');
   const [prevScreen, setPrevScreen] = useState<Screen>('home');
+  const [selectedReceiptId, setSelectedReceiptId] = useState<string | null>(null);
   const data = useMockData();
   const { economy } = useEconomy(token);
 
@@ -99,11 +103,24 @@ function AppContent({ token }: { token: string }) {
     setScreen(prevScreen === screen ? 'home' : prevScreen);
   }
 
+  function openReceipt(id: string) {
+    setSelectedReceiptId(id);
+    navigate('receipt-detail');
+  }
+
   return (
     <View style={styles.root}>
       <View style={styles.content}>
         {screen === 'home' && (
-          <HomeView token={token} onHistory={() => navigate('history')} />
+          <HomeView
+            token={token}
+            onHistory={() => navigate('history')}
+            onChallenges={() => navigate('challenges')}
+            onPoints={() => navigate('points')}
+          />
+        )}
+        {screen === 'points' && (
+          <PointsView token={token} goBack={goBack} />
         )}
         {screen === 'savings' && (
           <SavingsView
@@ -112,6 +129,7 @@ function AppContent({ token }: { token: string }) {
             savings={{ paid: totalPaid, withoutDiscount: totalPaid + totalSaved }}
             goHome={() => navigate('home')}
             goHistory={() => navigate('history')}
+            goChallenges={() => navigate('challenges')}
           />
         )}
         {screen === 'history' && (
@@ -120,7 +138,14 @@ function AppContent({ token }: { token: string }) {
             totalSaved={totalSaved}
             totalPaid={totalPaid}
             goBack={goBack}
+            onReceiptPress={openReceipt}
           />
+        )}
+        {screen === 'challenges' && (
+          <ChallengesView token={token} goBack={goBack} />
+        )}
+        {screen === 'receipt-detail' && selectedReceiptId && (
+          <ReceiptDetailView token={token} receiptId={selectedReceiptId} goBack={goBack} />
         )}
       </View>
       <CustomTabBar

@@ -10,9 +10,10 @@ interface SavingsViewProps {
   savings: Savings;
   goHome: () => void;
   goHistory: () => void;
+  goChallenges: () => void;
 }
 
-export function SavingsView({ tasks, leaderboard, savings, goHome, goHistory }: SavingsViewProps) {
+export function SavingsView({ tasks, leaderboard, savings, goHome, goHistory, goChallenges }: SavingsViewProps) {
   const insets = useSafeAreaInsets();
   const savedAmount = savings.withoutDiscount - savings.paid;
   const savedPct = Math.round((savedAmount / savings.withoutDiscount) * 100);
@@ -27,9 +28,14 @@ export function SavingsView({ tasks, leaderboard, savings, goHome, goHistory }: 
           <Text style={styles.backBtnText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Экономия</Text>
-        <TouchableOpacity style={styles.backBtn} onPress={goHistory} activeOpacity={0.7}>
-          <Text style={styles.backBtnText}>🕐</Text>
-        </TouchableOpacity>
+        <View style={styles.headerRight}>
+          <TouchableOpacity style={styles.iconBtn} onPress={goChallenges} activeOpacity={0.7}>
+            <Text style={styles.backBtnText}>📋</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.iconBtn} onPress={goHistory} activeOpacity={0.7}>
+            <Text style={styles.backBtnText}>🕐</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView
@@ -159,6 +165,16 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 28,
   },
   backBtn: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerRight: {
+    flexDirection: 'row',
+    gap: 4,
+  },
+  iconBtn: {
     width: 36,
     height: 36,
     alignItems: 'center',
