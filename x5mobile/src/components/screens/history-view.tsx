@@ -1,29 +1,34 @@
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BrandColors } from '@/constants/theme';
-import { HistoryItem, Savings } from '@/mock-data';
+import { useReceipts } from '@/hooks/useReceipts';
+
+import { ReceiptListItem } from './ReceiptListItem';
 
 interface HistoryViewProps {
-  history: HistoryItem[];
-  savings: Savings;
+  token: string;
+  totalSaved: number;
+  totalPaid: number;
   goBack: () => void;
 }
 
-export function HistoryView({ history, savings, goBack }: HistoryViewProps) {
+export function HistoryView({ token, totalSaved, totalPaid, goBack }: HistoryViewProps) {
   const insets = useSafeAreaInsets();
-  const savedAmount = savings.withoutDiscount - savings.paid;
-  const savedPct = Math.round((savedAmount / savings.withoutDiscount) * 100);
+  const { receipts, loading, error } = useReceipts(token);
+
+  const withoutDiscount = totalPaid + totalSaved;
+  const savedPct = withoutDiscount > 0
+    ? Math.round((totalSaved / withoutDiscount) * 100)
+    : 0;
 
   return (
     <View style={styles.root}>
-      {/* Dark header */}
       <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
         <TouchableOpacity style={styles.backBtn} onPress={goBack} activeOpacity={0.7}>
           <Text style={styles.backBtnText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>История покупок</Text>
-        {/* Placeholder for symmetry */}
         <View style={styles.backBtn} />
       </View>
 
@@ -32,41 +37,34 @@ export function HistoryView({ history, savings, goBack }: HistoryViewProps) {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
 
-        {/* Savings summary */}
         <View style={styles.summaryCard}>
           <View style={styles.summaryLeft}>
-            <Text style={styles.summaryLabel}>СЭКОНОМЛЕНО ЗА НЕДЕЛЮ</Text>
-            <Text style={styles.summaryAmount}>−{savedAmount} ₽</Text>
+            <Text style={styles.summaryLabel}>СЭКОНОМЛЕНО ВСЕГО</Text>
+            <Text style={styles.summaryAmount}>
+              −{Math.round(totalSaved).toLocaleString('ru-RU')} ₽
+            </Text>
           </View>
-          <Text style={styles.summaryPct}>{savedPct}%</Text>
+          {savedPct > 0 && <Text style={styles.summaryPct}>{savedPct}%</Text>}
         </View>
 
-        {/* History list */}
         <View style={styles.historyList}>
-          {history.map(item => (
-            <HistoryCard key={item.id} item={item} />
+          {loading && (
+            <ActivityIndicator color={BrandColors.green} style={styles.loader} />
+          )}
+          {!loading && error && (
+            <Text style={styles.emptyText}>Не удалось загрузить покупки</Text>
+          )}
+          {!loading && !error && receipts.length === 0 && (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyIcon}>🛒</Text>
+              <Text style={styles.emptyText}>Покупок пока нет</Text>
+            </View>
+          )}
+          {receipts.map((r) => (
+            <ReceiptListItem key={r.id} item={r} />
           ))}
         </View>
       </ScrollView>
-    </View>
-  );
-}
-
-function HistoryCard({ item }: { item: HistoryItem }) {
-  return (
-    <View style={styles.historyCard}>
-      <View style={styles.storeIcon}>
-        <Text style={styles.storeIconText}>М</Text>
-      </View>
-      <View style={styles.historyInfo}>
-        <Text style={styles.historyPlace}>{item.place}</Text>
-        <Text style={styles.historyMeta}>{item.dateLabel} · {item.items} товаров</Text>
-      </View>
-      <View style={styles.historyRight}>
-        <Text style={styles.historySum}>{item.sum}</Text>
-        <Text style={styles.historySaved}>−{item.saved} ₽</Text>
-      </View>
-      <Text style={styles.chevron}>›</Text>
     </View>
   );
 }
@@ -101,9 +99,7 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '700',
   },
-  scroll: {
-    flex: 1,
-  },
+  scroll: { flex: 1 },
   scrollContent: {
     padding: 16,
     gap: 16,
@@ -118,9 +114,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  summaryLeft: {
-    gap: 4,
-  },
+  summaryLeft: { gap: 4 },
   summaryLabel: {
     fontSize: 12,
     color: BrandColors.textSecondary,
@@ -137,63 +131,16 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: BrandColors.green,
   },
-  historyList: {
-    gap: 10,
-  },
-  historyCard: {
-    backgroundColor: BrandColors.cardBg,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: BrandColors.cardBorder,
-    padding: 14,
-    flexDirection: 'row',
+  historyList: { gap: 10 },
+  loader: { marginVertical: 24 },
+  emptyState: {
     alignItems: 'center',
+    paddingVertical: 48,
     gap: 12,
   },
-  storeIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
-    backgroundColor: BrandColors.elementBg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  storeIconText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: BrandColors.textSecondary,
-  },
-  historyInfo: {
-    flex: 1,
-    gap: 3,
-  },
-  historyPlace: {
-    fontSize: 14.5,
-    fontWeight: '600',
-    color: BrandColors.textPrimary,
-  },
-  historyMeta: {
-    fontSize: 12.5,
-    color: BrandColors.textSecondary,
-  },
-  historyRight: {
-    alignItems: 'flex-end',
-    gap: 2,
-  },
-  historySum: {
+  emptyIcon: { fontSize: 40 },
+  emptyText: {
     fontSize: 15,
-    fontWeight: '700',
-    color: BrandColors.textPrimary,
-  },
-  historySaved: {
-    fontSize: 11.5,
-    fontWeight: '600',
-    color: BrandColors.green,
-  },
-  chevron: {
-    fontSize: 20,
     color: BrandColors.textSecondary,
-    marginLeft: -4,
   },
 });

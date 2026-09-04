@@ -1,28 +1,27 @@
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BrandColors } from '@/constants/theme';
-
-export type TabScreen = 'home' | 'savings' | 'history';
+export type TabScreen = 'home' | 'catalog' | 'cart' | 'appi' | 'profile';
 
 interface CustomTabBarProps {
   activeScreen: TabScreen;
-  onTabPress: (tab: 'home' | 'catalog' | 'bonus' | 'profile') => void;
+  onTabPress: (tab: TabScreen) => void;
 }
 
-const ACTIVE = BrandColors.red;
+const GREEN_ACTIVE = '#25A244';
 const INACTIVE = '#B4B3AF';
 
-// SVG-иконки через View-примитивы (без react-native-svg)
-
 function HomeIcon({ color }: { color: string }) {
+  // 4-leaf clover
   return (
-    <View style={[tabIconStyles.house]}>
-      {/* Крыша */}
-      <View style={[tabIconStyles.roof, { borderBottomColor: color }]} />
-      {/* Стены + дверь */}
-      <View style={[tabIconStyles.walls, { backgroundColor: color }]}>
-        <View style={[tabIconStyles.door, { backgroundColor: INACTIVE === color ? '#F6F4F1' : '#fff' }]} />
+    <View style={iconS.clover}>
+      <View style={iconS.cloverRow}>
+        <View style={[iconS.cloverLeaf, { backgroundColor: color }]} />
+        <View style={[iconS.cloverLeaf, { backgroundColor: color }]} />
+      </View>
+      <View style={iconS.cloverRow}>
+        <View style={[iconS.cloverLeaf, { backgroundColor: color }]} />
+        <View style={[iconS.cloverLeaf, { backgroundColor: color }]} />
       </View>
     </View>
   );
@@ -30,79 +29,126 @@ function HomeIcon({ color }: { color: string }) {
 
 function CatalogIcon({ color }: { color: string }) {
   return (
-    <View style={tabIconStyles.grid}>
-      <View style={tabIconStyles.gridRow}>
-        <View style={[tabIconStyles.gridCell, { backgroundColor: color }]} />
-        <View style={[tabIconStyles.gridCell, { backgroundColor: color }]} />
-      </View>
-      <View style={tabIconStyles.gridRow}>
-        <View style={[tabIconStyles.gridCell, { backgroundColor: color }]} />
-        <View style={[tabIconStyles.gridCell, { backgroundColor: color }]} />
+    <View style={iconS.catalog}>
+      <View style={[iconS.searchCircle, { borderColor: color }]}>
+        <View style={[iconS.searchLines, { gap: 2 }]}>
+          <View style={[iconS.line, { backgroundColor: color }]} />
+          <View style={[iconS.line, { backgroundColor: color, width: 10 }]} />
+        </View>
       </View>
     </View>
   );
 }
 
-function BonusIcon({ color }: { color: string }) {
-  // Пятиконечная звезда через символ ★
-  return <Text style={[tabIconStyles.starText, { color }]}>★</Text>;
+function CartIcon({ color }: { color: string }) {
+  return (
+    <View style={iconS.cart}>
+      <View style={[iconS.cartBasket, { borderColor: color }]}>
+        <View style={iconS.cartHandleRow}>
+          <View style={[iconS.cartHandle, { borderColor: color }]} />
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function AppiIcon({ color }: { color: string }) {
+  const isActive = color === GREEN_ACTIVE;
+  return (
+    <View style={[iconS.appiCircle, { backgroundColor: isActive ? '#FF6D00' : '#E0E0E0' }]}>
+      <Text style={iconS.appiEmoji}>🙂</Text>
+    </View>
+  );
 }
 
 function ProfileIcon({ color }: { color: string }) {
   return (
-    <View style={tabIconStyles.profile}>
-      <View style={[tabIconStyles.profileHead, { backgroundColor: color }]} />
-      <View style={[tabIconStyles.profileBody, { borderColor: color }]} />
+    <View style={iconS.profile}>
+      <View style={[iconS.profileHead, { backgroundColor: color }]} />
+      <View style={[iconS.profileBody, { borderColor: color }]} />
     </View>
   );
 }
 
-const tabIconStyles = StyleSheet.create({
-  house: {
+const iconS = StyleSheet.create({
+  clover: {
     width: 22,
-    height: 20,
-    alignItems: 'center',
+    height: 22,
+    gap: 2,
   },
-  roof: {
-    width: 0,
-    height: 0,
-    borderLeftWidth: 11,
-    borderRightWidth: 11,
-    borderBottomWidth: 9,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-  },
-  walls: {
-    width: 16,
-    height: 11,
-    borderRadius: 1,
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    paddingBottom: 0,
-  },
-  door: {
-    width: 5,
-    height: 7,
-    borderRadius: 2,
-    marginBottom: 0,
-  },
-  grid: {
-    width: 20,
-    height: 20,
-    gap: 3,
-  },
-  gridRow: {
+  cloverRow: {
     flex: 1,
     flexDirection: 'row',
-    gap: 3,
+    gap: 2,
   },
-  gridCell: {
+  cloverLeaf: {
     flex: 1,
-    borderRadius: 3,
+    borderRadius: 6,
   },
-  starText: {
-    fontSize: 22,
-    lineHeight: 22,
+  catalog: {
+    width: 22,
+    height: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  searchCircle: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  searchLines: {
+    width: 12,
+  },
+  line: {
+    height: 2,
+    width: 12,
+    borderRadius: 1,
+  },
+  cart: {
+    width: 24,
+    height: 22,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+  },
+  cartBasket: {
+    width: 22,
+    height: 14,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderTopWidth: 0,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    paddingTop: 0,
+    position: 'relative',
+  },
+  cartHandleRow: {
+    position: 'absolute',
+    top: -10,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  cartHandle: {
+    width: 14,
+    height: 10,
+    borderTopLeftRadius: 7,
+    borderTopRightRadius: 7,
+    borderWidth: 2,
+    borderBottomWidth: 0,
+  },
+  appiCircle: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  appiEmoji: {
+    fontSize: 16,
+    lineHeight: 20,
   },
   profile: {
     width: 22,
@@ -127,18 +173,19 @@ const tabIconStyles = StyleSheet.create({
 export function CustomTabBar({ activeScreen, onTabPress }: CustomTabBarProps) {
   const insets = useSafeAreaInsets();
 
-  // "Главная" всегда активна — все три экрана (home/savings/history) принадлежат ей
-  const tabs = [
-    { key: 'home' as const, label: 'Главная', Icon: HomeIcon, active: true },
-    { key: 'catalog' as const, label: 'Каталог', Icon: CatalogIcon, active: false },
-    { key: 'bonus' as const, label: 'Бонусы', Icon: BonusIcon, active: false },
-    { key: 'profile' as const, label: 'Профиль', Icon: ProfileIcon, active: false },
+  const tabs: { key: TabScreen; label: string; Icon: React.ComponentType<{ color: string }> }[] = [
+    { key: 'home', label: 'Главная', Icon: HomeIcon },
+    { key: 'catalog', label: 'Каталог', Icon: CatalogIcon },
+    { key: 'cart', label: 'Корзина', Icon: CartIcon },
+    { key: 'appi', label: 'Аппи', Icon: AppiIcon },
+    { key: 'profile', label: 'Профиль', Icon: ProfileIcon },
   ];
 
   return (
     <View style={[styles.container, { paddingBottom: insets.bottom }]}>
       {tabs.map(tab => {
-        const color = tab.active ? ACTIVE : INACTIVE;
+        const active = tab.key === activeScreen;
+        const color = active ? GREEN_ACTIVE : INACTIVE;
         return (
           <TouchableOpacity
             key={tab.key}
