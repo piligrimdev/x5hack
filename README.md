@@ -53,6 +53,10 @@ cp .env.example .env
 # 2. Собрать и запустить весь стек
 docker compose up --build
 
+# Для работы AI-ассистента корзины (POST /basket/assistant) нужен реальный
+# OPENROUTER_API_KEY в .env — с плейсхолдером по умолчанию этот один
+# эндпоинт не работает, остальное приложение — без изменений.
+
 # Сервис доступен на http://localhost:8000
 # Проверка: curl http://localhost:8000/health → {"status":"ok"}
 # Документация: http://localhost:8000/docs (Scalar UI)
@@ -119,6 +123,9 @@ docker compose run --rm --entrypoint python \
 ```
 
 > Требует предварительного запуска seed_products.py, seed_stores.py и seed_discounts.py.
+> Также создаёт `User` на каждую синтетическую карту лояльности и в конце печатает
+> несколько демо-логинов (`user_id=... phone=...`) — по этому телефону можно
+> залогиниться (`POST /login`) пользователем с реальной историей покупок.
 
 #### Генерация демо-данных без датасета
 
