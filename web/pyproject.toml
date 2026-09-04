@@ -19,6 +19,7 @@ dependencies = [
     "scalar-fastapi>=1.0.0,<2.0.0",
     "pyjwt (>=2.8)",
     "phonenumbers (>=9.0.38,<10.0.0)",
+    "fastapi-pagination[sqlalchemy]>=0.12.0,<1.0.0",
 ]
 
 [dependency-groups]

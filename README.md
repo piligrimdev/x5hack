@@ -70,6 +70,18 @@ docker compose build          # Пересобрать образ без зап�
 
 > Миграции БД применяются автоматически при каждом старте контейнера.
 
+### Заполнение каталога товарами
+
+```bash
+# Запустить seed-скрипт с файлом данных (JSON array или JSONL)
+docker compose run --rm --entrypoint python \
+  -v "/абсолютный/путь/к/unique_products.json:/tmp/products_data.json" \
+  -e SEED_FILE_PATH=/tmp/products_data.json \
+  web scripts/seed_products.py
+```
+
+> Скрипт идемпотентен: повторный запуск обновит существующие товары без дублирования.
+
 ---
 
 ## Сетап бэкенда (без Docker)

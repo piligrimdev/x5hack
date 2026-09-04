@@ -29,6 +29,8 @@ services:
       SERVICE_NAME: ${SERVICE_NAME:-webx5}
     ports:
       - "${PORT:-8000}:8000"
+    volumes:
+      - ./dataset:/data:ro
     depends_on:
       db:
         condition: service_healthy
