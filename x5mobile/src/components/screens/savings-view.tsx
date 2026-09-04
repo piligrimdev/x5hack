@@ -47,7 +47,8 @@ export function SavingsView({ tasks, leaderboard, savings, token, goHome, goHist
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}>
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled">
 
         {/* Savings card */}
         <View style={styles.card}>
@@ -101,6 +102,8 @@ export function SavingsView({ tasks, leaderboard, savings, token, goHome, goHist
               value={instructionText}
               onChangeText={setInstructionText}
               editable={!basketLoading}
+              returnKeyType="send"
+              onSubmitEditing={handleSendInstruction}
             />
             <TouchableOpacity
               style={styles.basketSendBtn}

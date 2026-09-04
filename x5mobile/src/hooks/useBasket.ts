@@ -29,7 +29,7 @@ export function useBasket(token: string | null) {
     setLoading(true);
     apiFetch<SuggestedBasketResponse>('/basket/suggested', token)
       .then((data) => setItems(data.items))
-      .catch(() => {})
+      .catch((e: Error) => setMessage(e.message))
       .finally(() => setLoading(false));
   }, [token]);
 
