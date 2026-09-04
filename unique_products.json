@@ -1,0 +1,926 @@
+[
+  {
+    "sku_id": "sku_0000",
+    "category": "молочные продукты и яйца",
+    "item": "молоко",
+    "regular_unit_price_rub": 105.5,
+    "unit_cost_rub": 71.67
+  },
+  {
+    "sku_id": "sku_0001",
+    "category": "молочные продукты и яйца",
+    "item": "сметана",
+    "regular_unit_price_rub": 73.55,
+    "unit_cost_rub": 49.97
+  },
+  {
+    "sku_id": "sku_0002",
+    "category": "молочные продукты и яйца",
+    "item": "творог",
+    "regular_unit_price_rub": 110.52,
+    "unit_cost_rub": 75.08
+  },
+  {
+    "sku_id": "sku_0003",
+    "category": "молочные продукты и яйца",
+    "item": "кефир",
+    "regular_unit_price_rub": 78.21,
+    "unit_cost_rub": 53.13
+  },
+  {
+    "sku_id": "sku_0004",
+    "category": "молочные продукты и яйца",
+    "item": "сыр",
+    "regular_unit_price_rub": 78.12,
+    "unit_cost_rub": 53.07
+  },
+  {
+    "sku_id": "sku_0005",
+    "category": "молочные продукты и яйца",
+    "item": "яйца",
+    "regular_unit_price_rub": 95.53,
+    "unit_cost_rub": 64.9
+  },
+  {
+    "sku_id": "sku_0006",
+    "category": "овощи",
+    "item": "картофель",
+    "regular_unit_price_rub": 64.68,
+    "unit_cost_rub": 42.8
+  },
+  {
+    "sku_id": "sku_0007",
+    "category": "овощи",
+    "item": "морковь",
+    "regular_unit_price_rub": 49.19,
+    "unit_cost_rub": 32.55
+  },
+  {
+    "sku_id": "sku_0008",
+    "category": "овощи",
+    "item": "лук",
+    "regular_unit_price_rub": 45.98,
+    "unit_cost_rub": 30.43
+  },
+  {
+    "sku_id": "sku_0009",
+    "category": "овощи",
+    "item": "свёкла",
+    "regular_unit_price_rub": 53.78,
+    "unit_cost_rub": 35.59
+  },
+  {
+    "sku_id": "sku_0010",
+    "category": "овощи",
+    "item": "капуста",
+    "regular_unit_price_rub": 57.36,
+    "unit_cost_rub": 37.96
+  },
+  {
+    "sku_id": "sku_0011",
+    "category": "овощи",
+    "item": "огурцы",
+    "regular_unit_price_rub": 53.43,
+    "unit_cost_rub": 35.36
+  },
+  {
+    "sku_id": "sku_0012",
+    "category": "фрукты",
+    "item": "яблоки",
+    "regular_unit_price_rub": 88.63,
+    "unit_cost_rub": 59.59
+  },
+  {
+    "sku_id": "sku_0013",
+    "category": "фрукты",
+    "item": "бананы",
+    "regular_unit_price_rub": 76.99,
+    "unit_cost_rub": 51.76
+  },
+  {
+    "sku_id": "sku_0014",
+    "category": "фрукты",
+    "item": "апельсины",
+    "regular_unit_price_rub": 68.77,
+    "unit_cost_rub": 46.23
+  },
+  {
+    "sku_id": "sku_0015",
+    "category": "фрукты",
+    "item": "груши",
+    "regular_unit_price_rub": 115.12,
+    "unit_cost_rub": 77.4
+  },
+  {
+    "sku_id": "sku_0016",
+    "category": "фрукты",
+    "item": "виноград",
+    "regular_unit_price_rub": 82.52,
+    "unit_cost_rub": 55.48
+  },
+  {
+    "sku_id": "sku_0017",
+    "category": "фрукты",
+    "item": "лимоны",
+    "regular_unit_price_rub": 91.19,
+    "unit_cost_rub": 61.31
+  },
+  {
+    "sku_id": "sku_0018",
+    "category": "мясо и птица",
+    "item": "курица",
+    "regular_unit_price_rub": 258.8,
+    "unit_cost_rub": 177.66
+  },
+  {
+    "sku_id": "sku_0019",
+    "category": "мясо и птица",
+    "item": "говядина",
+    "regular_unit_price_rub": 354.01,
+    "unit_cost_rub": 243.02
+  },
+  {
+    "sku_id": "sku_0020",
+    "category": "мясо и птица",
+    "item": "свинина",
+    "regular_unit_price_rub": 397.88,
+    "unit_cost_rub": 273.13
+  },
+  {
+    "sku_id": "sku_0021",
+    "category": "мясо и птица",
+    "item": "фарш",
+    "regular_unit_price_rub": 255.67,
+    "unit_cost_rub": 175.51
+  },
+  {
+    "sku_id": "sku_0022",
+    "category": "мясо и птица",
+    "item": "сосиски",
+    "regular_unit_price_rub": 407.98,
+    "unit_cost_rub": 280.07
+  },
+  {
+    "sku_id": "sku_0023",
+    "category": "мясо и птица",
+    "item": "колбаса",
+    "regular_unit_price_rub": 401.57,
+    "unit_cost_rub": 275.67
+  },
+  {
+    "sku_id": "sku_0024",
+    "category": "рыба и морепродукты",
+    "item": "сельдь",
+    "regular_unit_price_rub": 436.48,
+    "unit_cost_rub": 299.63
+  },
+  {
+    "sku_id": "sku_0025",
+    "category": "рыба и морепродукты",
+    "item": "форель",
+    "regular_unit_price_rub": 347.27,
+    "unit_cost_rub": 238.39
+  },
+  {
+    "sku_id": "sku_0026",
+    "category": "рыба и морепродукты",
+    "item": "рыбные консервы",
+    "regular_unit_price_rub": 445.78,
+    "unit_cost_rub": 306.02
+  },
+  {
+    "sku_id": "sku_0027",
+    "category": "рыба и морепродукты",
+    "item": "креветки",
+    "regular_unit_price_rub": 419.5,
+    "unit_cost_rub": 287.98
+  },
+  {
+    "sku_id": "sku_0028",
+    "category": "рыба и морепродукты",
+    "item": "кальмары",
+    "regular_unit_price_rub": 277.05,
+    "unit_cost_rub": 190.19
+  },
+  {
+    "sku_id": "sku_0029",
+    "category": "рыба и морепродукты",
+    "item": "минтай",
+    "regular_unit_price_rub": 392.8,
+    "unit_cost_rub": 269.65
+  },
+  {
+    "sku_id": "sku_0030",
+    "category": "бакалея",
+    "item": "мука",
+    "regular_unit_price_rub": 71.91,
+    "unit_cost_rub": 48.35
+  },
+  {
+    "sku_id": "sku_0031",
+    "category": "бакалея",
+    "item": "сахар",
+    "regular_unit_price_rub": 46.1,
+    "unit_cost_rub": 30.99
+  },
+  {
+    "sku_id": "sku_0032",
+    "category": "бакалея",
+    "item": "соль",
+    "regular_unit_price_rub": 49.29,
+    "unit_cost_rub": 33.14
+  },
+  {
+    "sku_id": "sku_0033",
+    "category": "бакалея",
+    "item": "гречка",
+    "regular_unit_price_rub": 73.45,
+    "unit_cost_rub": 49.38
+  },
+  {
+    "sku_id": "sku_0034",
+    "category": "бакалея",
+    "item": "рис",
+    "regular_unit_price_rub": 71.42,
+    "unit_cost_rub": 48.02
+  },
+  {
+    "sku_id": "sku_0035",
+    "category": "бакалея",
+    "item": "макароны",
+    "regular_unit_price_rub": 72.39,
+    "unit_cost_rub": 48.67
+  },
+  {
+    "sku_id": "sku_0036",
+    "category": "хлеб и выпечка",
+    "item": "хлеб белый",
+    "regular_unit_price_rub": 51.23,
+    "unit_cost_rub": 34.8
+  },
+  {
+    "sku_id": "sku_0037",
+    "category": "хлеб и выпечка",
+    "item": "хлеб чёрный",
+    "regular_unit_price_rub": 59.0,
+    "unit_cost_rub": 40.08
+  },
+  {
+    "sku_id": "sku_0038",
+    "category": "хлеб и выпечка",
+    "item": "батон",
+    "regular_unit_price_rub": 58.07,
+    "unit_cost_rub": 39.45
+  },
+  {
+    "sku_id": "sku_0039",
+    "category": "хлеб и выпечка",
+    "item": "лаваш",
+    "regular_unit_price_rub": 48.62,
+    "unit_cost_rub": 33.03
+  },
+  {
+    "sku_id": "sku_0040",
+    "category": "хлеб и выпечка",
+    "item": "булочки",
+    "regular_unit_price_rub": 54.09,
+    "unit_cost_rub": 36.75
+  },
+  {
+    "sku_id": "sku_0041",
+    "category": "хлеб и выпечка",
+    "item": "сухари",
+    "regular_unit_price_rub": 52.38,
+    "unit_cost_rub": 35.58
+  },
+  {
+    "sku_id": "sku_0042",
+    "category": "напитки",
+    "item": "вода",
+    "regular_unit_price_rub": 97.53,
+    "unit_cost_rub": 64.54
+  },
+  {
+    "sku_id": "sku_0043",
+    "category": "напитки",
+    "item": "сок",
+    "regular_unit_price_rub": 65.08,
+    "unit_cost_rub": 43.07
+  },
+  {
+    "sku_id": "sku_0044",
+    "category": "напитки",
+    "item": "газировка",
+    "regular_unit_price_rub": 85.06,
+    "unit_cost_rub": 56.29
+  },
+  {
+    "sku_id": "sku_0045",
+    "category": "напитки",
+    "item": "чай",
+    "regular_unit_price_rub": 77.68,
+    "unit_cost_rub": 51.4
+  },
+  {
+    "sku_id": "sku_0046",
+    "category": "напитки",
+    "item": "кофе",
+    "regular_unit_price_rub": 110.97,
+    "unit_cost_rub": 73.43
+  },
+  {
+    "sku_id": "sku_0047",
+    "category": "напитки",
+    "item": "компот",
+    "regular_unit_price_rub": 82.0,
+    "unit_cost_rub": 54.26
+  },
+  {
+    "sku_id": "sku_0048",
+    "category": "заморозка",
+    "item": "пельмени",
+    "regular_unit_price_rub": 185.2,
+    "unit_cost_rub": 125.82
+  },
+  {
+    "sku_id": "sku_0049",
+    "category": "заморозка",
+    "item": "овощная смесь",
+    "regular_unit_price_rub": 133.22,
+    "unit_cost_rub": 90.5
+  },
+  {
+    "sku_id": "sku_0050",
+    "category": "заморозка",
+    "item": "мороженое",
+    "regular_unit_price_rub": 179.73,
+    "unit_cost_rub": 122.1
+  },
+  {
+    "sku_id": "sku_0051",
+    "category": "заморозка",
+    "item": "замороженные ягоды",
+    "regular_unit_price_rub": 152.3,
+    "unit_cost_rub": 103.47
+  },
+  {
+    "sku_id": "sku_0052",
+    "category": "заморозка",
+    "item": "наггетсы",
+    "regular_unit_price_rub": 231.66,
+    "unit_cost_rub": 157.38
+  },
+  {
+    "sku_id": "sku_0053",
+    "category": "заморозка",
+    "item": "блины",
+    "regular_unit_price_rub": 192.65,
+    "unit_cost_rub": 130.88
+  },
+  {
+    "sku_id": "sku_0054",
+    "category": "сладости и снеки",
+    "item": "шоколад",
+    "regular_unit_price_rub": 167.64,
+    "unit_cost_rub": 109.16
+  },
+  {
+    "sku_id": "sku_0055",
+    "category": "сладости и снеки",
+    "item": "печенье",
+    "regular_unit_price_rub": 92.72,
+    "unit_cost_rub": 60.37
+  },
+  {
+    "sku_id": "sku_0056",
+    "category": "сладости и снеки",
+    "item": "чипсы",
+    "regular_unit_price_rub": 172.4,
+    "unit_cost_rub": 112.26
+  },
+  {
+    "sku_id": "sku_0057",
+    "category": "сладости и снеки",
+    "item": "орехи солёные",
+    "regular_unit_price_rub": 88.37,
+    "unit_cost_rub": 57.54
+  },
+  {
+    "sku_id": "sku_0058",
+    "category": "сладости и снеки",
+    "item": "зефир",
+    "regular_unit_price_rub": 137.35,
+    "unit_cost_rub": 89.44
+  },
+  {
+    "sku_id": "sku_0059",
+    "category": "сладости и снеки",
+    "item": "вафли",
+    "regular_unit_price_rub": 104.9,
+    "unit_cost_rub": 68.31
+  },
+  {
+    "sku_id": "sku_0060",
+    "category": "консервация",
+    "item": "тушёнка",
+    "regular_unit_price_rub": 88.47,
+    "unit_cost_rub": 59.48
+  },
+  {
+    "sku_id": "sku_0061",
+    "category": "консервация",
+    "item": "кукуруза консервированная",
+    "regular_unit_price_rub": 99.67,
+    "unit_cost_rub": 67.01
+  },
+  {
+    "sku_id": "sku_0062",
+    "category": "консервация",
+    "item": "горошек консервированный",
+    "regular_unit_price_rub": 125.68,
+    "unit_cost_rub": 84.49
+  },
+  {
+    "sku_id": "sku_0063",
+    "category": "консервация",
+    "item": "оливки",
+    "regular_unit_price_rub": 96.71,
+    "unit_cost_rub": 65.02
+  },
+  {
+    "sku_id": "sku_0064",
+    "category": "консервация",
+    "item": "огурцы маринованные",
+    "regular_unit_price_rub": 98.57,
+    "unit_cost_rub": 66.27
+  },
+  {
+    "sku_id": "sku_0065",
+    "category": "консервация",
+    "item": "томатная паста",
+    "regular_unit_price_rub": 94.88,
+    "unit_cost_rub": 63.79
+  },
+  {
+    "sku_id": "sku_0066",
+    "category": "соусы и приправы",
+    "item": "майонез",
+    "regular_unit_price_rub": 81.67,
+    "unit_cost_rub": 53.18
+  },
+  {
+    "sku_id": "sku_0067",
+    "category": "соусы и приправы",
+    "item": "кетчуп",
+    "regular_unit_price_rub": 81.94,
+    "unit_cost_rub": 53.36
+  },
+  {
+    "sku_id": "sku_0068",
+    "category": "соусы и приправы",
+    "item": "соевый соус",
+    "regular_unit_price_rub": 125.95,
+    "unit_cost_rub": 82.01
+  },
+  {
+    "sku_id": "sku_0069",
+    "category": "соусы и приправы",
+    "item": "специи",
+    "regular_unit_price_rub": 122.16,
+    "unit_cost_rub": 79.54
+  },
+  {
+    "sku_id": "sku_0070",
+    "category": "соусы и приправы",
+    "item": "горчица",
+    "regular_unit_price_rub": 137.04,
+    "unit_cost_rub": 89.23
+  },
+  {
+    "sku_id": "sku_0071",
+    "category": "соусы и приправы",
+    "item": "уксус",
+    "regular_unit_price_rub": 98.37,
+    "unit_cost_rub": 64.05
+  },
+  {
+    "sku_id": "sku_0072",
+    "category": "масла и жиры",
+    "item": "подсолнечное масло",
+    "regular_unit_price_rub": 125.87,
+    "unit_cost_rub": 85.51
+  },
+  {
+    "sku_id": "sku_0073",
+    "category": "масла и жиры",
+    "item": "оливковое масло",
+    "regular_unit_price_rub": 142.39,
+    "unit_cost_rub": 96.73
+  },
+  {
+    "sku_id": "sku_0074",
+    "category": "масла и жиры",
+    "item": "сливочное масло",
+    "regular_unit_price_rub": 188.78,
+    "unit_cost_rub": 128.25
+  },
+  {
+    "sku_id": "sku_0075",
+    "category": "масла и жиры",
+    "item": "маргарин",
+    "regular_unit_price_rub": 156.07,
+    "unit_cost_rub": 106.03
+  },
+  {
+    "sku_id": "sku_0076",
+    "category": "масла и жиры",
+    "item": "кокосовое масло",
+    "regular_unit_price_rub": 149.64,
+    "unit_cost_rub": 101.66
+  },
+  {
+    "sku_id": "sku_0077",
+    "category": "масла и жиры",
+    "item": "кулинарный жир",
+    "regular_unit_price_rub": 183.93,
+    "unit_cost_rub": 124.95
+  },
+  {
+    "sku_id": "sku_0078",
+    "category": "бытовая химия",
+    "item": "стиральный порошок",
+    "regular_unit_price_rub": 261.51,
+    "unit_cost_rub": 173.05
+  },
+  {
+    "sku_id": "sku_0079",
+    "category": "бытовая химия",
+    "item": "средство для мытья посуды",
+    "regular_unit_price_rub": 173.18,
+    "unit_cost_rub": 114.6
+  },
+  {
+    "sku_id": "sku_0080",
+    "category": "бытовая химия",
+    "item": "чистящее средство",
+    "regular_unit_price_rub": 189.84,
+    "unit_cost_rub": 125.62
+  },
+  {
+    "sku_id": "sku_0081",
+    "category": "бытовая химия",
+    "item": "мешки для мусора",
+    "regular_unit_price_rub": 220.78,
+    "unit_cost_rub": 146.1
+  },
+  {
+    "sku_id": "sku_0082",
+    "category": "бытовая химия",
+    "item": "губки",
+    "regular_unit_price_rub": 173.1,
+    "unit_cost_rub": 114.54
+  },
+  {
+    "sku_id": "sku_0083",
+    "category": "бытовая химия",
+    "item": "отбеливатель",
+    "regular_unit_price_rub": 219.49,
+    "unit_cost_rub": 145.24
+  },
+  {
+    "sku_id": "sku_0084",
+    "category": "личная гигиена",
+    "item": "зубная паста",
+    "regular_unit_price_rub": 216.39,
+    "unit_cost_rub": 140.9
+  },
+  {
+    "sku_id": "sku_0085",
+    "category": "личная гигиена",
+    "item": "шампунь",
+    "regular_unit_price_rub": 155.75,
+    "unit_cost_rub": 101.42
+  },
+  {
+    "sku_id": "sku_0086",
+    "category": "личная гигиена",
+    "item": "мыло",
+    "regular_unit_price_rub": 223.23,
+    "unit_cost_rub": 145.36
+  },
+  {
+    "sku_id": "sku_0087",
+    "category": "личная гигиена",
+    "item": "гель для душа",
+    "regular_unit_price_rub": 149.64,
+    "unit_cost_rub": 97.44
+  },
+  {
+    "sku_id": "sku_0088",
+    "category": "личная гигиена",
+    "item": "дезодорант",
+    "regular_unit_price_rub": 178.31,
+    "unit_cost_rub": 116.11
+  },
+  {
+    "sku_id": "sku_0089",
+    "category": "личная гигиена",
+    "item": "туалетная бумага",
+    "regular_unit_price_rub": 142.24,
+    "unit_cost_rub": 92.62
+  },
+  {
+    "sku_id": "sku_0090",
+    "category": "детское питание",
+    "item": "пюре детское",
+    "regular_unit_price_rub": 220.37,
+    "unit_cost_rub": 151.28
+  },
+  {
+    "sku_id": "sku_0091",
+    "category": "детское питание",
+    "item": "каша детская",
+    "regular_unit_price_rub": 208.35,
+    "unit_cost_rub": 143.03
+  },
+  {
+    "sku_id": "sku_0092",
+    "category": "детское питание",
+    "item": "молочная смесь",
+    "regular_unit_price_rub": 242.1,
+    "unit_cost_rub": 166.2
+  },
+  {
+    "sku_id": "sku_0093",
+    "category": "детское питание",
+    "item": "печенье детское",
+    "regular_unit_price_rub": 291.23,
+    "unit_cost_rub": 199.92
+  },
+  {
+    "sku_id": "sku_0094",
+    "category": "детское питание",
+    "item": "сок детский",
+    "regular_unit_price_rub": 254.68,
+    "unit_cost_rub": 174.83
+  },
+  {
+    "sku_id": "sku_0095",
+    "category": "детское питание",
+    "item": "вода детская",
+    "regular_unit_price_rub": 276.02,
+    "unit_cost_rub": 189.48
+  },
+  {
+    "sku_id": "sku_0096",
+    "category": "алкоголь",
+    "item": "пиво",
+    "regular_unit_price_rub": 403.41,
+    "unit_cost_rub": 281.2
+  },
+  {
+    "sku_id": "sku_0097",
+    "category": "алкоголь",
+    "item": "вино",
+    "regular_unit_price_rub": 340.03,
+    "unit_cost_rub": 237.02
+  },
+  {
+    "sku_id": "sku_0098",
+    "category": "алкоголь",
+    "item": "водка",
+    "regular_unit_price_rub": 398.3,
+    "unit_cost_rub": 277.64
+  },
+  {
+    "sku_id": "sku_0099",
+    "category": "алкоголь",
+    "item": "сидр",
+    "regular_unit_price_rub": 415.43,
+    "unit_cost_rub": 289.58
+  },
+  {
+    "sku_id": "sku_0100",
+    "category": "алкоголь",
+    "item": "шампанское",
+    "regular_unit_price_rub": 322.44,
+    "unit_cost_rub": 224.76
+  },
+  {
+    "sku_id": "sku_0101",
+    "category": "алкоголь",
+    "item": "коньяк",
+    "regular_unit_price_rub": 479.21,
+    "unit_cost_rub": 334.03
+  },
+  {
+    "sku_id": "sku_0102",
+    "category": "кондитерка",
+    "item": "торт",
+    "regular_unit_price_rub": 173.56,
+    "unit_cost_rub": 114.85
+  },
+  {
+    "sku_id": "sku_0103",
+    "category": "кондитерка",
+    "item": "пирожное",
+    "regular_unit_price_rub": 283.23,
+    "unit_cost_rub": 187.42
+  },
+  {
+    "sku_id": "sku_0104",
+    "category": "кондитерка",
+    "item": "конфеты",
+    "regular_unit_price_rub": 280.71,
+    "unit_cost_rub": 185.75
+  },
+  {
+    "sku_id": "sku_0105",
+    "category": "кондитерка",
+    "item": "мармелад",
+    "regular_unit_price_rub": 269.91,
+    "unit_cost_rub": 178.61
+  },
+  {
+    "sku_id": "sku_0106",
+    "category": "кондитерка",
+    "item": "пастила",
+    "regular_unit_price_rub": 247.81,
+    "unit_cost_rub": 163.98
+  },
+  {
+    "sku_id": "sku_0107",
+    "category": "кондитерка",
+    "item": "круассан",
+    "regular_unit_price_rub": 186.54,
+    "unit_cost_rub": 123.44
+  },
+  {
+    "sku_id": "sku_0108",
+    "category": "готовая еда",
+    "item": "салат готовый",
+    "regular_unit_price_rub": 194.58,
+    "unit_cost_rub": 130.82
+  },
+  {
+    "sku_id": "sku_0109",
+    "category": "готовая еда",
+    "item": "суп готовый",
+    "regular_unit_price_rub": 216.94,
+    "unit_cost_rub": 145.85
+  },
+  {
+    "sku_id": "sku_0110",
+    "category": "готовая еда",
+    "item": "пицца готовая",
+    "regular_unit_price_rub": 315.14,
+    "unit_cost_rub": 211.87
+  },
+  {
+    "sku_id": "sku_0111",
+    "category": "готовая еда",
+    "item": "роллы",
+    "regular_unit_price_rub": 299.08,
+    "unit_cost_rub": 201.07
+  },
+  {
+    "sku_id": "sku_0112",
+    "category": "готовая еда",
+    "item": "сэндвич",
+    "regular_unit_price_rub": 247.19,
+    "unit_cost_rub": 166.19
+  },
+  {
+    "sku_id": "sku_0113",
+    "category": "готовая еда",
+    "item": "каша быстрого приготовления",
+    "regular_unit_price_rub": 179.58,
+    "unit_cost_rub": 120.73
+  },
+  {
+    "sku_id": "sku_0114",
+    "category": "орехи и сухофрукты",
+    "item": "изюм",
+    "regular_unit_price_rub": 219.59,
+    "unit_cost_rub": 145.31
+  },
+  {
+    "sku_id": "sku_0115",
+    "category": "орехи и сухофрукты",
+    "item": "курага",
+    "regular_unit_price_rub": 321.76,
+    "unit_cost_rub": 212.92
+  },
+  {
+    "sku_id": "sku_0116",
+    "category": "орехи и сухофрукты",
+    "item": "чернослив",
+    "regular_unit_price_rub": 310.13,
+    "unit_cost_rub": 205.22
+  },
+  {
+    "sku_id": "sku_0117",
+    "category": "орехи и сухофрукты",
+    "item": "миндаль",
+    "regular_unit_price_rub": 219.46,
+    "unit_cost_rub": 145.22
+  },
+  {
+    "sku_id": "sku_0118",
+    "category": "орехи и сухофрукты",
+    "item": "фундук",
+    "regular_unit_price_rub": 292.91,
+    "unit_cost_rub": 193.83
+  },
+  {
+    "sku_id": "sku_0119",
+    "category": "орехи и сухофрукты",
+    "item": "кешью",
+    "regular_unit_price_rub": 326.5,
+    "unit_cost_rub": 216.05
+  },
+  {
+    "sku_id": "sku_0120",
+    "category": "товары для дома",
+    "item": "свечи",
+    "regular_unit_price_rub": 131.36,
+    "unit_cost_rub": 86.92
+  },
+  {
+    "sku_id": "sku_0121",
+    "category": "товары для дома",
+    "item": "батарейки",
+    "regular_unit_price_rub": 92.44,
+    "unit_cost_rub": 61.17
+  },
+  {
+    "sku_id": "sku_0122",
+    "category": "товары для дома",
+    "item": "фольга",
+    "regular_unit_price_rub": 130.91,
+    "unit_cost_rub": 86.63
+  },
+  {
+    "sku_id": "sku_0123",
+    "category": "товары для дома",
+    "item": "плёнка пищевая",
+    "regular_unit_price_rub": 89.27,
+    "unit_cost_rub": 59.07
+  },
+  {
+    "sku_id": "sku_0124",
+    "category": "товары для дома",
+    "item": "спички",
+    "regular_unit_price_rub": 171.93,
+    "unit_cost_rub": 113.77
+  },
+  {
+    "sku_id": "sku_0125",
+    "category": "товары для дома",
+    "item": "скотч",
+    "regular_unit_price_rub": 166.41,
+    "unit_cost_rub": 110.12
+  },
+  {
+    "sku_id": "sku_0126",
+    "category": "товары для животных",
+    "item": "корм для кошек",
+    "regular_unit_price_rub": 220.67,
+    "unit_cost_rub": 148.36
+  },
+  {
+    "sku_id": "sku_0127",
+    "category": "товары для животных",
+    "item": "корм для собак",
+    "regular_unit_price_rub": 143.05,
+    "unit_cost_rub": 96.17
+  },
+  {
+    "sku_id": "sku_0128",
+    "category": "товары для животных",
+    "item": "наполнитель для туалета",
+    "regular_unit_price_rub": 274.69,
+    "unit_cost_rub": 184.67
+  },
+  {
+    "sku_id": "sku_0129",
+    "category": "товары для животных",
+    "item": "лакомства",
+    "regular_unit_price_rub": 222.66,
+    "unit_cost_rub": 149.69
+  },
+  {
+    "sku_id": "sku_0130",
+    "category": "товары для животных",
+    "item": "миски",
+    "regular_unit_price_rub": 212.91,
+    "unit_cost_rub": 143.14
+  },
+  {
+    "sku_id": "sku_0131",
+    "category": "товары для животных",
+    "item": "игрушки для животных",
+    "regular_unit_price_rub": 182.87,
+    "unit_cost_rub": 122.94
+  }
+]
