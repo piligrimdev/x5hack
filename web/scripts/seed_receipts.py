@@ -52,13 +52,22 @@ def _receipt_uuid(receipt_id: str) -> uuid.UUID:
     return uuid.uuid5(_USER_NS, f"receipt:{receipt_id}")
 
 
-def _synthetic_phone(user_id_str: str) -> str:
+_MAX_PHONE_ATTEMPTS = 20
+
+
+def _synthetic_phone(user_id_str: str, attempt: int = 0) -> str:
     """Deterministic, valid RU mobile number for a synthetic user — lets a
     demo login as this user via the real /login flow (POST /login with this
     phone). +7900 is a real MegaFon mobile range; the 7-digit suffix is
-    derived from user_id_str so re-running the seed always produces the
-    same phone for the same synthetic user."""
-    digest = hashlib.sha256(user_id_str.encode("utf-8")).hexdigest()
+    derived from `(user_id_str, attempt)` so re-running the seed always
+    produces the same phone for the same synthetic user (attempt 0).
+
+    The suffix space is only 10,000,000 values, so for a large population
+    a plain hash-mod is not collision-free on its own — callers must check
+    `users.phone` uniqueness themselves and retry with an incremented
+    `attempt` on collision (see the User-creation block in `main()`)."""
+    seed = user_id_str if attempt == 0 else f"{user_id_str}:{attempt}"
+    digest = hashlib.sha256(seed.encode("utf-8")).hexdigest()
     suffix = str(int(digest[:8], 16) % 10_000_000).zfill(7)
     return normalize_phone(f"+7900{suffix}")
 
@@ -180,7 +189,19 @@ def main() -> None:
                 # is actually a FK to users.id, not loyalty_cards.id.
                 user = session.get(User, loyalty_card_id)
                 if not user:
-                    phone = _synthetic_phone(user_id_str)
+                    phone = None
+                    for attempt in range(_MAX_PHONE_ATTEMPTS):
+                        candidate = _synthetic_phone(user_id_str, attempt)
+                        taken = session.scalar(select(User).where(User.phone == candidate))
+                        if not taken:
+                            phone = candidate
+                            break
+                    if phone is None:
+                        raise RuntimeError(
+                            f"Could not find a free synthetic phone for user "
+                            f"{user_id_str!r} after {_MAX_PHONE_ATTEMPTS} attempts "
+                            "— this should never happen in practice"
+                        )
                     user = User(id=loyalty_card_id, phone=phone)
                     session.add(user)
                     session.flush()
