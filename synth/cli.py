@@ -84,13 +84,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     chal_parser.add_argument("--api-key-env", default="OPENROUTER_API_KEY")
     chal_parser.add_argument(
-        "--challenge-type", choices=["llm", "spend_threshold"], default="llm",
+        "--challenge-type", choices=["llm", "spend_threshold", "category_expansion"], default="llm",
         help="'llm': free-form challenge via OpenRouter. "
-             "'spend_threshold': deterministic 'spend >= N rub, get a discount on your favorite product' — no API call, no cost.",
+             "'spend_threshold': deterministic 'spend >= N rub, get a discount on your favorite product' — no API call, no cost. "
+             "'category_expansion': deterministic discount on a category the user essentially never buys — no API call, no cost.",
     )
     chal_parser.add_argument(
         "--dry-run", action="store_true",
-        help="Classify receptiveness and pick generic offers, but make no real LLM calls (ignored for --challenge-type spend_threshold, which never calls an LLM).",
+        help="Classify receptiveness and pick generic offers, but make no real LLM calls (ignored for --challenge-type spend_threshold/category_expansion, which never call an LLM).",
     )
     chal_parser.add_argument("--delay", type=float, default=0.0, help="Seconds to sleep between LLM calls.")
     chal_parser.add_argument("--limit", type=int, default=None, help="Only process the first N profiles.")
@@ -110,10 +111,11 @@ def build_parser() -> argparse.ArgumentParser:
     sim_parser.add_argument("--population", required=True, help="population*.jsonl(.gz) file.")
     sim_parser.add_argument("--truth", required=True, help="simulation_truth.jsonl file (same run as --population).")
     sim_parser.add_argument(
-        "--challenge-type", choices=["llm", "spend_threshold"], default="llm",
+        "--challenge-type", choices=["llm", "spend_threshold", "category_expansion"], default="llm",
         help="'llm': personal challenges valued via the frequency (extra-visit) channel, same as the "
              "'challenges' subcommand's default. 'spend_threshold': personal challenges valued via the "
-             "basket-uplift (bigger-trip) channel instead — matches --challenge-type spend_threshold there.",
+             "basket-uplift (bigger-trip) channel instead. 'category_expansion': personal challenges valued "
+             "via the fully-incremental expansion (new-category-trial) channel instead.",
     )
     sim_parser.add_argument("--report-out", default="data/v2/simulation_report.json")
     sim_parser.add_argument(
@@ -160,8 +162,8 @@ def main(argv: list[str] | None = None) -> None:
         if args.challenge_type == "llm" and not args.dry_run and not api_key:
             raise SystemExit(
                 f"{args.api_key_env} is not set and --dry-run was not passed — "
-                "either export the key, add --dry-run, or use --challenge-type spend_threshold "
-                "(no API call needed)."
+                "either export the key, add --dry-run, or use --challenge-type spend_threshold / "
+                "category_expansion (no API call needed)."
             )
         challenges = generate_challenges(
             profiles, config, model=args.model, api_key=api_key, dry_run=args.dry_run,

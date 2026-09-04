@@ -1,0 +1,657 @@
+[
+  {
+    "user_id": "c9f51e79-b5e1-4236-9d58-dbc84998a999",
+    "path": "generic",
+    "receptiveness_signal": {
+      "reason": "weak/insufficient pattern",
+      "n_receipts_train": 37,
+      "concentration": 0.356
+    },
+    "model": null,
+    "challenge_title": "Бонус за покупку свежих овощей и фруктов",
+    "description": "Начислим бонусные баллы за покупку овощей или фруктов на сумму от 300 рублей.",
+    "target_categories": [
+      "овощи",
+      "фрукты"
+    ],
+    "mechanic": "бонусные баллы",
+    "reward_rub": 40.0
+  },
+  {
+    "user_id": "7f7e70d8-178b-421b-80a3-d9cec8b73ad9",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 27,
+      "concentration": 0.506
+    },
+    "model": "deepseek/deepseek-chat",
+    "challenge_title": "Любителям морепродуктов и снеков",
+    "description": "Купите 2 товара из категории рыба и морепродукты и получите скидку на сладости и снеки",
+    "target_categories": [
+      "рыба и морепродукты",
+      "сладости и снеки"
+    ],
+    "mechanic": "скидка 20% на сладости и снеки при покупке 2 товаров из категории рыба и морепродукты",
+    "reward_rub": 150.0,
+    "reasoning": "Пользователь часто покупает рыбу и морепродукты (15 покупок) и сладости/снеки (14 покупок), что делает эти категории релевантными для челленджа. Предложение стимулирует увеличение покупок в обеих категориях."
+  },
+  {
+    "user_id": "5d4fb5e2-c807-4d78-ac51-675e06be7099",
+    "path": "generic",
+    "receptiveness_signal": {
+      "reason": "weak/insufficient pattern",
+      "n_receipts_train": 51,
+      "concentration": 0.415
+    },
+    "model": null,
+    "challenge_title": "Скидка на личную гигиену от партнёра",
+    "description": "Партнёрская скидка 15% на товары личной гигиены.",
+    "target_categories": [
+      "личная гигиена"
+    ],
+    "mechanic": "партнёрская скидка",
+    "reward_rub": 45.0
+  },
+  {
+    "user_id": "8cbf5995-17dd-4e22-a5bc-5079e0c2936a",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 46,
+      "concentration": 0.578
+    },
+    "model": "deepseek/deepseek-chat",
+    "challenge_title": "Молочный уикенд",
+    "description": "Купите 3 любых молочных продукта в выходные и получите кешбэк 50 рублей",
+    "target_categories": [
+      "молочные продукты и яйца"
+    ],
+    "mechanic": "кешбэк",
+    "reward_rub": 50.0,
+    "reasoning": "Молочные продукты — самая популярная категория у пользователя, а 56% покупок совершаются по выходным. Челендж стимулирует повторную покупку в привычное время."
+  },
+  {
+    "user_id": "5f15103b-ab27-4449-9f4b-5fe29cf80430",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 43,
+      "concentration": 0.537
+    },
+    "model": "deepseek/deepseek-chat",
+    "challenge_title": "Попробуйте новое в бакалее",
+    "description": "Купите любой новый продукт из категории бакалея, который вы раньше не пробовали",
+    "target_categories": [
+      "бакалея"
+    ],
+    "mechanic": "покупка нового продукта в категории",
+    "reward_rub": 30.0,
+    "reasoning": "Бакалея является наиболее часто покупаемой категорией (35 покупок за 90 дней), предлагаем стимулировать пробу новых продуктов в этой категории"
+  },
+  {
+    "user_id": "25995851-9e3b-4283-a7ed-bcea35ada712",
+    "path": "no_challenge",
+    "frequency_signal": {
+      "n_receipts_train": 88,
+      "threshold": 85
+    },
+    "model": null,
+    "reasoning": "Purchase frequency is already unusually high — an additional challenge is unlikely to be worth its reward cost."
+  },
+  {
+    "user_id": "f4290dac-4b65-4c04-8446-750d860faf24",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 31,
+      "concentration": 0.507
+    },
+    "model": "deepseek/deepseek-chat",
+    "challenge_title": "Уборка с выгодой",
+    "description": "Купи 3 товара из категории бытовая химия и получи кэшбэк 100 ₽",
+    "target_categories": [
+      "бытовая химия"
+    ],
+    "mechanic": "кэшбэк",
+    "reward_rub": 100.0,
+    "reasoning": "Бытовая химия — самая популярная категория у пользователя (15 покупок за 90 дней), что указывает на регулярную потребность в этих товарах. Предложение кэшбэка стимулирует повторную покупку и увеличивает средний чек."
+  },
+  {
+    "user_id": "87ec70d8-0d38-495e-992d-f6c6414194a7",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 45,
+      "concentration": 0.515
+    },
+    "model": "deepseek/deepseek-chat",
+    "challenge_title": "Попробуйте новинки в заморозке!",
+    "description": "Купите любые 3 товара из категории заморозка и получите кешбэк 50 рублей",
+    "target_categories": [
+      "заморозка"
+    ],
+    "mechanic": "cashback",
+    "reward_rub": 50.0,
+    "reasoning": "Пользователь часто покупает замороженные продукты (18 покупок за 90 дней), поэтому предложение попробовать новинки в этой категории может стимулировать дополнительную покупку."
+  },
+  {
+    "user_id": "d6d15731-fb31-4627-b51f-090a1e01be7b",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 27,
+      "concentration": 0.586
+    },
+    "model": "deepseek/deepseek-chat",
+    "challenge_title": "Молочный уикенд",
+    "description": "Купите 3 любых молочных продукта или яйца в выходные и получите кешбэк 50 рублей",
+    "target_categories": [
+      "молочные продукты и яйца"
+    ],
+    "mechanic": "cashback",
+    "reward_rub": 50.0,
+    "reasoning": "Молочные продукты и яйца — самая популярная категория у пользователя (13 покупок за 90 дней), а также 56% покупок совершаются по выходным, что делает это предложение релевантным и привлекательным."
+  },
+  {
+    "user_id": "2cb8a690-ed7d-4fff-a6f5-6009677e4829",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 59,
+      "concentration": 0.537
+    },
+    "model": "deepseek/deepseek-chat",
+    "challenge_title": "Молочный уикенд",
+    "description": "Купите 3 любых молочных продукта в выходные и получите кешбэк",
+    "target_categories": [
+      "молочные продукты и яйца"
+    ],
+    "mechanic": "Кешбэк на карту лояльности",
+    "reward_rub": 30.0,
+    "reasoning": "Молочные продукты — самая популярная категория у пользователя, а также высокая доля покупок по выходным. Челендж стимулирует повторную покупку в любимой категории в удобное для пользователя время."
+  },
+  {
+    "user_id": "6b69c2db-a9e4-45cf-894b-de718ab4fc9a",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 62,
+      "concentration": 0.439
+    },
+    "model": "deepseek/deepseek-chat",
+    "challenge_title": "Сладкий перекус для всей семьи",
+    "description": "Купите 3 товара из категории сладости и снеки и получите кешбэк 30 рублей",
+    "target_categories": [
+      "сладости и снеки"
+    ],
+    "mechanic": "cashback",
+    "reward_rub": 30.0,
+    "reasoning": "У пользователя высокая частота покупок в категории 'сладости и снеки' (36 позиций за 90 дней), что указывает на активное потребление. Предложение кешбэка за покупку нескольких товаров из этой категории стимулирует повторную покупку и увеличивает средний чек."
+  },
+  {
+    "user_id": "b387a5ff-326e-4df0-8a94-3676ed2040fb",
+    "path": "generic",
+    "receptiveness_signal": {
+      "reason": "weak/insufficient pattern",
+      "n_receipts_train": 69,
+      "concentration": 0.402
+    },
+    "model": null,
+    "challenge_title": "Бонус за сладости и снеки",
+    "description": "Начислим баллы за покупку сладостей или снеков на сумму от 250 рублей.",
+    "target_categories": [
+      "сладости и снеки"
+    ],
+    "mechanic": "бонусные баллы",
+    "reward_rub": 35.0
+  },
+  {
+    "user_id": "93d59af9-02d3-4f1a-b724-1b3039ada9f0",
+    "path": "no_challenge",
+    "frequency_signal": {
+      "n_receipts_train": 87,
+      "threshold": 85
+    },
+    "model": null,
+    "reasoning": "Purchase frequency is already unusually high — an additional challenge is unlikely to be worth its reward cost."
+  },
+  {
+    "user_id": "5316f87f-7176-4d85-a832-8fdc926839a9",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 34,
+      "concentration": 0.424
+    },
+    "model": "deepseek/deepseek-chat",
+    "challenge_title": "Попробуй новый соус!",
+    "description": "Купи любой соус или приправу и получи кешбэк 50 рублей",
+    "target_categories": [
+      "соусы и приправы"
+    ],
+    "mechanic": "Купи любой товар из категории соусы и приправы и получи 50 рублей кешбэка",
+    "reward_rub": 50.0,
+    "reasoning": "Соусы и приправы - самая популярная категория у пользователя (17 покупок за 90 дней), поэтому предложение попробовать новый соус может быть интересным и мотивирующим."
+  },
+  {
+    "user_id": "65f40d54-c757-4410-bb07-f3d761d9699b",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 38,
+      "concentration": 0.506
+    },
+    "model": "deepseek/deepseek-chat",
+    "challenge_title": "Попробуй новое в бакалее!",
+    "description": "Купи 3 новых продукта из категории бакалея и получи кэшбэк 50 рублей.",
+    "target_categories": [
+      "бакалея"
+    ],
+    "mechanic": "Купи 3 новых продукта из категории бакалея",
+    "reward_rub": 50.0,
+    "reasoning": "Бакалея — самая популярная категория у пользователя (15 покупок за 90 дней). Предложение попробовать новые продукты может стимулировать интерес и увеличить количество покупок в этой категории."
+  },
+  {
+    "user_id": "36b60365-39a1-498c-98e0-849ed34c9b68",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 34,
+      "concentration": 0.468
+    },
+    "model": "deepseek/deepseek-chat",
+    "challenge_title": "Собери урожай овощей",
+    "description": "Купи 3 разных вида овощей в одном чеке и получи кэшбэк",
+    "target_categories": [
+      "овощи"
+    ],
+    "mechanic": "Купить 3 разных вида овощей в одном чеке",
+    "reward_rub": 50.0,
+    "reasoning": "Овощи являются самой популярной категорией у пользователя (22 покупки), что делает этот челлендж релевантным его привычкам."
+  },
+  {
+    "user_id": "780241c2-81f4-4997-af41-ebac3931bab3",
+    "path": "no_challenge",
+    "frequency_signal": {
+      "n_receipts_train": 89,
+      "threshold": 85
+    },
+    "model": null,
+    "reasoning": "Purchase frequency is already unusually high — an additional challenge is unlikely to be worth its reward cost."
+  },
+  {
+    "user_id": "08c72d3e-cc7c-4354-88a6-6160f4673674",
+    "path": "no_challenge",
+    "frequency_signal": {
+      "n_receipts_train": 88,
+      "threshold": 85
+    },
+    "model": null,
+    "reasoning": "Purchase frequency is already unusually high — an additional challenge is unlikely to be worth its reward cost."
+  },
+  {
+    "user_id": "4f23835c-0363-48bd-89ae-39704f13b86d",
+    "path": "generic",
+    "receptiveness_signal": {
+      "reason": "weak/insufficient pattern",
+      "n_receipts_train": 82,
+      "concentration": 0.42
+    },
+    "model": null,
+    "challenge_title": "Скидка партнёра на молочную продукцию",
+    "description": "5% кэшбэк баллами на молочные продукты и яйца от партнёра программы лояльности.",
+    "target_categories": [
+      "молочные продукты и яйца"
+    ],
+    "mechanic": "партнёрский кэшбэк",
+    "reward_rub": 50.0
+  },
+  {
+    "user_id": "3cf1de8b-d996-43c4-bb7c-d3a2d09d64e1",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 50,
+      "concentration": 0.466
+    },
+    "model": "deepseek/deepseek-chat",
+    "challenge_title": "Попробуйте новые масла и жиры",
+    "description": "Купите 3 разных продукта из категории масла и жиры и получите кэшбэк 150 рублей",
+    "target_categories": [
+      "масла и жиры"
+    ],
+    "mechanic": "Кэшбэк при покупке 3 разных продуктов из категории",
+    "reward_rub": 150.0,
+    "reasoning": "Пользователь часто покупает масла и жиры (36 позиций за 90 дней), что делает эту категорию наиболее релевантной для челленджа. Предложение попробовать новые продукты в этой категории может стимулировать повторную покупку."
+  },
+  {
+    "user_id": "86d704d2-f310-4e05-b62b-b111cc1e50f8",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 54,
+      "concentration": 0.514
+    },
+    "model": "deepseek/deepseek-chat",
+    "challenge_title": "Молочный уикенд",
+    "description": "Купите 3 молочных продукта в выходные и получите 50 рублей на карту лояльности",
+    "target_categories": [
+      "молочные продукты и яйца"
+    ],
+    "mechanic": "cashback",
+    "reward_rub": 50.0,
+    "reasoning": "Пользователь часто покупает молочные продукты (34 покупки за 90 дней) и половина его покупок приходится на выходные, что делает это предложение релевантным и стимулирующим."
+  },
+  {
+    "user_id": "d5a1c8f0-e9e1-43b9-a571-3f2cb9a6a957",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 47,
+      "concentration": 0.482
+    },
+    "model": "deepseek/deepseek-chat",
+    "challenge_title": "Собери свою корзину консервов",
+    "description": "Купи 5 банок консервов и получи скидку 50 рублей на следующую покупку",
+    "target_categories": [
+      "консервация"
+    ],
+    "mechanic": "Купи 5 банок консервов в одном чеке",
+    "reward_rub": 50.0,
+    "reasoning": "Консервация является топовой категорией по числу позиций в истории покупок (72 позиции), что указывает на высокую вероятность повторной покупки. Предложение скидки на следующую покупку стимулирует увеличение среднего чека и частоты покупок."
+  },
+  {
+    "user_id": "cf0758ef-e3f8-4c34-abf7-bb843326190b",
+    "path": "generic",
+    "receptiveness_signal": {
+      "reason": "weak/insufficient pattern",
+      "n_receipts_train": 58,
+      "concentration": 0.386
+    },
+    "model": null,
+    "challenge_title": "Бонус за покупку свежих овощей и фруктов",
+    "description": "Начислим бонусные баллы за покупку овощей или фруктов на сумму от 300 рублей.",
+    "target_categories": [
+      "овощи",
+      "фрукты"
+    ],
+    "mechanic": "бонусные баллы",
+    "reward_rub": 40.0
+  },
+  {
+    "user_id": "eac031a6-65ab-40b7-b698-8916f1f18fe4",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 42,
+      "concentration": 0.511
+    },
+    "model": "deepseek/deepseek-chat",
+    "challenge_title": "Мясо и выпечка на выходные",
+    "description": "Купите мясо или птицу и хлеб/выпечку в одном чеке в выходные дни и получите кешбэк",
+    "target_categories": [
+      "мясо и птица",
+      "хлеб и выпечка"
+    ],
+    "mechanic": "кешбэк за покупку в выходные",
+    "reward_rub": 100.0,
+    "reasoning": "Пользователь часто покупает мясо и птицу, а также хлеб и выпечку, при этом 60% покупок совершает в выходные. Предложение кешбэба за покупку этих категорий в выходные стимулирует повторную покупку."
+  },
+  {
+    "user_id": "1ad63d0b-c93d-49a8-9d9b-2ac5ce376f82",
+    "path": "generic",
+    "receptiveness_signal": {
+      "reason": "weak/insufficient pattern",
+      "n_receipts_train": 62,
+      "concentration": 0.294
+    },
+    "model": null,
+    "challenge_title": "Скидка партнёра на молочную продукцию",
+    "description": "5% кэшбэк баллами на молочные продукты и яйца от партнёра программы лояльности.",
+    "target_categories": [
+      "молочные продукты и яйца"
+    ],
+    "mechanic": "партнёрский кэшбэк",
+    "reward_rub": 50.0
+  },
+  {
+    "user_id": "0ef123aa-6178-4a4a-b477-bb5ffee5d914",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 25,
+      "concentration": 0.51
+    },
+    "model": "deepseek/deepseek-chat",
+    "challenge_title": "Вкусные выходные",
+    "description": "Купите 3 продукта из категории 'хлеб и выпечка' в выходные и получите кешбэк 50 рублей",
+    "target_categories": [
+      "хлеб и выпечка"
+    ],
+    "mechanic": "кешбэк",
+    "reward_rub": 50.0,
+    "reasoning": "Пользователь часто покупает хлеб и выпечку, а также совершает больше покупок по выходным. Предложение стимулирует покупки в любимой категории в удобное время."
+  },
+  {
+    "user_id": "d2753a18-9427-4547-8677-6fc124d51840",
+    "path": "generic",
+    "receptiveness_signal": {
+      "reason": "weak/insufficient pattern",
+      "n_receipts_train": 56,
+      "concentration": 0.383
+    },
+    "model": null,
+    "challenge_title": "Кэшбэк за товары для животных",
+    "description": "Верните часть стоимости при покупке корма или аксессуаров для питомцев.",
+    "target_categories": [
+      "товары для животных"
+    ],
+    "mechanic": "кэшбэк",
+    "reward_rub": 50.0
+  },
+  {
+    "user_id": "6281b7e8-e94e-4ae7-b3ee-e3b910698a62",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 58,
+      "concentration": 0.437
+    },
+    "model": "deepseek/deepseek-chat",
+    "challenge_title": "Чистота и вкусный обед",
+    "description": "Купите 3 товара из категорий бытовая химия и готовая еда и получите кешбэк 100 ₽",
+    "target_categories": [
+      "бытовая химия",
+      "готовая еда"
+    ],
+    "mechanic": "кешбэк",
+    "reward_rub": 100.0,
+    "reasoning": "Пользователь часто покупает бытовую химию и готовую еду, что говорит о его интересе к поддержанию чистоты и удобству в питании. Предложение кешбэка за покупку этих категорий стимулирует повторную покупку."
+  },
+  {
+    "user_id": "dc680de0-78ad-41e8-8a90-eb1ba6603b06",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 59,
+      "concentration": 0.664
+    },
+    "model": "deepseek/deepseek-chat",
+    "challenge_title": "Молочный уикенд",
+    "description": "Купите 3 любых молочных продукта в выходные и получите скидку 50 рублей на следующий чек!",
+    "target_categories": [
+      "молочные продукты и яйца"
+    ],
+    "mechanic": "скидка на следующий чек",
+    "reward_rub": 50.0,
+    "reasoning": "Пользователь часто покупает молочные продукты (31 покупка за 90 дней) и делает 61% покупок по выходным, что делает акцию на молочные продукты в выходные особенно релевантной."
+  },
+  {
+    "user_id": "fcf18a73-184b-4ddd-9338-3dc666662e03",
+    "path": "no_challenge",
+    "frequency_signal": {
+      "n_receipts_train": 87,
+      "threshold": 85
+    },
+    "model": null,
+    "reasoning": "Purchase frequency is already unusually high — an additional challenge is unlikely to be worth its reward cost."
+  },
+  {
+    "user_id": "e40508d1-6e66-400b-9116-33567c50b1c1",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 40,
+      "concentration": 0.505
+    },
+    "model": "deepseek/deepseek-chat",
+    "challenge_title": "Собери свою полезную корзину",
+    "description": "Купи 3 товара из категорий орехи и сухофрукты, рыба и морепродукты, мясо и птица в одном чеке",
+    "target_categories": [
+      "орехи и сухофрукты",
+      "рыба и морепродукты",
+      "мясо и птица"
+    ],
+    "mechanic": "Купи 3 товара из указанных категорий в одном чеке",
+    "reward_rub": 50.0,
+    "reasoning": "Пользователь активно покупает продукты из категорий орехи и сухофрукты, рыба и морепродукты, мясо и птица. Предложение собрать полезную корзину из этих товаров стимулирует повторную покупку и увеличение среднего чека."
+  },
+  {
+    "user_id": "ffa53faa-301d-4935-b907-dda4b05aba98",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 35,
+      "concentration": 0.542
+    },
+    "model": "deepseek/deepseek-chat",
+    "challenge_title": "Молочный уикенд",
+    "description": "Купи 3 любых молочных продукта в выходные и получи кешбэк 50 рублей",
+    "target_categories": [
+      "молочные продукты и яйца"
+    ],
+    "mechanic": "cashback",
+    "reward_rub": 50.0,
+    "reasoning": "Пользователь часто покупает молочные продукты (14 покупок за 90 дней) и чаще совершает покупки по выходным (51% чеков). Предложение стимулирует покупку молочных продуктов в выходные дни."
+  },
+  {
+    "user_id": "c8311f98-5476-4495-a1f7-5952ec026c56",
+    "path": "no_challenge",
+    "frequency_signal": {
+      "n_receipts_train": 92,
+      "threshold": 85
+    },
+    "model": null,
+    "reasoning": "Purchase frequency is already unusually high — an additional challenge is unlikely to be worth its reward cost."
+  },
+  {
+    "user_id": "58f9091a-5e6a-4473-ac17-5b1bcda6e65b",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 48,
+      "concentration": 0.513
+    },
+    "model": "deepseek/deepseek-chat",
+    "challenge_title": "Попробуйте новинки из бакалеи",
+    "description": "Купите 3 товара из категории бакалея и получите кэшбэк 50 рублей",
+    "target_categories": [
+      "бакалея"
+    ],
+    "mechanic": "Купите 3 товара из категории бакалея в одном чеке",
+    "reward_rub": 50.0,
+    "reasoning": "Бакалея является самой частой категорией покупок пользователя (24 покупки за 90 дней), что делает её идеальной для челленджа, который стимулирует увеличение среднего чека и частоты покупок."
+  },
+  {
+    "user_id": "e4039782-67e5-43c9-ae73-35a01662e2ce",
+    "path": "no_challenge",
+    "frequency_signal": {
+      "n_receipts_train": 90,
+      "threshold": 85
+    },
+    "model": null,
+    "reasoning": "Purchase frequency is already unusually high — an additional challenge is unlikely to be worth its reward cost."
+  },
+  {
+    "user_id": "ab870179-a80a-464d-9f0f-0133575d110d",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 37,
+      "concentration": 0.424
+    },
+    "model": "deepseek/deepseek-chat",
+    "challenge_title": "Фруктовый марафон",
+    "description": "Купите 3 разных вида фруктов и получите скидку на следующий чек!",
+    "target_categories": [
+      "фрукты"
+    ],
+    "mechanic": "Купить 3 разных вида фруктов",
+    "reward_rub": 30.0,
+    "reasoning": "Пользователь часто покупает фрукты (9 покупок за 90 дней), и это может стимулировать его попробовать новые виды или увеличить количество покупок в этой категории."
+  },
+  {
+    "user_id": "7b46c9ce-c1a9-4388-b911-5be54c589997",
+    "path": "no_challenge",
+    "frequency_signal": {
+      "n_receipts_train": 89,
+      "threshold": 85
+    },
+    "model": null,
+    "reasoning": "Purchase frequency is already unusually high — an additional challenge is unlikely to be worth its reward cost."
+  },
+  {
+    "user_id": "4686fd9b-97a0-4271-af96-00667f7a2172",
+    "path": "generic",
+    "receptiveness_signal": {
+      "reason": "weak/insufficient pattern",
+      "n_receipts_train": 47,
+      "concentration": 0.351
+    },
+    "model": null,
+    "challenge_title": "Бонус за сладости и снеки",
+    "description": "Начислим баллы за покупку сладостей или снеков на сумму от 250 рублей.",
+    "target_categories": [
+      "сладости и снеки"
+    ],
+    "mechanic": "бонусные баллы",
+    "reward_rub": 35.0
+  },
+  {
+    "user_id": "e29473b0-c4b1-4d26-918a-2a3edf464515",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 39,
+      "concentration": 0.436
+    },
+    "model": "deepseek/deepseek-chat",
+    "challenge_title": "Молочная неделя",
+    "description": "Купите 3 любых молочных продукта и получите кешбэк 100 рублей",
+    "target_categories": [
+      "молочные продукты и яйца"
+    ],
+    "mechanic": "cashback",
+    "reward_rub": 100.0,
+    "reasoning": "Молочные продукты являются самой частой категорией покупок (26 позиций), что делает их идеальной целью для челленджа"
+  },
+  {
+    "user_id": "42cc0ea1-a7cd-4157-87ab-02660cebe09f",
+    "path": "personal",
+    "receptiveness_signal": {
+      "reason": "strong enough pattern",
+      "n_receipts_train": 75,
+      "concentration": 0.691
+    },
+    "model": "deepseek/deepseek-chat",
+    "challenge_title": "Фруктовый уикенд",
+    "description": "Купите фрукты на сумму 500 ₽ в выходные и получите 100 ₽ на следующую покупку",
+    "target_categories": [
+      "фрукты"
+    ],
+    "mechanic": "cashback",
+    "reward_rub": 100.0,
+    "reasoning": "Пользователь часто покупает фрукты (78 позиций за 90 дней), а 31% покупок приходится на выходные. Челендж стимулирует покупки в выходные и увеличивает лояльность."
+  }
+]

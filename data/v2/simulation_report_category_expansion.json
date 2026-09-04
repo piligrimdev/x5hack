@@ -1,0 +1,92 @@
+{
+  "n_total_users": 10000,
+  "overall": {
+    "n_users": 10000,
+    "n_responded": 118,
+    "response_rate": 0.0118,
+    "mean_baseline_visits_28d": 20.93,
+    "mean_extra_visits_28d": 0.0,
+    "frequency_uplift_pct": 0.0,
+    "mean_basket_uplift_rub": 0.0,
+    "mean_expansion_trials_28d": 0.0118,
+    "total_extra_margin_rub": 2601.74,
+    "total_reward_paid_rub": 1185.0,
+    "net_value_rub": 1416.74
+  },
+  "by_path": {
+    "personal": {
+      "n_users": 9754,
+      "n_responded": 118,
+      "response_rate": 0.0121,
+      "mean_baseline_visits_28d": 20.49,
+      "mean_extra_visits_28d": 0.0,
+      "frequency_uplift_pct": 0.0,
+      "mean_basket_uplift_rub": 0.0,
+      "mean_expansion_trials_28d": 0.0121,
+      "total_extra_margin_rub": 2601.74,
+      "total_reward_paid_rub": 1185.0,
+      "net_value_rub": 1416.74
+    },
+    "no_challenge": {
+      "n_users": 234,
+      "n_responded": 0,
+      "response_rate": 0.0,
+      "mean_baseline_visits_28d": 39.57,
+      "mean_extra_visits_28d": 0.0,
+      "frequency_uplift_pct": 0.0,
+      "mean_basket_uplift_rub": 0.0,
+      "mean_expansion_trials_28d": 0.0,
+      "total_extra_margin_rub": 0.0,
+      "total_reward_paid_rub": 0.0,
+      "net_value_rub": 0.0
+    },
+    "generic": {
+      "n_users": 12,
+      "n_responded": 0,
+      "response_rate": 0.0,
+      "mean_baseline_visits_28d": 12.57,
+      "mean_extra_visits_28d": 0.0,
+      "frequency_uplift_pct": 0.0,
+      "mean_basket_uplift_rub": 0.0,
+      "mean_expansion_trials_28d": 0.0,
+      "total_extra_margin_rub": 0.0,
+      "total_reward_paid_rub": 0.0,
+      "net_value_rub": 0.0
+    }
+  },
+  "by_channel": {
+    "none": {
+      "n_users": 9882,
+      "n_responded": 0,
+      "response_rate": 0.0,
+      "mean_baseline_visits_28d": 20.93,
+      "mean_extra_visits_28d": 0.0,
+      "frequency_uplift_pct": 0.0,
+      "mean_basket_uplift_rub": 0.0,
+      "mean_expansion_trials_28d": 0.0,
+      "total_extra_margin_rub": 0.0,
+      "total_reward_paid_rub": 0.0,
+      "net_value_rub": 0.0
+    },
+    "expansion": {
+      "n_users": 118,
+      "n_responded": 118,
+      "response_rate": 1.0,
+      "mean_baseline_visits_28d": 20.39,
+      "mean_extra_visits_28d": 0.0,
+      "frequency_uplift_pct": 0.0,
+      "mean_basket_uplift_rub": 0.0,
+      "mean_expansion_trials_28d": 1.0,
+      "total_extra_margin_rub": 2601.74,
+      "total_reward_paid_rub": 1185.0,
+      "net_value_rub": 1416.74
+    }
+  },
+  "assumptions": {
+    "generic_relevance_multiplier": 0.4,
+    "expansion_relevance_multiplier": 0.25,
+    "headroom_capture_base": 0.5,
+    "headroom_capture_reward_weight": 0.5,
+    "note": "These numbers are unvalidated modeling assumptions, not measured from real data (none is available — see CONTEXT_PACK.md §3/§4). The DIRECTION they encode (personal > generic > expansion for response probability; higher reward_sensitivity captures more frequency headroom; higher basket_uplift_sensitivity captures more of a spend-threshold challenge's target; higher novelty_receptiveness raises expansion response) matches this project's stated hypotheses (H2) and the standard uplift-marketing incrementality principle; the exact magnitudes do not come from anywhere and should be treated as a starting point to sensitivity-test, not a forecast. Three channels exist: 'frequency' (personal-LLM/generic offers, valued at an extra visit's average basket margin), 'basket' (spend_threshold offers, valued at the margin on incremental spend within an existing trip), and 'expansion' (category_expansion offers, valued at the full margin of one trial purchase in a category the user doesn't normally buy — no headroom discount, since by construction it isn't a purchase that would have happened anyway) — mutually exclusive per user, selected by which challenge_type routed them."
+  }
+}
