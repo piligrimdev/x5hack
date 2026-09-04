@@ -5,6 +5,7 @@ from fastapi_pagination import add_pagination
 from scalar_fastapi import get_scalar_api_reference
 
 from webx5.routes.auth import auth_router
+from webx5.routes.basket import basket_router
 from webx5.routes.catalog import catalog_router
 from webx5.routes.discounts import discounts_router
 from webx5.routes.health import health_router
@@ -22,6 +23,7 @@ app.add_middleware(
 
 app.include_router(health_router)
 app.include_router(auth_router)
+app.include_router(basket_router)
 app.include_router(catalog_router)
 app.include_router(receipts_router)
 app.include_router(stores_router)
