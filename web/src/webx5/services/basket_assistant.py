@@ -4,17 +4,25 @@ import uuid
 from decimal import Decimal
 
 import structlog
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from webx5.core.llm import call_openrouter_tools
 from webx5.crud.basket import BasketRepository
+from webx5.crud.receipt import ReceiptRepository
+from webx5.crud.store import StoreRepository
 from webx5.entities.product import Product
 from webx5.schemas.basket import AssistantResponse, BasketItem, BasketItemIn
+from webx5.schemas.receipt import ReceiptCreate, ReceiptItemCreate, ReceiptResponse
+from webx5.services.discount_calculator import CartItem, DiscountCalculatorService
+from webx5.services.receipt import ReceiptService
 
 logger = structlog.get_logger(__name__)
 
 CANNOT_UNDERSTAND_MESSAGE = "Не поняла запрос, попробуй иначе"
 LLM_FAILURE_MESSAGE = "Не получилось обработать запрос, попробуй ещё раз"
+CHECKOUT_EMPTY_BASKET_MESSAGE = "Корзина пуста"
+CHECKOUT_NO_STORES_MESSAGE = "Не найдено ни одного магазина"
 
 TOOLS = [
     {
@@ -63,8 +71,20 @@ TOOLS = [
 
 
 class BasketService:
-    def __init__(self, repo: BasketRepository, model: str = "anthropic/claude-haiku-4.5") -> None:
+    def __init__(
+        self,
+        repo: BasketRepository,
+        receipt_repo: ReceiptRepository,
+        store_repo: StoreRepository,
+        discount_calc: DiscountCalculatorService,
+        receipt_service: ReceiptService,
+        model: str = "anthropic/claude-haiku-4.5",
+    ) -> None:
         self.repo = repo
+        self.receipt_repo = receipt_repo
+        self.store_repo = store_repo
+        self.discount_calc = discount_calc
+        self.receipt_service = receipt_service
         self.model = model
 
     def suggest(self, session: Session, user_id: uuid.UUID) -> list[BasketItem]:
@@ -124,6 +144,50 @@ class BasketService:
             logger.info("basket_assistant.no_applicable_tool_calls", instruction=instruction)
             return self._response(current, catalog_by_id, applied=False, message=CANNOT_UNDERSTAND_MESSAGE)
         return self._response(current, catalog_by_id, applied=True, message=None)
+
+    def checkout(
+        self,
+        session: Session,
+        user_id: uuid.UUID,
+        items: list[BasketItemIn],
+    ) -> ReceiptResponse:
+        if not items:
+            raise HTTPException(status_code=422, detail=CHECKOUT_EMPTY_BASKET_MESSAGE)
+
+        catalog = self.repo.get_full_catalog(session)
+        catalog_by_id = {p.id: p for p in catalog}
+        missing = [str(i.product_id) for i in items if i.product_id not in catalog_by_id]
+        if missing:
+            raise HTTPException(
+                status_code=422,
+                detail={"detail": "Unknown product_ids", "unknown_product_ids": missing},
+            )
+
+        receipts, _total = self.receipt_repo.list_by_loyalty_card(session, user_id, page=1, size=1)
+        if receipts:
+            store = self.store_repo.get_by_id(session, receipts[0].store_id)
+        else:
+            stores = self.store_repo.list_all(session)
+            if not stores:
+                raise HTTPException(status_code=422, detail=CHECKOUT_NO_STORES_MESSAGE)
+            store = stores[0]
+
+        cart_items = [CartItem(product_id=i.product_id, quantity=i.quantity) for i in items]
+        calculated = self.discount_calc.calculate(
+            items=cart_items, store=store, loyalty_card_id=user_id, session=session
+        )
+        receipt_items = [
+            ReceiptItemCreate(product_id=c.product_id, quantity=c.quantity, discount_id=c.discount_id)
+            for c in calculated
+        ]
+        data = ReceiptCreate(
+            loyalty_card_id=user_id,
+            store_id=store.id,
+            channel="offline",
+            items=receipt_items,
+        )
+        receipt, _is_new = self.receipt_service.create_receipt(session, uuid.uuid4(), data)
+        return self.receipt_service.build_receipt_response(session, receipt)
 
     def _build_system_prompt(self, current: dict[uuid.UUID, int], catalog_by_id: dict[uuid.UUID, Product]) -> str:
         current_lines = (
