@@ -11,9 +11,10 @@ interface HistoryViewProps {
   totalSaved: number;
   totalPaid: number;
   goBack: () => void;
+  onReceiptPress: (id: string) => void;
 }
 
-export function HistoryView({ token, totalSaved, totalPaid, goBack }: HistoryViewProps) {
+export function HistoryView({ token, totalSaved, totalPaid, goBack, onReceiptPress }: HistoryViewProps) {
   const insets = useSafeAreaInsets();
   const { receipts, loading, error } = useReceipts(token);
 
@@ -61,7 +62,7 @@ export function HistoryView({ token, totalSaved, totalPaid, goBack }: HistoryVie
             </View>
           )}
           {receipts.map((r) => (
-            <ReceiptListItem key={r.id} item={r} />
+            <ReceiptListItem key={r.id} item={r} onPress={() => onReceiptPress(r.id)} />
           ))}
         </View>
       </ScrollView>

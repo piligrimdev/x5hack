@@ -9,17 +9,21 @@ RUN pip install --no-cache-dir poetry \
     && poetry config virtualenvs.create false \
     && poetry config virtualenvs.in-project false
 
-COPY pyproject.toml poetry.lock ./
+# Build context = repo root. Web-specific files under ./web/, synth under ./synth/, config under ./config/.
+COPY web/pyproject.toml web/poetry.lock ./
 RUN poetry install --no-root --only main
 
-COPY src/ ./src/
-COPY scripts/ ./scripts/
-COPY alembic/ ./alembic/
-COPY alembic.ini ./
-COPY entrypoint.sh ./
+COPY web/src/ ./src/
+COPY web/scripts/ ./scripts/
+COPY web/alembic/ ./alembic/
+COPY web/alembic.ini ./
+COPY web/entrypoint.sh ./
+COPY synth/ /app/synth/
+COPY config/ /config/
 RUN chmod +x entrypoint.sh
 
-ENV PYTHONPATH=/app/src
+# /app/src — webx5 package; /app — allows `import synth`
+ENV PYTHONPATH=/app/src:/app
 
 EXPOSE 8000
 

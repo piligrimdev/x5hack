@@ -21,10 +21,24 @@
 - Скоринг по uid карт оплаты (сигнал: 4 последние банковские карты на карту лояльности)
 
 ### Апельсинки / баллы лояльности
-- Таблица транзакций баллов: начисление (за покупку, за задание), списание (на кассе, на награду)
-- Кэш-баланс на карте лояльности (денормализованный)
-- Срок истечения баллов (expired_at)
-- Интеграция апельсинок как частичной оплаты чека (points_redeemed на чеке)
+- ~~Таблица транзакций баллов: начисление (за задание), списание (на кассе)~~ — реализовано в feature 007 (`points_transaction`).
+- ~~Кэш-баланс на карте лояльности (денормализованный)~~ — реализовано (`points_account.balance`).
+- ~~Интеграция апельсинок как частичной оплаты чека (points_redeemed на чеке)~~ — реализовано (`receipt.cashback_applied_*`).
+- **Не реализовано** (осталось):
+  - Начисление баллов за сам факт покупки (сейчас — только за задания).
+  - Срок истечения баллов (`expired_at`, автосгорание).
+  - Возврат/отмена чека — откат `spend`, отзыв `earn` за отменённое задание.
+  - Cleanup orphan `points_account` при удалении `loyalty_card`.
+  - Push-уведомление о начислении баллов.
+  - Дробный курс (Decimal `rate_points_per_rub`) — сейчас только integer.
+
+### Cashback (feature 007) — переосмысление устаревших полей
+- `task.reward_id` и `task.reward_type` (введены в feature 006) новыми задачами не заполняются: награда = баллы, а не Discount. Отдельной миграцией удалить/переосмыслить.
+- `TaskRepository.create_reward_discount` помечен `# BACKLOG-cleanup` — удалить после подтверждения, что нет внешних вызовов.
+- Sanity-check скрипт: пересчитывать `points_account.balance = SUM(amount) FROM points_transaction WHERE account_id=...` периодически, для выявления рассинхронизации.
+
+### Concurrent-spend integration test (SC-003)
+- Реальный integration-тест с 100 параллельными потоками против живой Postgres, проверяющий инвариант `balance >= 0` (сейчас — только логика через MagicMock + DB constraint).
 
 ### Составные задания (multi-criterion)
 - task_progress таблица: task_id, criterion_id, current_value, target_value
@@ -34,7 +48,7 @@
 - Скидки по дням недели / времени суток (is_recurrent, schedule)
 
 ### Уценка как фиксированная сумма
-- value_type на скидке (percent / fixed_rub) для корректного моделирования уценки
+- ~~value_type на скидке (percent / fixed_rub)~~ — реализовано в feature 006 для награды за задание. Уценку кассой ещё нужно смоделировать явно.
 
 ### Персистентная корзина ассистента
 - Сейчас корзина живёт только в локальном стейте фронтенда (`useBasket`) и
@@ -44,3 +58,18 @@
   `docs/superpowers/specs/2026-09-04-basket-ai-assistant-design.md`
 - Для продакшна нужна таблица вида `user_baskets` (корзина на пользователя,
   персистентная между сессиями/устройствами)
+
+### Дополнительные типы наград (мост FR-011a готов)
+- Coupon-сущность (id, code, discount_value, expires_at, used_at) как второй `task.reward_type`
+- Points/апельсинки как третий `task.reward_type` (требует таблицы транзакций баллов из «Апельсинки»-раздела)
+
+### Langfuse интеграция
+- Экспортировать записи `challenge_generation_log` как traces + tool-calls в Langfuse для внешнего аудита LLM
+- Сейчас — только Postgres-таблица
+
+### Unit-тесты Celery-задач с live Postgres
+- test_generation_and_receipt.py, test_process_receipt_progress.py, test_expiration.py — требуют pytest-фикстуры на реальную БД
+- Логика частично покрыта unit-тестами task_completion/challenge_service
+
+### Adapter unit-tests
+- `web/tests/webx5/services/test_challenge_adapter.py` — детально проверить `build_profile` (margin из config), `_lookup_product` (ILIKE + ordering), `persist_challenge` для всех известных `SCRIPT_FIELD_TO_CRITERION_KIND`

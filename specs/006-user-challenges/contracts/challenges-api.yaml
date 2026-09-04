@@ -1,0 +1,159 @@
+openapi: 3.0.3
+info:
+  title: X5 Loyalty — Challenges API
+  version: 0.1.0
+  description: |
+    Персональные челленджи (задания) пользователя. Возвращает активные задания
+    пользователя с прогрессом, наградой и дедлайном. Максимум 3 задания в ответе.
+
+    Аутентификация: JWT Bearer (существующий механизм из spec 003-auth).
+
+servers:
+  - url: http://localhost:8000
+    description: Local dev
+
+security:
+  - bearerAuth: []
+
+paths:
+  /challenges/current:
+    get:
+      operationId: getCurrentChallenges
+      summary: Список активных заданий текущего пользователя
+      description: |
+        Возвращает массив из ≤3 активных заданий (статус «открыто») со всеми полями,
+        нужными мобильному приложению для рендеринга карточки задания.
+
+        Empty-состояния (пустой массив + причина в `empty_reason`):
+        - `no_history` — пользователь без чеков, задания появятся после первой покупки.
+        - `saturated` — пользователь считается «топ-покупателем», новых заданий сейчас нет
+          (script вернул `no_challenge` для последних попыток).
+        - `none` — стандартное состояние (задания есть).
+      tags: [Challenges]
+      responses:
+        "200":
+          description: Список активных заданий
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChallengeListResponse'
+              examples:
+                three_active:
+                  summary: Активны 3 задания
+                  value:
+                    items:
+                      - id: "1a2b3c4d-..."
+                        title: "Скидка 15% на Молоко Простоквашино"
+                        description: "Потрать от 1500 ₽ за один поход и получи 15% на молоко."
+                        mechanic: "порог трат + скидка на любимый товар"
+                        reward_rub: 45.00
+                        criterion_type: "product"
+                        criterion_entity_id: "9e8d7c6b-..."
+                        quantity_target: 1
+                        quantity_current: 0
+                        deadline: "2026-09-11T14:23:00Z"
+                        status: "открыто"
+                    empty_reason: "none"
+                new_user:
+                  summary: Пользователь без чеков
+                  value:
+                    items: []
+                    empty_reason: "no_history"
+                saturated:
+                  summary: Saturated пользователь
+                  value:
+                    items: []
+                    empty_reason: "saturated"
+        "401":
+          description: Отсутствует или невалидный JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ChallengeListResponse:
+      type: object
+      required: [items, empty_reason]
+      properties:
+        items:
+          type: array
+          maxItems: 3
+          items:
+            $ref: '#/components/schemas/ChallengeItem'
+        empty_reason:
+          type: string
+          enum: [none, no_history, saturated]
+          description: |
+            Причина, по которой массив пуст (или почему меньше 3 элементов).
+            `none` — задания есть или причина отсутствия не установлена.
+
+    ChallengeItem:
+      type: object
+      required:
+        - id
+        - title
+        - description
+        - mechanic
+        - reward_rub
+        - criterion_type
+        - criterion_entity_id
+        - quantity_target
+        - quantity_current
+        - deadline
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Идентификатор задания.
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+        mechanic:
+          type: string
+          description: Текстовое описание механики (для отображения). Не машинно-читаемое.
+        reward_rub:
+          type: number
+          format: decimal
+          minimum: 0
+          description: Сумма награды в рублях (обещанная).
+        criterion_type:
+          type: string
+          enum: [product, category, brand]
+          description: Тип основного критерия.
+        criterion_entity_id:
+          type: string
+          format: uuid
+          description: ID сущности критерия (Product/Category/Brand).
+        quantity_target:
+          type: integer
+          minimum: 1
+          default: 1
+        quantity_current:
+          type: integer
+          minimum: 0
+        deadline:
+          type: string
+          format: date-time
+          description: ISO 8601 с TZ. Дедлайн выполнения (7 дней от issued_at).
+        status:
+          type: string
+          enum: [открыто]
+          description: В этом эндпоинте всегда 'открыто' (завершённые/истёкшие не возвращаются).
+
+    ErrorResponse:
+      type: object
+      required: [detail]
+      properties:
+        detail:
+          type: string

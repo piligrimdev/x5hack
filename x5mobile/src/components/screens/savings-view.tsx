@@ -13,9 +13,10 @@ interface SavingsViewProps {
   token: string;
   goHome: () => void;
   goHistory: () => void;
+  goChallenges: () => void;
 }
 
-export function SavingsView({ tasks, leaderboard, savings, token, goHome, goHistory }: SavingsViewProps) {
+export function SavingsView({ tasks, leaderboard, savings, token, goHome, goHistory, goChallenges }: SavingsViewProps) {
   const insets = useSafeAreaInsets();
   const { items: basketItems, loading: basketLoading, message: basketMessage, sendInstruction } = useBasket(token);
   const [instructionText, setInstructionText] = useState('');
@@ -39,9 +40,14 @@ export function SavingsView({ tasks, leaderboard, savings, token, goHome, goHist
           <Text style={styles.backBtnText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Экономия</Text>
-        <TouchableOpacity style={styles.backBtn} onPress={goHistory} activeOpacity={0.7}>
-          <Text style={styles.backBtnText}>🕐</Text>
-        </TouchableOpacity>
+        <View style={styles.headerRight}>
+          <TouchableOpacity style={styles.iconBtn} onPress={goChallenges} activeOpacity={0.7}>
+            <Text style={styles.backBtnText}>📋</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.iconBtn} onPress={goHistory} activeOpacity={0.7}>
+            <Text style={styles.backBtnText}>🕐</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView
@@ -94,6 +100,7 @@ export function SavingsView({ tasks, leaderboard, savings, token, goHome, goHist
             ))
           )}
           {basketMessage && <Text style={styles.basketMessage}>{basketMessage}</Text>}
+          <Text style={styles.appiLabel}>🍊 Спроси Аппи</Text>
           <View style={styles.basketInputRow}>
             <TextInput
               style={styles.basketInput}
@@ -212,6 +219,16 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 28,
   },
   backBtn: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerRight: {
+    flexDirection: 'row',
+    gap: 4,
+  },
+  iconBtn: {
     width: 36,
     height: 36,
     alignItems: 'center',
@@ -340,6 +357,11 @@ const styles = StyleSheet.create({
     fontSize: 12.5,
     color: BrandColors.textSecondary,
     fontStyle: 'italic',
+  },
+  appiLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: BrandColors.textSecondary,
   },
   basketInputRow: {
     flexDirection: 'row',

@@ -18,21 +18,83 @@ services:
       retries: 10
       start_period: 10s
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   web:
     build:
-      context: ./web
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: web/Dockerfile
     env_file:
       - .env
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg2://postgres:password@db:5432/x5hack}
       SERVICE_NAME: ${SERVICE_NAME:-webx5}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      CHALLENGE_LLM_MODEL: ${CHALLENGE_LLM_MODEL:-anthropic/claude-haiku-4.5}
+      SYNTH_CONFIG_PATH: ${SYNTH_CONFIG_PATH:-/config/synth_schema.yaml}
     ports:
       - "${PORT:-8000}:8000"
     volumes:
       - ./dataset:/data:ro
+      - ./config:/config:ro
     depends_on:
       db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg2://postgres:password@db:5432/x5hack}
+      SERVICE_NAME: ${SERVICE_NAME:-webx5-worker}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      CHALLENGE_LLM_MODEL: ${CHALLENGE_LLM_MODEL:-anthropic/claude-haiku-4.5}
+      SYNTH_CONFIG_PATH: ${SYNTH_CONFIG_PATH:-/config/synth_schema.yaml}
+    volumes:
+      - ./dataset:/data:ro
+      - ./config:/config:ro
+    entrypoint: ["celery", "-A", "webx5.core.celery_app", "worker", "-Q", "receipts,challenges", "--concurrency=4", "-l", "info"]
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  beat:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg2://postgres:password@db:5432/x5hack}
+      SERVICE_NAME: ${SERVICE_NAME:-webx5-beat}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      SYNTH_CONFIG_PATH: ${SYNTH_CONFIG_PATH:-/config/synth_schema.yaml}
+    volumes:
+      - ./config:/config:ro
+    entrypoint: ["celery", "-A", "webx5.core.celery_app", "beat", "-l", "info"]
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     restart: unless-stopped
 

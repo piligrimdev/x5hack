@@ -1,0 +1,201 @@
+openapi: 3.1.0
+info:
+  title: Receipts API — delta для feature 007-cashback-points
+  version: 0.1.0
+  description: |
+    Расширение существующих /receipts и /receipts/calculate (спека 005):
+    приём `points_to_spend` и возврат блока кешбека. Схемы, не показанные здесь,
+    остаются без изменений. Существующие поля НЕ переименовываются (FR-025).
+
+paths:
+  /receipts/calculate:
+    post:
+      summary: Предварительный расчёт чека с учётом кешбека
+      description: |
+        Расширяется одним опциональным полем `points_to_spend` в запросе
+        и блоком полей `points_available / points_to_apply / cashback_rub /
+        total_paid_rub / points_balance_after / points_capped_by` в ответе.
+        Не изменяет состояние счёта баллов (read-only).
+      security:
+        - terminalToken: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CalculateRequestExtended"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CalculateResponseExtended"
+
+  /receipts:
+    post:
+      summary: Фиксация чека с опциональным списанием баллов
+      description: |
+        Расширяется полем `points_to_spend` в теле. При успешной фиксации
+        баллы списываются атомарно с чеком. Ответ включает поля
+        `cashback_applied_points / cashback_applied_rub / points_rate_at_purchase`.
+      security:
+        - terminalToken: []
+      parameters:
+        - in: header
+          name: X-Idempotency-Key
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReceiptCreateExtended"
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReceiptResponseExtended"
+        "200":
+          description: Идемпотентный ответ (тот же X-Idempotency-Key)
+        "422":
+          description: |
+            Например: `points_to_spend > 0` для анонимного покупателя
+            (без loyalty_card_id).
+
+components:
+  securitySchemes:
+    terminalToken:
+      type: apiKey
+      in: header
+      name: X-Terminal-Token
+
+  schemas:
+    PointsToSpend:
+      description: |
+        Сколько баллов пользователь хочет потратить. `"all"` = весь текущий баланс.
+        Число ≥ 0 — конкретное количество. Отсутствует или 0 — не тратить.
+      oneOf:
+        - type: integer
+          minimum: 0
+        - type: string
+          enum: [all]
+
+    CalculateRequestExtended:
+      description: Расширение существующего CalculateRequest — добавлено одно поле.
+      allOf:
+        - type: object
+          properties:
+            store_id:
+              type: string
+              format: uuid
+            loyalty_card_id:
+              type: string
+              format: uuid
+              nullable: true
+            items:
+              type: array
+              items:
+                type: object
+                properties:
+                  product_id: { type: string, format: uuid }
+                  quantity: { type: integer, minimum: 1 }
+        - type: object
+          properties:
+            points_to_spend:
+              $ref: "#/components/schemas/PointsToSpend"
+
+    CalculateResponseExtended:
+      description: Расширение существующего CalculateResponse — добавлен блок cashback.
+      type: object
+      properties:
+        store_id: { type: string, format: uuid }
+        loyalty_card_id: { type: string, format: uuid, nullable: true }
+        items:
+          type: array
+          items:
+            type: object
+        total_base: { type: number }
+        total_paid: { type: number }
+        total_saved: { type: number }
+        cashback:
+          type: object
+          nullable: true
+          description: null для анонимных запросов
+          properties:
+            points_available:
+              type: integer
+              minimum: 0
+              description: Текущий баланс на момент расчёта
+            points_to_apply:
+              type: integer
+              minimum: 0
+              description: |
+                Сколько реально будет списано с учётом ограничений:
+                min(points_to_spend, balance, subtotal_rub × rate),
+                округлено вниз до кратного rate.
+            cashback_rub:
+              type: integer
+              minimum: 0
+              description: points_to_apply // rate
+            total_paid_rub:
+              type: integer
+              minimum: 0
+              description: total_paid - cashback_rub
+            points_balance_after:
+              type: integer
+              minimum: 0
+              description: balance - points_to_apply
+            points_capped_by:
+              type: string
+              enum: [none, balance, receipt_total]
+              description: |
+                Что урезало запрошенное списание. `receipt_total` — потолок
+                достиг стоимости чека (излишек баллов остаётся на счёте).
+                Отображается кассиру.
+            rate_points_per_rub:
+              type: integer
+              minimum: 1
+
+    ReceiptCreateExtended:
+      description: Расширение существующего ReceiptCreate — добавлено одно поле.
+      type: object
+      required: [store_id, items]
+      properties:
+        store_id: { type: string, format: uuid }
+        loyalty_card_id: { type: string, format: uuid, nullable: true }
+        channel: { type: string, enum: [online, offline], default: offline }
+        payment_card_uid: { type: string, nullable: true }
+        items:
+          type: array
+          items:
+            type: object
+        points_to_spend:
+          $ref: "#/components/schemas/PointsToSpend"
+
+    ReceiptResponseExtended:
+      description: Расширение существующего ReceiptResponse — добавлены три поля.
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        purchase_date: { type: string, format: date-time }
+        store_id: { type: string, format: uuid }
+        loyalty_card_id: { type: string, format: uuid, nullable: true }
+        channel: { type: string }
+        items:
+          type: array
+          items:
+            type: object
+        total_base: { type: number }
+        total_paid: { type: number }
+        total_saved: { type: number }
+        cashback_applied_points:
+          type: integer
+          minimum: 0
+        cashback_applied_rub:
+          type: integer
+          minimum: 0
+        points_rate_at_purchase:
+          type: integer
+          nullable: true

@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 from decimal import Decimal
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 from fastapi import HTTPException
@@ -137,8 +137,7 @@ class TestCreateReceiptNoDiscount:
             store_id=store.id,
             items=[ReceiptItemCreate(product_id=product.id, quantity=2)],
         )
-        with patch.object(service, "_update_task_progress"):
-            r, is_new = service.create_receipt(session, receipt.id, data)
+        r, is_new = service.create_receipt(session, receipt.id, data)
 
         assert is_new is True
         call_kwargs = receipt_repo.create.call_args
@@ -172,8 +171,7 @@ class TestCreateReceiptWithDiscount:
             store_id=store.id,
             items=[ReceiptItemCreate(product_id=product.id, quantity=1, discount_id=discount.id)],
         )
-        with patch.object(service, "_update_task_progress"):
-            service.create_receipt(session, receipt.id, data)
+        service.create_receipt(session, receipt.id, data)
 
         items_data = receipt_repo.create.call_args.kwargs["items"]
         assert items_data[0]["paid_price"] == Decimal("150.00")

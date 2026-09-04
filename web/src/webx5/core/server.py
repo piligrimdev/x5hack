@@ -7,8 +7,10 @@ from scalar_fastapi import get_scalar_api_reference
 from webx5.routes.auth import auth_router
 from webx5.routes.basket import basket_router
 from webx5.routes.catalog import catalog_router
+from webx5.routes.challenges import challenges_router
 from webx5.routes.discounts import discounts_router
 from webx5.routes.health import health_router
+from webx5.routes.points import points_router
 from webx5.routes.receipts import receipts_router
 from webx5.routes.stores import stores_router
 
@@ -28,6 +30,8 @@ app.include_router(catalog_router)
 app.include_router(receipts_router)
 app.include_router(stores_router)
 app.include_router(discounts_router)
+app.include_router(challenges_router)
+app.include_router(points_router)
 
 add_pagination(app)
 
