@@ -63,7 +63,7 @@ TOOLS = [
 
 
 class BasketService:
-    def __init__(self, repo: BasketRepository, model: str = "deepseek/deepseek-chat") -> None:
+    def __init__(self, repo: BasketRepository, model: str = "anthropic/claude-haiku-4.5") -> None:
         self.repo = repo
         self.model = model
 
