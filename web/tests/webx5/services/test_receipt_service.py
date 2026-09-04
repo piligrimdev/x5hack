@@ -252,3 +252,65 @@ class TestIdempotency:
 
         assert r is existing_receipt
         assert is_new is False
+
+
+from webx5.entities.receipt import ReceiptItem
+from webx5.schemas.receipt import ReceiptResponse
+
+
+def _make_receipt_item(*, product_id: uuid.UUID, receipt_id: uuid.UUID) -> ReceiptItem:
+    ri = ReceiptItem()
+    ri.id = uuid.uuid4()
+    ri.receipt_id = receipt_id
+    ri.product_id = product_id
+    ri.quantity = 2
+    ri.base_price_at_purchase = Decimal("100.00")
+    ri.paid_price = Decimal("90.00")
+    ri.discounted_amount = Decimal("10.00")
+    ri.discount_id = None
+    return ri
+
+
+class TestBuildReceiptResponse:
+    def test_builds_response_with_totals(
+        self, service: ReceiptService, receipt_repo: MagicMock, session: MagicMock
+    ) -> None:
+        product = _make_product()
+        receipt = _make_receipt()
+        receipt.cashback_applied_points = 0
+        receipt.cashback_applied_rub = 0
+        receipt.points_rate_at_purchase = None
+        item = _make_receipt_item(product_id=product.id, receipt_id=receipt.id)
+        receipt_repo.get_items_with_products.return_value = [(item, product)]
+
+        result = service.build_receipt_response(session, receipt)
+
+        assert isinstance(result, ReceiptResponse)
+        assert result.id == receipt.id
+        assert result.store_id == receipt.store_id
+        assert len(result.items) == 1
+        assert result.items[0].product_id == product.id
+        assert result.total_base == Decimal("200.00")
+        assert result.total_paid == Decimal("180.00")
+        assert result.discount_saved_rub == Decimal("20.00")
+        assert result.total_saved == Decimal("20.00")
+
+    def test_subtracts_cashback_from_total_paid(
+        self, service: ReceiptService, receipt_repo: MagicMock, session: MagicMock
+    ) -> None:
+        product = _make_product()
+        receipt = _make_receipt()
+        receipt.cashback_applied_points = 500
+        receipt.cashback_applied_rub = 50
+        receipt.points_rate_at_purchase = 10
+        item = _make_receipt_item(product_id=product.id, receipt_id=receipt.id)
+        item.discounted_amount = Decimal("0.00")
+        item.paid_price = Decimal("100.00")
+        receipt_repo.get_items_with_products.return_value = [(item, product)]
+
+        result = service.build_receipt_response(session, receipt)
+
+        assert result.total_paid == Decimal("150.00")  # 200 base paid - 50 cashback
+        assert result.total_saved == Decimal("50.00")  # 0 discount + 50 cashback
+        assert result.cashback_applied_rub == 50
+        assert result.points_rate_at_purchase == 10

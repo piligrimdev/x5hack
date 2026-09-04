@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from webx5.crud.discount import DiscountRepository
 from webx5.crud.receipt import ReceiptRepository
 from webx5.entities.receipt import Receipt
-from webx5.schemas.receipt import ReceiptCreate
+from webx5.schemas.receipt import ReceiptCreate, ReceiptItemResponse, ReceiptResponse
 
 
 class ReceiptService:
@@ -164,3 +164,45 @@ class ReceiptService:
                 pass
 
         return receipt, is_new
+
+    def build_receipt_response(self, session: Session, receipt: Receipt) -> ReceiptResponse:
+        items_with_products = self.receipt_repo.get_items_with_products(session, receipt.id)
+
+        item_responses = [
+            ReceiptItemResponse(
+                id=ri.id,
+                product_id=ri.product_id,
+                quantity=ri.quantity,
+                base_price_at_purchase=Decimal(str(ri.base_price_at_purchase)),
+                paid_price=Decimal(str(ri.paid_price)),
+                discounted_amount=Decimal(str(ri.discounted_amount)),
+                discount_id=ri.discount_id,
+            )
+            for ri, _product in items_with_products
+        ]
+
+        total_base = sum(i.base_price_at_purchase * i.quantity for i in item_responses)
+        total_paid_before_cashback = sum(i.paid_price * i.quantity for i in item_responses)
+        cashback_rub = Decimal(str(receipt.cashback_applied_rub))
+        discount_saved = total_base - total_paid_before_cashback
+        total_paid = max(total_paid_before_cashback - cashback_rub, Decimal("0"))
+
+        return ReceiptResponse(
+            id=receipt.id,
+            purchase_date=receipt.purchase_date,
+            store_id=receipt.store_id,
+            loyalty_card_id=receipt.loyalty_card_id,
+            channel=receipt.channel,
+            items=item_responses,
+            total_base=total_base,
+            total_paid=total_paid,
+            total_saved=discount_saved + cashback_rub,
+            discount_saved_rub=discount_saved,
+            cashback_applied_points=int(receipt.cashback_applied_points),
+            cashback_applied_rub=int(receipt.cashback_applied_rub),
+            points_rate_at_purchase=(
+                int(receipt.points_rate_at_purchase)
+                if receipt.points_rate_at_purchase is not None
+                else None
+            ),
+        )
