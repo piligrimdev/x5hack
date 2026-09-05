@@ -251,6 +251,32 @@ def test_parse_and_validate_challenge_strips_markdown_code_fence():
     assert result["target_categories"] == ["овощи"]
 
 
+def test_parse_and_validate_challenge_accepts_category_within_allowed_set():
+    raw = json.dumps({
+        "challenge_title": "Test",
+        "description": "desc",
+        "target_categories": ["бакалея"],
+        "mechanic": "скидка",
+        "reward_rub": 30,
+    })
+    result = parse_and_validate_challenge(
+        raw, _config, max_reward_rub=100, allowed_categories={"бакалея", "консервация"}
+    )
+    assert result["target_categories"] == ["бакалея"]
+
+
+def test_parse_and_validate_challenge_rejects_category_outside_allowed_set():
+    raw = json.dumps({
+        "challenge_title": "Test",
+        "description": "desc",
+        "target_categories": ["овощи"],
+        "mechanic": "скидка",
+        "reward_rub": 30,
+    })
+    with pytest.raises(ValueError, match="outside allowed set"):
+        parse_and_validate_challenge(raw, _config, max_reward_rub=100, allowed_categories={"бакалея"})
+
+
 def test_build_personal_prompt_mentions_forbidden_categories_and_reward_ceiling():
     profile = _profile("promo_hunter", seed=1)
     system, user = build_personal_prompt(profile, _config, max_reward_rub=77.0)

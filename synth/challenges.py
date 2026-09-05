@@ -576,7 +576,12 @@ def _strip_code_fence(text: str) -> str:
     return match.group(1).strip() if match else text
 
 
-def parse_and_validate_challenge(raw_text: str, config: SynthConfig, max_reward_rub: float) -> dict:
+def parse_and_validate_challenge(
+    raw_text: str,
+    config: SynthConfig,
+    max_reward_rub: float,
+    allowed_categories: set[str] | None = None,
+) -> dict:
     try:
         data = json.loads(_strip_code_fence(raw_text))
     except json.JSONDecodeError as e:
@@ -593,6 +598,11 @@ def parse_and_validate_challenge(raw_text: str, config: SynthConfig, max_reward_
     forbidden_hit = set(target_categories) & set(config.forbidden_categories)
     if forbidden_hit:
         raise ValueError(f"target_categories includes forbidden categories: {forbidden_hit}")
+
+    if allowed_categories is not None:
+        disallowed = set(target_categories) - allowed_categories
+        if disallowed:
+            raise ValueError(f"target_categories outside allowed set: {disallowed}")
 
     reward = float(data["reward_rub"])
     if reward < 0:
