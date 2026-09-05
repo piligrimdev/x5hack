@@ -18,7 +18,7 @@ class CartItem:
     quantity: int
 
 
-def _apply_discount(base_price: Decimal, discount: "Discount") -> Decimal:
+def apply_discount(base_price: Decimal, discount: "Discount") -> Decimal:
     """Compute paid price after applying one discount.
 
     `value_type='percent'` — value is percentage 0..100.
@@ -148,7 +148,7 @@ class DiscountCalculatorService:
             best_paid = base_price
 
             for d in unique_candidates:
-                paid = _apply_discount(base_price, d)
+                paid = apply_discount(base_price, d)
                 if paid < best_paid:
                     best_paid = paid
                     best_discount = d

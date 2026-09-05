@@ -229,6 +229,64 @@ class TestCreateReceiptWithDiscount:
         assert exc_info.value.status_code == 422
 
 
+class TestCreateReceiptFixedRubDiscount:
+    def test_fixed_rub_discount_subtracts_flat_amount_not_percent(
+        self,
+        service: ReceiptService,
+        receipt_repo: MagicMock,
+        discount_repo: MagicMock,
+        session: MagicMock,
+    ) -> None:
+        product = _make_product(price="100.00")
+        store = _make_store()
+        discount = _make_discount(value="30")
+        discount.value_type = "fixed_rub"
+        receipt = _make_receipt()
+
+        session.get.return_value = store
+        session.scalars.return_value = [product]
+        discount_repo.get_by_id.return_value = discount
+        receipt_repo.create.return_value = (receipt, True)
+
+        data = ReceiptCreate(
+            store_id=store.id,
+            items=[ReceiptItemCreate(product_id=product.id, quantity=1, discount_id=discount.id)],
+        )
+        service.create_receipt(session, receipt.id, data)
+
+        items_data = receipt_repo.create.call_args.kwargs["items"]
+        assert items_data[0]["paid_price"] == Decimal("70.00")
+        assert items_data[0]["discounted_amount"] == Decimal("30.00")
+
+    def test_fixed_rub_discount_larger_than_price_floors_at_zero(
+        self,
+        service: ReceiptService,
+        receipt_repo: MagicMock,
+        discount_repo: MagicMock,
+        session: MagicMock,
+    ) -> None:
+        product = _make_product(price="100.00")
+        store = _make_store()
+        discount = _make_discount(value="200")
+        discount.value_type = "fixed_rub"
+        receipt = _make_receipt()
+
+        session.get.return_value = store
+        session.scalars.return_value = [product]
+        discount_repo.get_by_id.return_value = discount
+        receipt_repo.create.return_value = (receipt, True)
+
+        data = ReceiptCreate(
+            store_id=store.id,
+            items=[ReceiptItemCreate(product_id=product.id, quantity=1, discount_id=discount.id)],
+        )
+        service.create_receipt(session, receipt.id, data)
+
+        items_data = receipt_repo.create.call_args.kwargs["items"]
+        assert items_data[0]["paid_price"] == Decimal("0.00")
+        assert items_data[0]["discounted_amount"] == Decimal("100.00")
+
+
 class TestIdempotency:
     def test_returns_existing_receipt_when_duplicate(
         self,
