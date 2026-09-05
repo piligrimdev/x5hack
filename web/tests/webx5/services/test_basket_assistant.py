@@ -348,6 +348,66 @@ class TestCheckout:
             service.checkout(session, uuid.uuid4(), [BasketItemIn(product_id=milk.id, quantity=1)])
         assert exc_info.value.status_code == 422
 
+    def test_points_to_spend_forwarded_to_receipt_create(
+        self,
+        service: BasketService,
+        repo: MagicMock,
+        receipt_repo: MagicMock,
+        store_repo: MagicMock,
+        discount_calc: MagicMock,
+        receipt_service: MagicMock,
+        session: MagicMock,
+    ) -> None:
+        milk = _make_product("sku_0001", "Молоко")
+        repo.get_full_catalog.return_value = [milk]
+        store = _make_store()
+        receipt_repo.list_by_loyalty_card.return_value = ([], 0)
+        store_repo.list_all.return_value = [store]
+        discount_calc.calculate.return_value = [
+            CalculatedItem(
+                product_id=milk.id, product_name=milk.name, quantity=1,
+                base_price=Decimal("100.00"), paid_price=Decimal("100.00"),
+                discount_id=None, discounted_amount=Decimal("0.00"),
+            )
+        ]
+        receipt_service.create_receipt.return_value = (MagicMock(), True)
+
+        service.checkout(
+            session, uuid.uuid4(), [BasketItemIn(product_id=milk.id, quantity=1)], points_to_spend="all"
+        )
+
+        created_data = receipt_service.create_receipt.call_args.args[2]
+        assert created_data.points_to_spend == "all"
+
+    def test_points_to_spend_defaults_to_none(
+        self,
+        service: BasketService,
+        repo: MagicMock,
+        receipt_repo: MagicMock,
+        store_repo: MagicMock,
+        discount_calc: MagicMock,
+        receipt_service: MagicMock,
+        session: MagicMock,
+    ) -> None:
+        milk = _make_product("sku_0001", "Молоко")
+        repo.get_full_catalog.return_value = [milk]
+        store = _make_store()
+        receipt_repo.list_by_loyalty_card.return_value = ([], 0)
+        store_repo.list_all.return_value = [store]
+        discount_calc.calculate.return_value = [
+            CalculatedItem(
+                product_id=milk.id, product_name=milk.name, quantity=1,
+                base_price=Decimal("100.00"), paid_price=Decimal("100.00"),
+                discount_id=None, discounted_amount=Decimal("0.00"),
+            )
+        ]
+        receipt_service.create_receipt.return_value = (MagicMock(), True)
+
+        service.checkout(session, uuid.uuid4(), [BasketItemIn(product_id=milk.id, quantity=1)])
+
+        created_data = receipt_service.create_receipt.call_args.args[2]
+        assert created_data.points_to_spend is None
+
 
 class TestPreview:
     def test_returns_priced_items_with_discount_and_cashback(

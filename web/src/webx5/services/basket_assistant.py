@@ -162,6 +162,7 @@ class BasketService:
         session: Session,
         user_id: uuid.UUID,
         items: list[BasketItemIn],
+        points_to_spend: PointsToSpend = None,
     ) -> ReceiptResponse:
         if not items:
             raise HTTPException(status_code=422, detail=CHECKOUT_EMPTY_BASKET_MESSAGE)
@@ -190,6 +191,7 @@ class BasketService:
             store_id=store.id,
             channel="offline",
             items=receipt_items,
+            points_to_spend=points_to_spend,
         )
         receipt, _is_new = self.receipt_service.create_receipt(session, uuid.uuid4(), data)
         return self.receipt_service.build_receipt_response(session, receipt)

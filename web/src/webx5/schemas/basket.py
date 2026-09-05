@@ -37,6 +37,7 @@ class AssistantResponse(BaseModel):
 
 class CheckoutRequest(BaseModel):
     items: list[BasketItemIn]
+    points_to_spend: PointsToSpend = None
 
 
 class BasketPreviewRequest(BaseModel):

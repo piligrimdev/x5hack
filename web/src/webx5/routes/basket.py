@@ -54,4 +54,4 @@ def post_basket_checkout(
 ) -> ReceiptResponse:
     from webx5.core.basket import basket_service
 
-    return basket_service.checkout(session, user_id, data.items)
+    return basket_service.checkout(session, user_id, data.items, data.points_to_spend)

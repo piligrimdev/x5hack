@@ -130,6 +130,34 @@ class TestPostBasketCheckout:
             )
         assert resp.status_code == 422
 
+    def test_forwards_points_to_spend(self) -> None:
+        from webx5.schemas.receipt import ReceiptResponse
+
+        captured: dict = {}
+
+        def _fake_checkout(self, session, user_id, items, points_to_spend=None):
+            captured["points_to_spend"] = points_to_spend
+            return ReceiptResponse(
+                id=uuid.uuid4(),
+                purchase_date="2026-09-05T12:00:00Z",
+                store_id=uuid.uuid4(),
+                loyalty_card_id=user_id,
+                channel="offline",
+                items=[],
+                total_base=Decimal("0"),
+                total_paid=Decimal("0"),
+                total_saved=Decimal("0"),
+            )
+
+        with patch("webx5.services.basket_assistant.BasketService.checkout", _fake_checkout):
+            resp = client.post(
+                "/basket/checkout",
+                json={"items": [{"product_id": str(uuid.uuid4()), "quantity": 1}], "points_to_spend": "all"},
+                headers=_bearer(_token()),
+            )
+        assert resp.status_code == 201
+        assert captured["points_to_spend"] == "all"
+
 
 class TestPostBasketPreview:
     def test_returns_priced_preview(self) -> None:
