@@ -543,6 +543,46 @@ def build_personal_prompt(
     return system, user
 
 
+def build_vibe_prompt(
+    profile: dict, config: SynthConfig, max_reward_rub: float, vibe_category: str
+) -> tuple[str, str]:
+    """Like `build_personal_prompt`, but themed: `target_categories` must
+    come from `VIBE_CATEGORIES[vibe_category]` (the user's assigned theme
+    for the month) instead of being free-form — enforced by
+    `parse_and_validate_challenge`'s `allowed_categories` param, not by this
+    function. Doesn't require any purchase history to make sense — the
+    theme itself is the personalization signal, not the user's own habits —
+    so this slot works identically for a cold-start user with zero
+    receipts."""
+    summary = summarize_purchase_pattern(profile, config)
+    allowed = ", ".join(VIBE_CATEGORIES[vibe_category])
+
+    system = (
+        "Ты — модуль персональных рекомендаций программы лояльности X5 "
+        "(Пятёрочка/Перекрёсток/Чижик). Пользователю на этот месяц назначена "
+        f'тема "{vibe_category}". Предложи ОДИН челлендж строго в рамках этой '
+        "темы — он должен ощущаться как часть тематической подборки месяца, "
+        "а не случайная акция.\n\n"
+        f"target_categories обязаны быть подмножеством этого списка: {allowed} "
+        "— другие категории использовать нельзя.\n"
+        f"reward_rub не должен превышать {max_reward_rub:.0f} ₽ — это ограничение "
+        "по марже конкретно этого пользователя.\n\n"
+        "Ответь СТРОГО в виде одного JSON-объекта, без текста вне JSON:\n"
+        '{"challenge_title": string, "description": string, '
+        '"target_categories": [string, ...], "mechanic": string, '
+        '"reward_rub": number, "reasoning": string}'
+    )
+
+    user = (
+        f"Сеть: {profile['chain']}\n"
+        f"Тема месяца: {vibe_category}\n"
+        f"Чеков за 90 дней (train-период): {summary['n_receipts_90d_train']}\n"
+        f"Топ категорий по числу позиций: {summary['top_categories']}\n"
+        f"Средний чек: {summary['mean_receipt_total_rub']:.0f} ₽\n"
+    )
+    return system, user
+
+
 def call_openrouter(
     model: str,
     system: str,

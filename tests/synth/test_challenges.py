@@ -11,6 +11,7 @@ from synth.challenges import (
     build_category_expansion_challenge,
     build_personal_prompt,
     build_spend_threshold_challenge,
+    build_vibe_prompt,
     compute_frequency_saturation,
     compute_receptiveness,
     estimate_max_reward_rub,
@@ -291,6 +292,15 @@ def test_build_personal_prompt_discovery_focus_differs_from_habit_focus():
     discovery_system, _ = build_personal_prompt(profile, _config, max_reward_rub=50.0, focus="discovery")
     assert habit_system != discovery_system
     assert "почти" in discovery_system
+
+
+def test_build_vibe_prompt_restricts_to_theme_categories_and_mentions_reward_ceiling():
+    profile = _profile("promo_hunter", seed=1)
+    system, user = build_vibe_prompt(profile, _config, max_reward_rub=65.0, vibe_category="Экономия и запасы")
+    for cat in VIBE_CATEGORIES["Экономия и запасы"]:
+        assert cat in system
+    assert "65" in system
+    assert "Экономия и запасы" in user
 
 
 def test_compute_frequency_saturation_true_for_already_optimal():
