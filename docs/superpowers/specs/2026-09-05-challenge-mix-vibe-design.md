@@ -52,25 +52,45 @@ Date: 2026-09-05. Brainstormed interactively (`superpowers:brainstorming`).
 уже корректно деградирует на скудных данных (пишет "—" в отсутствующих полях),
 отдельный cold-start промпт не нужен.
 
-## Что удаляется (не просто перестаёт вызываться — удаляется как мёртвый код)
+## Важная поправка: что НЕ удаляется
 
-Из `synth/challenges.py`:
-- `compute_receptiveness` — функция и её вызов.
-- `compute_frequency_saturation` — функция и её вызов.
-- `build_spend_threshold_challenge`, `build_category_expansion_challenge` —
-  детерминированные билдеры, заменены LLM-слотами выше.
-- Ветка `no_challenge` в `generate_challenge_for_user` (пользователь с 0
-  заданий) — с уходом saturation-гейта эта ветка больше не достижима.
+`compute_receptiveness`, `compute_frequency_saturation`,
+`build_spend_threshold_challenge`, `build_category_expansion_challenge` —
+**остаются в `synth/challenges.py` без изменений**. Это не мёртвый код: их
+использует `synth/simulation.py` (`route_for_simulation`,
+`simulate_user_response`) — офлайн-симуляция экономического эффекта на
+1-10 тыс. синтетических пользователей (гипотеза H2, `CONTEXT_PACK.md` §6),
+полностью независимая от живой генерации челленджей. Удаление этих функций
+сломало бы `synth/simulation.py` и три экономических канала
+(frequency/basket/expansion), которые она считает.
+
+Меняется только `generate_challenge_for_user` — единственная точка, где эти
+функции определяли, какой микс слотов получит живой пользователь. Она
+перестаёт их вызывать для этой цели и переходит на безусловный 4-слотовый
+микс. Сами функции остаются доступны и протестированы как были, только
+переориентируются на единственного оставшегося потребителя
+(`synth/simulation.py`).
+
+## Что удаляется из живого пути генерации (не файлы, а вызовы/ветки)
+
+Из `synth/challenges.py::generate_challenge_for_user`:
+- Вызов `compute_receptiveness` и ветка "не receptive → все слоты generic".
+- Вызов `compute_frequency_saturation` и ветка `no_challenge`.
+- Вызовы `build_spend_threshold_challenge`/`build_category_expansion_challenge`
+  для построения слотов — их место занимают `llm_habit`/`llm_discovery`.
 
 Из `web/src/webx5`:
 - `EmptyReason.saturated` (`schemas/challenge.py`) и соответствующая ветка в
   `ChallengeService.get_current` (`services/challenge.py:219-226`), которая
-  проверяла последний лог на `path == "no_challenge"`.
+  проверяла последний лог на `path == "no_challenge"` — с уходом
+  saturation-гейта из живой генерации эта ветка недостижима.
 
-Все перечисленные реализации фиксируются в `BACKLOG.md` как решения, от
-которых отказались в пользу единого микса — они были осмысленными
-компромиссами PoC (rule-based экономия LLM-вызовов, защита от переспама
-активных покупателей), не багами.
+Только сам факт "эти правила больше не решают, что получит живой
+пользователь" фиксируется в `BACKLOG.md` — не как удалённая реализация, а
+как переориентация: rule-based экономия LLM-вызовов и защита от переспама
+были осмысленными компромиссами PoC для живой выдачи, от которых отказались
+в пользу единого микса, но те же правила остаются рабочим инструментом
+офлайн-симуляции эффекта.
 
 `task.path` CHECK-constraint (`personal/generic/generic_fallback/
 no_challenge/personal_dry_run`) не трогаем — значение `no_challenge` просто
@@ -183,14 +203,23 @@ tuple[str, str]` в `synth/challenges.py`, структурно как
 
 ## Тесты
 
-- `tests/synth/test_challenges.py` — обновить: удалить тесты
+- `tests/synth/test_challenges.py` — **сохранить** существующие тесты
   `compute_receptiveness`/`compute_frequency_saturation`/
-  `build_spend_threshold_challenge`/`build_category_expansion_challenge`;
-  добавить тесты на `build_vibe_prompt`, `VIBE_CATEGORIES` (партиция
-  покрывает все 20 разрешённых категорий без пересечений — инвариант стоит
-  проверить тестом), `parse_and_validate_challenge` с `allowed_categories`,
-  и на `generate_challenge_for_user` — теперь всегда 4 записи для любого
-  профиля (включая профиль с 0 чеками).
+  `build_spend_threshold_challenge`/`build_category_expansion_challenge`
+  как есть (эти функции продолжают жить и тестируются независимо от
+  `generate_challenge_for_user`). Удалить/переписать нужно только тесты,
+  которые проверяли СТАРОЕ поведение `generate_challenge_for_user`,
+  завязанное на них (маршрутизацию в `no_challenge`/полный generic-fallback
+  через эти функции) и старые имена слотов. Добавить тесты на
+  `build_vibe_prompt`, `VIBE_CATEGORIES` (партиция покрывает все 20
+  разрешённых категорий без пересечений — инвариант стоит проверить тестом),
+  `parse_and_validate_challenge` с `allowed_categories`, и на
+  `generate_challenge_for_user` — теперь всегда 4 записи для любого профиля
+  (включая профиль с 0 чеками), с новыми именами слотов.
+- `tests/synth/test_simulation.py` — не трогать: `synth/simulation.py`
+  не меняется в этой фиче, его тесты продолжают проверять
+  `compute_receptiveness`/`build_spend_threshold_challenge`/etc. через
+  `route_for_simulation`, что остаётся валидным.
 - `tests/webx5/services/test_challenge*.py` (если есть) — обновить под новый
   `ALL_SLOTS`/лимит 4; добавить тест на назначение/персистентность
   `vibe_category`/`vibe_month` в `build_profile`.
@@ -206,6 +235,12 @@ tuple[str, str]` в `synth/challenges.py`, структурно как
 `synth/cli.py` скоринг и обновить статус в `CONTEXT_PACK.md` (дата, новое
 значение hit-rate) — иначе документ будет утверждать неактуальный результат.
 Отдельная задача, не часть implementation plan этой фичи по коду.
+
+Экономическая симуляция эффекта (`synth/simulation.py`, тот же §6 H2) —
+**не затрагивается и её результаты не устаревают**: она использует
+`compute_receptiveness`/`build_spend_threshold_challenge`/etc. напрямую
+через `route_for_simulation`, независимо от `generate_challenge_for_user`,
+и эта фича их не меняет.
 
 ## Вне скоупа
 
