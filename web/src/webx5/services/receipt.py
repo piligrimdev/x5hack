@@ -11,7 +11,7 @@ from webx5.crud.discount import DiscountRepository
 from webx5.crud.receipt import ReceiptRepository
 from webx5.entities.receipt import Receipt
 from webx5.schemas.receipt import ReceiptCreate, ReceiptItemResponse, ReceiptResponse
-from webx5.services.discount_calculator import apply_discount
+from webx5.services.discount_calculator import DiscountCalculatorService
 
 
 class ReceiptService:
@@ -85,7 +85,7 @@ class ReceiptService:
                         })
                         continue
 
-                paid_price = apply_discount(base_price, discount)
+                paid_price = DiscountCalculatorService.apply_discount(base_price, discount)
 
             discounted_amount = (base_price - paid_price).quantize(
                 Decimal("0.01"), rounding=ROUND_HALF_UP

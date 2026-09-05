@@ -22,6 +22,7 @@ _TASK_MODULES = [
     "webx5.tasks.receipt",
     "webx5.tasks.generation",
     "webx5.tasks.expiration",
+    "webx5.tasks.basket",
 ]
 
 celery_app = Celery(

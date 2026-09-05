@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { apiFetch } from '@/api/client';
 
 const STORAGE_KEY = '@x5hack/weeklyBasket';
+const ASSISTANT_POLL_INTERVAL_MS = 800;
+const ASSISTANT_POLL_TIMEOUT_MS = 15_000;
 
 export interface BasketItem {
   product_id: string;
@@ -20,6 +22,16 @@ interface AssistantResponse {
   items: BasketItem[];
   applied: boolean;
   message: string | null;
+}
+
+interface AssistantEnqueuedResponse {
+  task_id: string;
+  status: 'pending';
+}
+
+interface AssistantTaskResultResponse {
+  status: 'pending' | 'complete' | 'failed';
+  result?: AssistantResponse;
 }
 
 interface CheckoutResponse {
@@ -52,6 +64,26 @@ export interface BasketPreview {
   total_paid: number;
   total_saved: number;
   cashback: BasketPreviewCashback | null;
+}
+
+async function pollAssistantResult(
+  taskId: string,
+  token: string,
+  signal: AbortSignal,
+): Promise<AssistantResponse> {
+  const deadline = Date.now() + ASSISTANT_POLL_TIMEOUT_MS;
+  while (!signal.aborted && Date.now() < deadline) {
+    await new Promise<void>((resolve) => setTimeout(resolve, ASSISTANT_POLL_INTERVAL_MS));
+    if (signal.aborted) break;
+
+    const poll = await apiFetch<AssistantTaskResultResponse>(
+      `/basket/assistant/${taskId}`,
+      token,
+    );
+    if (poll.status === 'complete' && poll.result) return poll.result;
+    if (poll.status === 'failed') throw new Error('Не получилось обработать запрос, попробуй ещё раз');
+  }
+  throw new Error('Ассистент не ответил вовремя, попробуй ещё раз');
 }
 
 export function useBasket(token: string | null, onOrderPlaced?: () => void) {
@@ -133,14 +165,18 @@ export function useBasket(token: string | null, onOrderPlaced?: () => void) {
   async function sendInstruction(instruction: string) {
     if (!token || !hydrated || !storageKey || !instruction.trim()) return;
     setLoading(true);
+    const abortController = new AbortController();
     try {
-      const res = await apiFetch<AssistantResponse>('/basket/assistant', token, {
+      // POST returns 202 with task_id immediately
+      const enqueued = await apiFetch<AssistantEnqueuedResponse>('/basket/assistant', token, {
         method: 'POST',
         body: JSON.stringify({
           items: items.map((i) => ({ product_id: i.product_id, quantity: i.quantity })),
           instruction,
         }),
       });
+      // Poll until complete or timeout
+      const res = await pollAssistantResult(enqueued.task_id, token, abortController.signal);
       await AsyncStorage.setItem(storageKey, JSON.stringify(res.items)).catch(() => {});
       setHasCollected(true);
       setItems(res.items);
@@ -148,6 +184,7 @@ export function useBasket(token: string | null, onOrderPlaced?: () => void) {
     } catch (e: unknown) {
       setMessage(e instanceof Error ? e.message : 'Ошибка запроса');
     } finally {
+      abortController.abort();
       setLoading(false);
     }
   }

@@ -18,23 +18,6 @@ class CartItem:
     quantity: int
 
 
-def apply_discount(base_price: Decimal, discount: "Discount") -> Decimal:
-    """Compute paid price after applying one discount.
-
-    `value_type='percent'` — value is percentage 0..100.
-    `value_type='fixed_rub'` — value is a flat ruble amount subtracted from base price.
-    """
-    value = Decimal(str(discount.value))
-    value_type = getattr(discount, "value_type", "percent")
-    if value_type == "fixed_rub":
-        paid = base_price - value
-        if paid < Decimal("0"):
-            paid = Decimal("0")
-    else:
-        paid = base_price * (Decimal("1") - value / Decimal("100"))
-    return paid.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-
-
 @dataclass
 class CalculatedItem:
     product_id: uuid.UUID
@@ -49,6 +32,23 @@ class CalculatedItem:
 class DiscountCalculatorService:
     def __init__(self, discount_repo: DiscountRepository) -> None:
         self.discount_repo = discount_repo
+
+    @staticmethod
+    def apply_discount(base_price: Decimal, discount: "Discount") -> Decimal:
+        """Compute paid price after applying one discount.
+
+        `value_type='percent'` — value is percentage 0..100.
+        `value_type='fixed_rub'` — value is a flat ruble amount subtracted from base price.
+        """
+        value = Decimal(str(discount.value))
+        value_type = getattr(discount, "value_type", "percent")
+        if value_type == "fixed_rub":
+            paid = base_price - value
+            if paid < Decimal("0"):
+                paid = Decimal("0")
+        else:
+            paid = base_price * (Decimal("1") - value / Decimal("100"))
+        return paid.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
     def calculate(
         self,
@@ -148,7 +148,7 @@ class DiscountCalculatorService:
             best_paid = base_price
 
             for d in unique_candidates:
-                paid = apply_discount(base_price, d)
+                paid = self.apply_discount(base_price, d)
                 if paid < best_paid:
                     best_paid = paid
                     best_discount = d

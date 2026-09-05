@@ -200,6 +200,21 @@
 
 ---
 
+## Phase 10: Convergence
+
+**Источник:** `ARCHITECTURE.md` trade-off #8, `BACKLOG.md` §lazy-imports, §apply_discount-encapsulation, `USER_FLOW.md` §basket-assistant. Basket-модуль (`dima`).
+
+- [X] T053 Создать `web/src/webx5/tasks/basket.py` — Celery task `basket_apply_instruction(user_id_str, items_json, instruction)` в очереди `receipts`: десериализует `items_json → list[BasketItemIn]`, вызывает `basket_service.apply_instruction(session, items, instruction)`, возвращает сериализованный `AssistantResponse.model_dump()`. Session берётся через `db.get_sync_session()` по аналогии с `tasks/generation.py`. per ARCHITECTURE.md §trade-off #8 (contradicts)
+- [X] T054 [P] Зарегистрировать `webx5.tasks.basket` в списке `_TASK_MODULES` в `web/src/webx5/core/celery_app.py`. per ARCHITECTURE.md §trade-off #8 (missing)
+- [X] T055 [P] Добавить в `web/src/webx5/schemas/basket.py` схему `AssistantTaskEnqueuedResponse(task_id: str, status: Literal["pending"])` и `AssistantTaskResultResponse(status: Literal["pending","complete","failed"], result: AssistantResponse | None = None)`. per USER_FLOW.md §basket-assistant (missing)
+- [X] T056 Изменить `web/src/webx5/routes/basket.py::post_basket_assistant`: принять `data.items` и `data.instruction`, сериализовать `items → json`, вызвать `basket_apply_instruction.delay(str(user_id), items_json, data.instruction)`, вернуть `AssistantTaskEnqueuedResponse(task_id=str(result.id), status="pending")` со статусом 202. per ARCHITECTURE.md §trade-off #8 (contradicts)
+- [X] T057 Добавить в `web/src/webx5/routes/basket.py` эндпоинт `GET /basket/assistant/{task_id}`: читает `celery_app.AsyncResult(task_id)`; если `PENDING` → `{status:"pending"}`; если `SUCCESS` → `{status:"complete", result: AssistantResponse(**r.result)}`; если `FAILURE` → `{status:"failed", result:None}`. `task_id` — строка, validate как UUID-format через Pydantic (Path). per USER_FLOW.md §basket-assistant (missing)
+- [X] T058 Обновить `x5mobile/src/hooks/useBasket.ts::applyInstruction()`: если `POST /basket/assistant` вернул 202, войти в цикл poll `GET /basket/assistant/{task_id}` с интервалом 800 мс (не более 15 секунд); при `status="complete"` применить `result.items`; при `status="failed"` или таймауте — показать сообщение об ошибке. Промежуточный статус → отображать `loading` в UI. per USER_FLOW.md §basket-assistant (partial)
+- [X] T059 [P] Убрать lazy imports из `web/src/webx5/routes/basket.py`: перенести `from webx5.core.basket import basket_service` на уровень модуля (строки 20, 28, 36, 44). Циклического импорта нет — цепочка `server.py → routes/basket.py → core/basket.py` не замыкается. per BACKLOG §«Lazy import basket_service» (partial)
+- [X] T060 [P] Перевести `apply_discount` из module-level функции в `@staticmethod DiscountCalculatorService.apply_discount(base_price, discount)` в `web/src/webx5/services/discount_calculator.py`; внутри `calculate()` заменить вызов `apply_discount(...)` на `self.apply_discount(...)` (или `DiscountCalculatorService.apply_discount(...)`). В `web/src/webx5/services/receipt.py` заменить `from webx5.services.discount_calculator import apply_discount` на `from webx5.services.discount_calculator import DiscountCalculatorService` и вызов `apply_discount(base_price, discount)` на `DiscountCalculatorService.apply_discount(base_price, discount)`. per BACKLOG §«apply_discount как публичная функция» (contradicts)
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies
