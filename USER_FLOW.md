@@ -196,6 +196,166 @@ paid = base_price × (1 − discount.value / 100)   [ROUND_HALF_UP до копе
 
 ---
 
+---
+
+## Флоу «Корзина на неделю» (мобильное приложение)
+
+### Участники
+
+- **Пользователь** — авторизован Bearer JWT
+- **Ассистент «Аппи»** — LLM (claude-haiku-4.5 через OpenRouter), редактирует корзину по текстовым командам
+
+### Хранение состояния на устройстве
+
+Корзина сохраняется в `AsyncStorage` (ключ `@x5hack/weeklyBasket`). Один ключ на устройство, без привязки к конкретному пользователю. После успешного checkout — удаляется.
+
+---
+
+### Фаза 1 — Первый заход: пустая корзина
+
+Пользователь открывает экран «Экономия». `useBasket` читает AsyncStorage — ключа нет → `hasCollected = false`, `items = []`. Показывается кнопка «Собрать корзину на неделю».
+
+```
+GET /basket/suggested
+Authorization: Bearer <jwt>
+
+→ 200 OK
+{
+  "items": [
+    { "product_id": "...", "name": "Молоко 2,5%", "quantity": 2, "price": "89.90" },
+    { "product_id": "...", "name": "Кефир 1%",    "quantity": 1, "price": "75.00" }
+  ]
+}
+```
+
+Алгоритм: продукты, которые пользователь покупал в среднем ≥0,5 раза в неделю за всю историю; количество — округлённое среднее за покупку (минимум 1). Если истории нет — пустой список.
+
+После получения — результат пишется в AsyncStorage, `hasCollected = true`.
+
+---
+
+### Фаза 2 — Редактирование через ассистента
+
+Пользователь вводит текстовую команду («убери молоко», «добавь 3 яйца», «поставь 2 кефира»).
+
+```
+POST /basket/assistant
+Authorization: Bearer <jwt>
+
+{
+  "items": [
+    { "product_id": "...", "quantity": 2 },
+    { "product_id": "...", "quantity": 1 }
+  ],
+  "instruction": "убери молоко и добавь яйца"
+}
+
+→ 200 OK
+{
+  "items": [
+    { "product_id": "...", "name": "Яйца С1 10шт", "quantity": 1, "price": "129.00" },
+    { "product_id": "...", "name": "Кефир 1%",     "quantity": 1, "price": "75.00"  }
+  ],
+  "applied": true,
+  "message": null
+}
+```
+
+Если LLM не понял команду: `applied: false`, `message: "Не поняла запрос, попробуй иначе"`. Если сетевая ошибка: `applied: false`, `message: "Не получилось обработать запрос, попробуй ещё раз"`. В обоих случаях `items` возвращаются без изменений.
+
+Любое изменение `items` (через ассистента или через кнопки ±) сохраняется в AsyncStorage.
+
+---
+
+### Фаза 3 — Предпросмотр цены и кэшбека
+
+Пользователь видит итоговую стоимость в реальном времени (при включённом тумблере «Списать баллы» — с учётом кэшбека).
+
+```
+POST /basket/preview
+Authorization: Bearer <jwt>
+
+{
+  "items": [
+    { "product_id": "...", "quantity": 1 },
+    { "product_id": "...", "quantity": 1 }
+  ],
+  "points_to_spend": "all"   // null | "all" | integer
+}
+
+→ 200 OK
+{
+  "store_id": "...",
+  "loyalty_card_id": "...",
+  "total_base": 204.00,
+  "total_paid": 204.00,
+  "total_saved": 50.40,
+  "items": [...],
+  "cashback": {
+    "points_available": 1500,
+    "points_to_apply": 500,
+    "cashback_rub": 50,
+    "total_paid_rub": 154,
+    "points_balance_after": 1000,
+    "points_capped_by": "balance",
+    "rate_points_per_rub": 10
+  }
+}
+```
+
+Магазин выбирается автоматически: последний из истории чеков пользователя, либо первый в БД. Превью не создаёт чека и не списывает баллы.
+
+---
+
+### Фаза 4 — Оформление заказа
+
+Пользователь нажимает «Оформить заказ».
+
+```
+POST /basket/checkout
+Authorization: Bearer <jwt>
+
+{
+  "items": [
+    { "product_id": "...", "quantity": 1 },
+    { "product_id": "...", "quantity": 1 }
+  ],
+  "points_to_spend": "all"
+}
+
+→ 201 Created
+{
+  "id": "<receipt_uuid>",
+  "purchase_date": "2026-09-05T12:34:56",
+  "store_id": "...",
+  "loyalty_card_id": "...",
+  "channel": "offline",
+  "items": [...],
+  "total_base": 204.00,
+  "total_paid": 154.00,
+  "total_saved": 50.40,
+  "cashback_applied_points": 500,
+  "cashback_applied_rub": 50,
+  "points_rate_at_purchase": 10
+}
+```
+
+| Статус | Значение |
+|--------|----------|
+| **201** | Чек создан, баллы списаны |
+| **422** | Пустая корзина / неизвестный `product_id` / нет магазинов в БД |
+| **401** | Нет/протух Bearer токен |
+
+После успеха: `items` очищается, `hasCollected = false`, ключ в AsyncStorage удаляется. Данные экономии (`/receipts/economy`) и прогресс челленджей обновляются.
+
+**Отличие от терминального `/receipts`:**
+- Нет `X-Idempotency-Key` — не идемпотентен (каждый вызов создаёт новый чек)
+- Нет `payment_card_uid`
+- Магазин — автовыбор, не передаётся явно
+- `channel` всегда `"offline"`
+
+---
+
 ## Справочные эндпоинты (публичные)
 
 ```
