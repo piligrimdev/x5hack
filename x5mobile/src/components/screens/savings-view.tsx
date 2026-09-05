@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BrandColors } from '@/constants/theme';
@@ -19,7 +19,16 @@ interface SavingsViewProps {
 
 export function SavingsView({ tasks, leaderboard, savings, token, goHome, goHistory, goChallenges, onOrderPlaced }: SavingsViewProps) {
   const insets = useSafeAreaInsets();
-  const { items: basketItems, loading: basketLoading, message: basketMessage, sendInstruction, checkout } = useBasket(token, onOrderPlaced);
+  const {
+    items: basketItems,
+    loading: basketLoading,
+    message: basketMessage,
+    sendInstruction,
+    checkout,
+    preview,
+    spendPoints,
+    setSpendPoints,
+  } = useBasket(token, onOrderPlaced);
   const [instructionText, setInstructionText] = useState('');
 
   function handleSendInstruction() {
@@ -95,15 +104,65 @@ export function SavingsView({ tasks, leaderboard, savings, token, goHome, goHist
           {basketLoading && basketItems.length === 0 ? (
             <ActivityIndicator color={BrandColors.textSecondary} />
           ) : basketItems.length > 0 ? (
-            basketItems.map((item: BasketItem) => (
-              <View key={item.product_id} style={styles.basketRow}>
-                <Text style={styles.basketItemName}>{item.name}</Text>
-                <Text style={styles.basketItemQty}>{item.quantity} шт</Text>
-              </View>
-            ))
+            basketItems.map((item: BasketItem) => {
+              const previewItem = preview?.items.find((p) => p.product_id === item.product_id);
+              const unitPaid = previewItem?.paid_price ?? item.price;
+              const unitBase = previewItem?.base_price ?? item.price;
+              const hasDiscount = unitPaid < unitBase;
+              return (
+                <View key={item.product_id} style={styles.basketRow}>
+                  <View style={styles.basketItemInfo}>
+                    <Text style={styles.basketItemName}>{item.name}</Text>
+                    <Text style={styles.basketItemQty}>{item.quantity} шт</Text>
+                  </View>
+                  <View style={styles.basketItemPrices}>
+                    {hasDiscount && (
+                      <Text style={styles.basketItemBasePrice}>{Math.round(unitBase * item.quantity)} ₽</Text>
+                    )}
+                    <Text style={styles.basketItemPaidPrice}>{Math.round(unitPaid * item.quantity)} ₽</Text>
+                  </View>
+                </View>
+              );
+            })
           ) : !basketMessage?.startsWith('Заказ оформлен') ? (
             <Text style={styles.basketEmptyText}>Пока нечего предложить — мало истории покупок</Text>
           ) : null}
+          {preview && basketItems.length > 0 && (
+            <View style={styles.basketTotals}>
+              <View style={styles.basketTotalsRow}>
+                <Text style={styles.basketTotalsLabel}>Итого</Text>
+                <Text style={styles.basketTotalsValue}>{Math.round(preview.total_paid)} ₽</Text>
+              </View>
+              {preview.total_base > preview.total_paid && (
+                <View style={styles.basketTotalsRow}>
+                  <Text style={styles.basketTotalsLabel}>Скидка</Text>
+                  <Text style={styles.basketTotalsDiscount}>
+                    −{Math.round(preview.total_base - preview.total_paid)} ₽
+                  </Text>
+                </View>
+              )}
+              {preview.cashback && preview.cashback.points_available > 0 && (
+                <View style={styles.basketTotalsRow}>
+                  <Text style={styles.basketTotalsLabel}>
+                    Списать баллы ({preview.cashback.points_available})
+                  </Text>
+                  <Switch
+                    value={spendPoints}
+                    onValueChange={setSpendPoints}
+                    trackColor={{ false: BrandColors.cardBorder, true: BrandColors.green }}
+                  />
+                </View>
+              )}
+              {spendPoints && preview.cashback && preview.cashback.cashback_rub > 0 && (
+                <View style={styles.basketTotalsRow}>
+                  <Text style={styles.basketTotalsLabel}>Итого с баллами</Text>
+                  <Text style={styles.basketTotalsValueGreen}>
+                    {Math.round(preview.cashback.total_paid_rub)} ₽
+                  </Text>
+                </View>
+              )}
+            </View>
+          )}
           {basketMessage && <Text style={styles.basketMessage}>{basketMessage}</Text>}
           <Text style={styles.appiLabel}>🍊 Спроси Аппи</Text>
           <View style={styles.basketInputRow}>
@@ -355,6 +414,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 4,
   },
+  basketItemInfo: {
+    flex: 1,
+  },
   basketItemName: {
     fontSize: 14,
     color: BrandColors.textPrimary,
@@ -363,6 +425,49 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: BrandColors.textSecondary,
     fontWeight: '600',
+  },
+  basketItemPrices: {
+    alignItems: 'flex-end',
+  },
+  basketItemBasePrice: {
+    fontSize: 12,
+    color: BrandColors.textSecondary,
+    textDecorationLine: 'line-through',
+  },
+  basketItemPaidPrice: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: BrandColors.textPrimary,
+  },
+  basketTotals: {
+    borderTopWidth: 1,
+    borderTopColor: BrandColors.cardBorder,
+    paddingTop: 10,
+    gap: 6,
+  },
+  basketTotalsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  basketTotalsLabel: {
+    fontSize: 13,
+    color: BrandColors.textSecondary,
+  },
+  basketTotalsValue: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: BrandColors.textPrimary,
+  },
+  basketTotalsValueGreen: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: BrandColors.green,
+  },
+  basketTotalsDiscount: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: BrandColors.green,
   },
   basketEmptyText: {
     fontSize: 13,
