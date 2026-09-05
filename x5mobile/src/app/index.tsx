@@ -89,7 +89,7 @@ function AppContent({ token }: { token: string }) {
   const [prevScreen, setPrevScreen] = useState<Screen>('home');
   const [selectedReceiptId, setSelectedReceiptId] = useState<string | null>(null);
   const data = useMockData();
-  const { economy } = useEconomy(token);
+  const { economy, refetch: refetchEconomy } = useEconomy(token);
 
   const totalSaved = economy?.total_saved ?? 0;
   const totalPaid = economy?.total_paid ?? 0;
@@ -132,6 +132,7 @@ function AppContent({ token }: { token: string }) {
             goHome={() => navigate('home')}
             goHistory={() => navigate('history')}
             goChallenges={() => navigate('challenges')}
+            onOrderPlaced={refetchEconomy}
           />
         )}
         {screen === 'history' && (

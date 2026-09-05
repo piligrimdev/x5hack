@@ -14,11 +14,12 @@ interface SavingsViewProps {
   goHome: () => void;
   goHistory: () => void;
   goChallenges: () => void;
+  onOrderPlaced: () => void;
 }
 
-export function SavingsView({ tasks, leaderboard, savings, token, goHome, goHistory, goChallenges }: SavingsViewProps) {
+export function SavingsView({ tasks, leaderboard, savings, token, goHome, goHistory, goChallenges, onOrderPlaced }: SavingsViewProps) {
   const insets = useSafeAreaInsets();
-  const { items: basketItems, loading: basketLoading, message: basketMessage, sendInstruction } = useBasket(token);
+  const { items: basketItems, loading: basketLoading, message: basketMessage, sendInstruction, checkout } = useBasket(token, onOrderPlaced);
   const [instructionText, setInstructionText] = useState('');
 
   function handleSendInstruction() {
@@ -26,6 +27,10 @@ export function SavingsView({ tasks, leaderboard, savings, token, goHome, goHist
     if (!text) return;
     sendInstruction(text);
     setInstructionText('');
+  }
+
+  function handleCheckout() {
+    checkout();
   }
   const savedAmount = savings.withoutDiscount - savings.paid;
   const savedPct = Math.round((savedAmount / savings.withoutDiscount) * 100);
@@ -123,6 +128,16 @@ export function SavingsView({ tasks, leaderboard, savings, token, goHome, goHist
               }
             </TouchableOpacity>
           </View>
+          <TouchableOpacity
+            style={[styles.checkoutBtn, (basketLoading || basketItems.length === 0) && styles.checkoutBtnDisabled]}
+            onPress={handleCheckout}
+            activeOpacity={0.7}
+            disabled={basketLoading || basketItems.length === 0}>
+            {basketLoading
+              ? <ActivityIndicator color="#fff" size="small" />
+              : <Text style={styles.checkoutBtnText}>Оформить заказ</Text>
+            }
+          </TouchableOpacity>
         </View>
 
         {/* Tasks */}
@@ -388,6 +403,21 @@ const styles = StyleSheet.create({
   basketSendBtnText: {
     color: '#fff',
     fontSize: 18,
+    fontWeight: '700',
+  },
+  checkoutBtn: {
+    backgroundColor: BrandColors.green,
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkoutBtnDisabled: {
+    backgroundColor: BrandColors.cardBorder,
+  },
+  checkoutBtnText: {
+    color: '#fff',
+    fontSize: 14,
     fontWeight: '700',
   },
   taskCard: {
