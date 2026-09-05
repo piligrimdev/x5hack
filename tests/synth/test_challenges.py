@@ -285,6 +285,14 @@ def test_build_personal_prompt_mentions_forbidden_categories_and_reward_ceiling(
     assert profile["chain"] in user
 
 
+def test_build_personal_prompt_discovery_focus_differs_from_habit_focus():
+    profile = _profile("promo_hunter", seed=1)
+    habit_system, _ = build_personal_prompt(profile, _config, max_reward_rub=50.0, focus="habit")
+    discovery_system, _ = build_personal_prompt(profile, _config, max_reward_rub=50.0, focus="discovery")
+    assert habit_system != discovery_system
+    assert "почти" in discovery_system
+
+
 def test_compute_frequency_saturation_true_for_already_optimal():
     profile = _profile("already_optimal_no_challenge", seed=1)
     saturated, signal = compute_frequency_saturation(profile, _config)

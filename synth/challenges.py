@@ -490,9 +490,25 @@ def summarize_purchase_pattern(profile: dict, config: SynthConfig) -> dict:
     }
 
 
-def build_personal_prompt(profile: dict, config: SynthConfig, max_reward_rub: float) -> tuple[str, str]:
+def build_personal_prompt(
+    profile: dict, config: SynthConfig, max_reward_rub: float, focus: str = "habit"
+) -> tuple[str, str]:
     summary = summarize_purchase_pattern(profile, config)
     forbidden = ", ".join(config.forbidden_categories)
+
+    if focus == "discovery":
+        focus_instruction = (
+            "Сфокусируйся на категориях, которые пользователь почти НЕ покупает "
+            "(судя по топ категориям ниже они отсутствуют или редки) — предложи "
+            "челлендж, стимулирующий попробовать новую для него категорию. Не "
+            "предлагай категорию, которая уже входит в его привычные/топ."
+        )
+    else:
+        focus_instruction = (
+            "Сфокусируйся на категориях, которые пользователь покупает чаще всего "
+            "(привычные/топ категории ниже) — предложи челлендж, укрепляющий уже "
+            "сложившуюся привычку."
+        )
 
     system = (
         "Ты — модуль персональных рекомендаций программы лояльности X5 "
@@ -500,6 +516,7 @@ def build_personal_prompt(profile: dict, config: SynthConfig, max_reward_rub: fl
         "предложи ОДИН персональный челлендж — небольшую акцию, релевантную "
         "именно его привычкам, которая подтолкнёт к повторной или "
         "дополнительной покупке.\n\n"
+        f"{focus_instruction}\n\n"
         f"Никогда не предлагай в target_categories эти категории: {forbidden} "
         "— они запрещены для челленджей (регулируемые/чувствительные).\n"
         f"reward_rub не должен превышать {max_reward_rub:.0f} ₽ — это ограничение "
