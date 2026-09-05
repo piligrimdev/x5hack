@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import uuid
 
 import structlog
 
@@ -19,11 +20,12 @@ def basket_apply_instruction(user_id_str: str, items_json: str, instruction: str
 
     logger.info("basket_apply_instruction.enter", instruction_len=len(instruction))
 
+    user_id = uuid.UUID(user_id_str)
     raw_items: list[dict] = json.loads(items_json)
     items = [BasketItemIn(**item) for item in raw_items]
 
     with db.get_sync_session() as session:
-        result = basket_service.apply_instruction(session, items=items, instruction=instruction)
+        result = basket_service.apply_instruction(session, items=items, instruction=instruction, user_id=user_id)
 
     logger.info(
         "basket_apply_instruction.done",
