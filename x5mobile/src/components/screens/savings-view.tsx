@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -15,11 +15,23 @@ interface SavingsViewProps {
   goHistory: () => void;
   goChallenges: () => void;
   onOrderPlaced: () => void;
+  autoCollect: boolean;
+  onAutoCollectHandled: () => void;
 }
 
-export function SavingsView({ leaderboard, savings, token, goHome, goHistory, goChallenges, onOrderPlaced }: SavingsViewProps) {
+export function SavingsView({ leaderboard, savings, token, goHome, goHistory, goChallenges, onOrderPlaced, autoCollect, onAutoCollectHandled }: SavingsViewProps) {
   const insets = useSafeAreaInsets();
-  const { current: challenges, loading: challengesLoading, error: challengesError } = useChallenges(token);
+  const { current: challenges, loading: challengesLoading, error: challengesError, refetch: refetchChallenges } = useChallenges(token);
+
+  function handleOrderPlaced() {
+    onOrderPlaced();
+    // Challenge progress is updated by an async Celery task, not synchronously
+    // with the checkout response — refetch once now (covers the common fast
+    // case) and once more shortly after (covers a slower worker pickup).
+    refetchChallenges();
+    setTimeout(refetchChallenges, 1200);
+  }
+
   const {
     items: basketItems,
     loading: basketLoading,
@@ -32,8 +44,15 @@ export function SavingsView({ leaderboard, savings, token, goHome, goHistory, go
     hasCollected,
     hydrated,
     collectWeeklyBasket,
-  } = useBasket(token, onOrderPlaced);
+  } = useBasket(token, handleOrderPlaced);
   const [instructionText, setInstructionText] = useState('');
+
+  useEffect(() => {
+    if (autoCollect && hydrated && !hasCollected && basketItems.length === 0) {
+      collectWeeklyBasket();
+      onAutoCollectHandled();
+    }
+  }, [autoCollect, hydrated, hasCollected, basketItems.length]);
 
   function handleSendInstruction() {
     const text = instructionText.trim();

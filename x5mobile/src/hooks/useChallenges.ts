@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { apiFetch } from '@/api/client';
 
@@ -39,7 +39,7 @@ export function useChallenges(token: string) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const refetch = useCallback(() => {
     if (!token) return;
     setLoading(true);
     setError(null);
@@ -55,5 +55,9 @@ export function useChallenges(token: string) {
       .finally(() => setLoading(false));
   }, [token]);
 
-  return { current, history, loading, error };
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
+
+  return { current, history, loading, error, refetch };
 }

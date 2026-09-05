@@ -88,6 +88,7 @@ function AppContent({ token }: { token: string }) {
   const [screen, setScreen] = useState<Screen>('home');
   const [prevScreen, setPrevScreen] = useState<Screen>('home');
   const [selectedReceiptId, setSelectedReceiptId] = useState<string | null>(null);
+  const [autoCollectBasket, setAutoCollectBasket] = useState(false);
   const data = useMockData();
   const { economy, refetch: refetchEconomy } = useEconomy(token);
 
@@ -117,7 +118,10 @@ function AppContent({ token }: { token: string }) {
             onHistory={() => navigate('history')}
             onChallenges={() => navigate('challenges')}
             onPoints={() => navigate('points')}
-            onOpenBasket={() => navigate('savings')}
+            onOpenBasket={() => {
+              setAutoCollectBasket(true);
+              navigate('savings');
+            }}
           />
         )}
         {screen === 'points' && (
@@ -132,6 +136,8 @@ function AppContent({ token }: { token: string }) {
             goHistory={() => navigate('history')}
             goChallenges={() => navigate('challenges')}
             onOrderPlaced={refetchEconomy}
+            autoCollect={autoCollectBasket}
+            onAutoCollectHandled={() => setAutoCollectBasket(false)}
           />
         )}
         {screen === 'history' && (
