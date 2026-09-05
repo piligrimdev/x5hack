@@ -4,6 +4,7 @@ import uuid
 
 from pydantic import BaseModel, Field
 
+from webx5.schemas.receipt import PointsToSpend
 from webx5.schemas.types import JsonDecimal
 
 
@@ -36,3 +37,8 @@ class AssistantResponse(BaseModel):
 
 class CheckoutRequest(BaseModel):
     items: list[BasketItemIn]
+
+
+class BasketPreviewRequest(BaseModel):
+    items: list[BasketItemIn]
+    points_to_spend: PointsToSpend = None

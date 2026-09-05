@@ -129,3 +129,64 @@ class TestPostBasketCheckout:
                 headers=_bearer(_token()),
             )
         assert resp.status_code == 422
+
+
+class TestPostBasketPreview:
+    def test_returns_priced_preview(self) -> None:
+        from webx5.schemas.receipt import CalculatedItemOut, CalculateResponse
+
+        fake_response = CalculateResponse(
+            store_id=uuid.uuid4(),
+            loyalty_card_id=uuid.uuid4(),
+            items=[
+                CalculatedItemOut(
+                    product_id=uuid.uuid4(),
+                    product_name="Молоко",
+                    quantity=2,
+                    base_price=Decimal("100.00"),
+                    paid_price=Decimal("90.00"),
+                    discount_id=None,
+                    discounted_amount=Decimal("10.00"),
+                )
+            ],
+            total_base=Decimal("200.00"),
+            total_paid=Decimal("180.00"),
+            total_saved=Decimal("20.00"),
+            cashback=None,
+        )
+        with patch(
+            "webx5.services.basket_assistant.BasketService.preview",
+            return_value=fake_response,
+        ):
+            resp = client.post(
+                "/basket/preview",
+                json={"items": [{"product_id": str(uuid.uuid4()), "quantity": 2}]},
+                headers=_bearer(_token()),
+            )
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["total_saved"] == 20.0
+        assert body["items"][0]["paid_price"] == 90.0
+
+    def test_requires_auth(self) -> None:
+        resp = client.post("/basket/preview", json={"items": []})
+        assert resp.status_code == 401
+
+    def test_empty_items_is_valid_request(self) -> None:
+        from webx5.schemas.receipt import CalculateResponse
+
+        fake_response = CalculateResponse(
+            store_id=uuid.uuid4(),
+            loyalty_card_id=uuid.uuid4(),
+            items=[],
+            total_base=Decimal("0"),
+            total_paid=Decimal("0"),
+            total_saved=Decimal("0"),
+            cashback=None,
+        )
+        with patch(
+            "webx5.services.basket_assistant.BasketService.preview",
+            return_value=fake_response,
+        ):
+            resp = client.post("/basket/preview", json={"items": []}, headers=_bearer(_token()))
+        assert resp.status_code == 200

@@ -12,9 +12,19 @@ from webx5.crud.basket import BasketRepository
 from webx5.crud.receipt import ReceiptRepository
 from webx5.crud.store import StoreRepository
 from webx5.entities.product import Product
+from webx5.entities.store import Store
 from webx5.schemas.basket import AssistantResponse, BasketItem, BasketItemIn
-from webx5.schemas.receipt import ReceiptCreate, ReceiptItemCreate, ReceiptResponse
+from webx5.schemas.receipt import (
+    CalculatedItemOut,
+    CalculateResponse,
+    CashbackBlock,
+    PointsToSpend,
+    ReceiptCreate,
+    ReceiptItemCreate,
+    ReceiptResponse,
+)
 from webx5.services.discount_calculator import CartItem, DiscountCalculatorService
+from webx5.services.points import PointsService
 from webx5.services.receipt import ReceiptService
 
 logger = structlog.get_logger(__name__)
@@ -78,6 +88,7 @@ class BasketService:
         store_repo: StoreRepository,
         discount_calc: DiscountCalculatorService,
         receipt_service: ReceiptService,
+        points_service: PointsService,
         model: str = "anthropic/claude-haiku-4.5",
     ) -> None:
         self.repo = repo
@@ -85,6 +96,7 @@ class BasketService:
         self.store_repo = store_repo
         self.discount_calc = discount_calc
         self.receipt_service = receipt_service
+        self.points_service = points_service
         self.model = model
 
     def suggest(self, session: Session, user_id: uuid.UUID) -> list[BasketItem]:
@@ -163,14 +175,7 @@ class BasketService:
                 detail={"detail": "Unknown product_ids", "unknown_product_ids": missing},
             )
 
-        receipts, _total = self.receipt_repo.list_by_loyalty_card(session, user_id, page=1, size=1)
-        if receipts:
-            store = self.store_repo.get_by_id(session, receipts[0].store_id)
-        else:
-            stores = self.store_repo.list_all(session)
-            if not stores:
-                raise HTTPException(status_code=422, detail=CHECKOUT_NO_STORES_MESSAGE)
-            store = stores[0]
+        store = self._resolve_store(session, user_id)
 
         cart_items = [CartItem(product_id=i.product_id, quantity=i.quantity) for i in items]
         calculated = self.discount_calc.calculate(
@@ -188,6 +193,82 @@ class BasketService:
         )
         receipt, _is_new = self.receipt_service.create_receipt(session, uuid.uuid4(), data)
         return self.receipt_service.build_receipt_response(session, receipt)
+
+    def _resolve_store(self, session: Session, user_id: uuid.UUID) -> Store:
+        receipts, _total = self.receipt_repo.list_by_loyalty_card(session, user_id, page=1, size=1)
+        if receipts:
+            return self.store_repo.get_by_id(session, receipts[0].store_id)
+        stores = self.store_repo.list_all(session)
+        if not stores:
+            raise HTTPException(status_code=422, detail=CHECKOUT_NO_STORES_MESSAGE)
+        return stores[0]
+
+    def preview(
+        self,
+        session: Session,
+        user_id: uuid.UUID,
+        items: list[BasketItemIn],
+        points_to_spend: PointsToSpend = None,
+    ) -> CalculateResponse:
+        catalog = self.repo.get_full_catalog(session)
+        catalog_by_id = {p.id: p for p in catalog}
+        missing = [str(i.product_id) for i in items if i.product_id not in catalog_by_id]
+        if missing:
+            raise HTTPException(
+                status_code=422,
+                detail={"detail": "Unknown product_ids", "unknown_product_ids": missing},
+            )
+
+        store = self._resolve_store(session, user_id)
+
+        cart_items = [CartItem(product_id=i.product_id, quantity=i.quantity) for i in items]
+        calculated = self.discount_calc.calculate(
+            items=cart_items, store=store, loyalty_card_id=user_id, session=session
+        )
+        items_out = [
+            CalculatedItemOut(
+                product_id=c.product_id,
+                product_name=c.product_name,
+                quantity=c.quantity,
+                base_price=c.base_price,
+                paid_price=c.paid_price,
+                discount_id=c.discount_id,
+                discounted_amount=c.discounted_amount,
+            )
+            for c in calculated
+        ]
+        total_base = sum((i.base_price * i.quantity for i in items_out), Decimal("0"))
+        total_paid = sum((i.paid_price * i.quantity for i in items_out), Decimal("0"))
+
+        cashback = self.points_service.preview_for_calculate(
+            session,
+            loyalty_card_id=user_id,
+            points_requested_raw=points_to_spend,
+            subtotal_rub=int(total_paid),
+        )
+        cashback_block = (
+            CashbackBlock(
+                points_available=cashback.points_available,
+                points_to_apply=cashback.points_to_apply,
+                cashback_rub=cashback.cashback_rub,
+                total_paid_rub=cashback.total_paid_rub,
+                points_balance_after=cashback.points_balance_after,
+                points_capped_by=cashback.points_capped_by,
+                rate_points_per_rub=cashback.rate_points_per_rub,
+            )
+            if cashback is not None
+            else None
+        )
+
+        return CalculateResponse(
+            store_id=store.id,
+            loyalty_card_id=user_id,
+            items=items_out,
+            total_base=total_base,
+            total_paid=total_paid,
+            total_saved=(total_base - total_paid) + (cashback_block.cashback_rub if cashback_block else 0),
+            cashback=cashback_block,
+        )
 
     def _build_system_prompt(self, current: dict[uuid.UUID, int], catalog_by_id: dict[uuid.UUID, Product]) -> str:
         current_lines = (
