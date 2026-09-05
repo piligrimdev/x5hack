@@ -1,9 +1,9 @@
 """High-level challenge service: batch generation via `synth.challenges` +
 resolving current-active list for API.
 
-Synth API (single call → list[dict] of exactly 4 records, each with
-`challenge_slot ∈ {'llm_habit', 'llm_discovery', 'generic', 'vibe'}`).
-De-dup with active tasks is done via `task.challenge_slot`.
+Synth API (single call → list[dict] of exactly 5 records, each with
+`challenge_slot ∈ {'llm_habit', 'llm_discovery', 'llm_basket', 'generic',
+'vibe'}`). De-dup with active tasks is done via `task.challenge_slot`.
 """
 
 from __future__ import annotations
@@ -46,9 +46,9 @@ class ChallengeService:
 
     def generate_batch(self, session: Session, user_id: uuid.UUID, count: int) -> list[uuid.UUID]:
         """Generate up to `count` new tasks for `user_id`, filling missing challenge slots.
-        Respects invariant "no more than 4 active tasks" (FR-001).
+        Respects invariant "no more than 5 active tasks" (FR-001).
 
-        Synth API: one call → list[dict] with exactly 4 records.
+        Synth API: one call → list[dict] with exactly 5 records.
         We filter the returned records by challenge_slot to skip slots the user
         already has active, then persist up to `count` of the remaining.
         """
@@ -73,6 +73,13 @@ class ChallengeService:
         existing_criteria: set[tuple[str, uuid.UUID]] = {
             (t.criterion_type, t.criterion_entity_id) for t in active_tasks if t.criterion_type and t.criterion_entity_id
         }
+        # Cross-cycle duplicate guard: a slot's own previous cycle's target
+        # shouldn't come back unchanged — e.g. llm_habit shouldn't propose
+        # "milk" again right after a "milk" llm_habit challenge already ran.
+        # Keyed by challenge_slot (not by user overall), and independent of
+        # `existing_criteria` above (which only guards THIS batch/active
+        # tasks against each other, not against history).
+        previous_by_slot = self.task_repo.get_last_criterion_per_slot(session, user_id)
         profile = self.adapter.build_profile(session, user_id, self.synth_config)
 
         logger.info(
@@ -186,6 +193,16 @@ class ChallengeService:
                     user_id=str(user_id),
                     challenge_slot=slot,
                     error=str(e),
+                )
+                continue
+
+            if previous_by_slot.get(slot) == criterion:
+                logger.info(
+                    "generate_batch.repeats_previous_cycle_skip",
+                    user_id=str(user_id),
+                    challenge_slot=slot,
+                    criterion_type=criterion[0],
+                    criterion_entity_id=str(criterion[1]),
                 )
                 continue
 
