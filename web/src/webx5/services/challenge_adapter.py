@@ -24,6 +24,7 @@ from sqlalchemy.orm import Session
 
 from synth.challenges import pick_vibe_category
 from synth.config import SynthConfig
+from webx5.crud.basket import BasketRepository
 from webx5.crud.task import TaskRepository
 from webx5.entities.category import Category
 from webx5.entities.product import Product
@@ -41,8 +42,9 @@ SCRIPT_FIELD_TO_CRITERION_KIND: dict[str, str] = {
 
 
 class ChallengeAdapter:
-    def __init__(self, task_repo: TaskRepository) -> None:
+    def __init__(self, task_repo: TaskRepository, basket_repo: BasketRepository) -> None:
         self.task_repo = task_repo
+        self.basket_repo = basket_repo
 
     # ------- vibe-of-the-month resolution -------
     def _resolve_vibe_category(self, session: Session, user: User) -> str:
@@ -61,6 +63,18 @@ class ChallengeAdapter:
         session.flush()
         return vibe_category
 
+    # ------- weekly-basket suggestion → plain-dict context -------
+    def _suggested_basket_items(self, session: Session, user_id: uuid.UUID) -> list[dict]:
+        """Convert `BasketRepository.suggest_items`'s `(Product, quantity)`
+        pairs into the plain-dict shape `synth.challenges.build_basket_prompt`
+        expects — keeps `synth.challenges` free of any ORM dependency, same
+        reason `build_profile` converts receipts/products to dicts too."""
+        suggested = self.basket_repo.suggest_items(session, user_id)
+        return [
+            {"item": product.name, "category": product.category.name, "weekly_quantity": qty}
+            for product, qty in suggested
+        ]
+
     # ------- ORM → dict-profile for synth --------
     def build_profile(self, session: Session, user_id: uuid.UUID, config: SynthConfig) -> dict:
         """Assemble the dict shape `synth.challenges.generate_challenge_for_user` expects.
@@ -77,6 +91,7 @@ class ChallengeAdapter:
             raise ValueError(f"User not found: {user_id}")
 
         vibe_category = self._resolve_vibe_category(session, user)
+        suggested_basket_items = self._suggested_basket_items(session, user_id)
 
         # Read last 90 days of receipts for this user.
         cutoff = datetime.now(timezone.utc) - timedelta(days=90)
@@ -142,6 +157,7 @@ class ChallengeAdapter:
             "habitual_categories": habitual,
             "receipts": receipts_dicts,
             "vibe_category": vibe_category,
+            "suggested_basket_items": suggested_basket_items,
         }
 
     # ------- Product resolution -------

@@ -9,7 +9,7 @@ from webx5.services.challenge_adapter import ChallengeAdapter
 
 
 def _adapter():
-    return ChallengeAdapter(task_repo=MagicMock())
+    return ChallengeAdapter(task_repo=MagicMock(), basket_repo=MagicMock())
 
 
 def test_resolve_vibe_category_reuses_stored_value_for_current_month():
@@ -75,3 +75,24 @@ def test_resolve_vibe_category_is_deterministic_for_the_same_user_and_month():
     result_b = adapter._resolve_vibe_category(session_b, user_b)
 
     assert result_a == result_b
+
+
+def test_suggested_basket_items_converts_product_quantity_pairs_to_plain_dicts():
+    adapter = _adapter()
+    product = MagicMock()
+    product.name = "Молоко 3.2%"
+    product.category.name = "молочные продукты и яйца"
+    adapter.basket_repo.suggest_items.return_value = [(product, 2)]
+
+    result = adapter._suggested_basket_items(MagicMock(), uuid.uuid4())
+
+    assert result == [{"item": "Молоко 3.2%", "category": "молочные продукты и яйца", "weekly_quantity": 2}]
+
+
+def test_suggested_basket_items_empty_when_no_suggestions():
+    adapter = _adapter()
+    adapter.basket_repo.suggest_items.return_value = []
+
+    result = adapter._suggested_basket_items(MagicMock(), uuid.uuid4())
+
+    assert result == []
