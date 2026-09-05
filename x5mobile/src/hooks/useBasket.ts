@@ -63,10 +63,25 @@ export function useBasket(token: string | null, onOrderPlaced?: () => void) {
   const [hasCollected, setHasCollected] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
+  const [storageKey, setStorageKey] = useState<string | null>(null);
+
   useEffect(() => {
+    let active = true;
+    setHydrated(false);
+    setStorageKey(null);
+    setItems([]);
+    setHasCollected(false);
+    setSpendPoints(false);
+    setMessage(null);
     (async () => {
       try {
-        const raw = await AsyncStorage.getItem(STORAGE_KEY);
+        if (!token) return;
+        const { user_id } = await apiFetch<{ user_id: string }>('/me', token);
+        const key = `${STORAGE_KEY}/${user_id}`;
+        // The old shared key has no owner, so never import it into an account.
+        const raw = await AsyncStorage.getItem(key).catch(() => null);
+        if (!active) return;
+        setStorageKey(key);
         if (raw !== null) {
           const parsed = JSON.parse(raw);
           if (Array.isArray(parsed)) {
@@ -75,23 +90,18 @@ export function useBasket(token: string | null, onOrderPlaced?: () => void) {
           }
         }
       } catch {
-        // corrupt or unavailable storage — start with an empty, uncollected basket
+        if (active) setMessage('Не удалось восстановить корзину. Откройте экран ещё раз.');
       } finally {
-        setHydrated(true);
+        if (active) setHydrated(true);
       }
     })();
-  }, []);
+    return () => { active = false; };
+  }, [token]);
 
   useEffect(() => {
-    if (!hydrated || !hasCollected) return;
-    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(items)).catch(() => {});
-  }, [items, hasCollected, hydrated]);
-
-  useEffect(() => {
-    if (!token || items.length === 0) {
-      setPreview(null);
-      return;
-    }
+    let active = true;
+    setPreview(null);
+    if (!token || items.length === 0) return;
     apiFetch<BasketPreview>('/basket/preview', token, {
       method: 'POST',
       body: JSON.stringify({
@@ -99,15 +109,18 @@ export function useBasket(token: string | null, onOrderPlaced?: () => void) {
         points_to_spend: spendPoints ? 'all' : null,
       }),
     })
-      .then(setPreview)
-      .catch(() => setPreview(null));
+      .then((result) => { if (active) setPreview(result); })
+      .catch(() => { if (active) setPreview(null); });
+    return () => { active = false; };
   }, [token, items, spendPoints]);
 
   async function collectWeeklyBasket() {
-    if (!token) return;
+    if (!token || !hydrated || !storageKey) return;
     setLoading(true);
     try {
       const data = await apiFetch<SuggestedBasketResponse>('/basket/suggested', token);
+      await AsyncStorage.setItem(storageKey, JSON.stringify(data.items)).catch(() => {});
+      setMessage(null);
       setItems(data.items);
       setHasCollected(true);
     } catch (e: unknown) {
@@ -118,7 +131,7 @@ export function useBasket(token: string | null, onOrderPlaced?: () => void) {
   }
 
   async function sendInstruction(instruction: string) {
-    if (!token || !instruction.trim()) return;
+    if (!token || !hydrated || !storageKey || !instruction.trim()) return;
     setLoading(true);
     try {
       const res = await apiFetch<AssistantResponse>('/basket/assistant', token, {
@@ -128,6 +141,8 @@ export function useBasket(token: string | null, onOrderPlaced?: () => void) {
           instruction,
         }),
       });
+      await AsyncStorage.setItem(storageKey, JSON.stringify(res.items)).catch(() => {});
+      setHasCollected(true);
       setItems(res.items);
       setMessage(res.applied ? null : res.message);
     } catch (e: unknown) {
@@ -138,7 +153,7 @@ export function useBasket(token: string | null, onOrderPlaced?: () => void) {
   }
 
   async function checkout() {
-    if (!token || items.length === 0) return;
+    if (!token || !hydrated || !storageKey || items.length === 0) return;
     setLoading(true);
     try {
       const res = await apiFetch<CheckoutResponse>('/basket/checkout', token, {
@@ -148,11 +163,11 @@ export function useBasket(token: string | null, onOrderPlaced?: () => void) {
           points_to_spend: spendPoints ? 'all' : null,
         }),
       });
+      await AsyncStorage.removeItem(storageKey).catch(() => {});
       setItems([]);
       setHasCollected(false);
       setPreview(null);
       setSpendPoints(false);
-      AsyncStorage.removeItem(STORAGE_KEY).catch(() => {});
       setMessage(`Заказ оформлен! Сэкономлено ${Math.round(res.total_saved)} ₽`);
       onOrderPlaced?.();
     } catch (e: unknown) {

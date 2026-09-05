@@ -170,7 +170,7 @@ export default function IndexScreen() {
   return (
     <SafeAreaProvider>
       {token
-        ? <AppContent token={token} />
+        ? <AppContent key={token} token={token} />
         : <LoginScreen onLogin={setToken} />
       }
     </SafeAreaProvider>
