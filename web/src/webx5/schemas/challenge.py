@@ -13,7 +13,6 @@ from webx5.schemas.types import JsonDecimal
 class EmptyReason(str, Enum):
     none = "none"
     no_history = "no_history"
-    saturated = "saturated"
 
 
 class ChallengeItem(BaseModel):

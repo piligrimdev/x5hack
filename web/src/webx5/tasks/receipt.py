@@ -59,14 +59,14 @@ def process_receipt(receipt_id: str) -> dict:
                 active_task_ids=[str(t.id) for t in active],
             )
 
-            # First-receipt trigger (R9): no active tasks → generate 3.
+            # First-receipt trigger (R9): no active tasks → generate 4.
             if not active:
                 logger.info(
                     "process_receipt.first_receipt_trigger",
                     user_id=str(user_id),
                     receipt_id=receipt_id,
                 )
-                generate_challenges.apply_async(args=[str(user_id), 3], queue="challenges")
+                generate_challenges.apply_async(args=[str(user_id), 4], queue="challenges")
                 return {"status": "first_receipt_generation_enqueued", "user_id": str(user_id)}
 
             # US2: increment progress + reward.

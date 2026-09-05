@@ -74,8 +74,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     chal_parser = subparsers.add_parser(
         "challenges",
-        help="Generate up to 3 challenges per profile (llm, spend_threshold, category_expansion slots — "
-             "each falls back to a distinct generic/partner-catalog offer on its own criteria).",
+        help="Generate exactly 4 challenges per profile, unconditionally (llm_habit, llm_discovery, "
+             "generic, vibe slots — each LLM-backed slot falls back to a distinct generic/partner-catalog "
+             "offer on its own criteria).",
     )
     chal_parser.add_argument(
         "--profiles", required=True,
@@ -88,7 +89,9 @@ def build_parser() -> argparse.ArgumentParser:
     chal_parser.add_argument("--api-key-env", default="OPENROUTER_API_KEY")
     chal_parser.add_argument(
         "--dry-run", action="store_true",
-        help="Classify receptiveness and build the spend_threshold/category_expansion/generic slots, but make no real LLM call for the llm slot.",
+        help="Build the deterministic generic slot as normal, but make no real LLM call for any of the "
+             "three LLM-backed slots (llm_habit/llm_discovery/vibe) — each returns a 'personal_dry_run' "
+             "placeholder record instead.",
     )
     chal_parser.add_argument("--delay", type=float, default=0.0, help="Seconds to sleep between LLM calls.")
     chal_parser.add_argument("--limit", type=int, default=None, help="Only process the first N profiles.")
