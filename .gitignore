@@ -9,6 +9,7 @@ dist/
 *.egg-info/
 .pytest_cache/
 *.log
+.worktrees/
 
 # Local seed-script input data (decompressed/converted from data/v2/,
 # mounted into the web/worker containers via docker-compose's
