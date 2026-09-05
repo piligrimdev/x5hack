@@ -33,7 +33,7 @@ export interface PastChallengeItem {
   reward_id: string | null;
 }
 
-export function useChallenges(token: string) {
+export function useChallenges(token: string, retainCompleted = false) {
   const [current, setCurrent] = useState<ChallengeItem[]>([]);
   const [history, setHistory] = useState<PastChallengeItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -48,16 +48,33 @@ export function useChallenges(token: string) {
       apiFetch<{ items: PastChallengeItem[]; total: number }>('/challenges/history', token),
     ])
       .then(([currentResp, historyResp]) => {
-        setCurrent(currentResp.items);
+        setCurrent(previous => {
+          if (!retainCompleted) return currentResp.items;
+          const completed = new Map(historyResp.items
+            .filter(item => item.status === 'выполнено')
+            .map(item => [item.id, item]));
+          const activeIds = new Set(currentResp.items.map(item => item.id));
+          // Keep only tasks seen during this visit, never unrelated history.
+          const retained = previous.flatMap(item => {
+            if (activeIds.has(item.id)) return [];
+            const done = completed.get(item.id) ?? (item.status === 'выполнено' ? item : null);
+            return done ? [done] : [];
+          });
+          return [...currentResp.items, ...retained];
+        });
         setHistory(historyResp.items);
       })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
-  }, [token]);
+  }, [token, retainCompleted]);
 
   useEffect(() => {
     refetch();
   }, [refetch]);
 
-  return { current, history, loading, error, refetch };
+  const clearCompleted = useCallback(() => {
+    setCurrent(previous => previous.filter(item => item.status !== 'выполнено'));
+  }, []);
+
+  return { current, history, loading, error, refetch, clearCompleted };
 }

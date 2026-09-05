@@ -4,6 +4,8 @@ import uuid
 from decimal import Decimal
 from unittest.mock import MagicMock
 
+import pytest
+
 from webx5.entities.points import PointsAccount, PointsTransaction
 from webx5.entities.task import Task
 from webx5.services.points import PointsService
@@ -80,9 +82,9 @@ def test_award_for_task_idempotent_when_earn_conflicts() -> None:
     assert account.balance == 100  # unchanged
 
 
-def test_award_for_task_reward_rub_scaled_and_rounded_to_nearest_10() -> None:
-    # Decimal("50.99") * rate(10) = 509.9 -> round to nearest 10 -> 510
-    task = _make_task("50.99")
+@pytest.mark.parametrize(("reward_rub", "expected"), [("50.99", 510), ("55", 550), ("33.33", 330)])
+def test_award_for_task_reward_rub_scaled_and_rounded_to_nearest_10(reward_rub: str, expected: int) -> None:
+    task = _make_task(reward_rub)
     account = _account(task.loyalty_card_id)
     repo = MagicMock()
     repo.get_rate.return_value = 10
@@ -93,8 +95,8 @@ def test_award_for_task_reward_rub_scaled_and_rounded_to_nearest_10() -> None:
 
     awarded = service.award_for_task(session, task)
 
-    assert awarded == 510
-    repo.insert_earn.assert_called_once_with(session, account.id, task.id, 510)
+    assert awarded == expected
+    repo.insert_earn.assert_called_once_with(session, account.id, task.id, expected)
 
 
 def test_award_for_task_uses_configured_rate() -> None:

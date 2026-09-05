@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -21,15 +21,28 @@ interface SavingsViewProps {
 
 export function SavingsView({ leaderboard, savings, token, goHome, goHistory, goChallenges, onOrderPlaced, autoCollect, onAutoCollectHandled }: SavingsViewProps) {
   const insets = useSafeAreaInsets();
-  const { current: challenges, loading: challengesLoading, error: challengesError, refetch: refetchChallenges } = useChallenges(token);
+  const { current: challenges, loading: challengesLoading, error: challengesError, refetch: refetchChallenges, clearCompleted } = useChallenges(token, true);
+  const challengeRefreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => {
+    if (challengeRefreshTimer.current) clearTimeout(challengeRefreshTimer.current);
+  }, []);
 
   function handleOrderPlaced() {
+    clearCompleted();
     onOrderPlaced();
     // Challenge progress is updated by an async Celery task, not synchronously
     // with the checkout response — refetch once now (covers the common fast
     // case) and once more shortly after (covers a slower worker pickup).
     refetchChallenges();
-    setTimeout(refetchChallenges, 1200);
+    if (challengeRefreshTimer.current) clearTimeout(challengeRefreshTimer.current);
+    // Keep checking while the worker processes the receipt (up to 30 seconds).
+    let remaining = 15;
+    const refresh = () => {
+      refetchChallenges();
+      if (--remaining > 0) challengeRefreshTimer.current = setTimeout(refresh, 2000);
+    };
+    challengeRefreshTimer.current = setTimeout(refresh, 2000);
   }
 
   const {
@@ -250,9 +263,9 @@ export function SavingsView({ leaderboard, savings, token, goHome, goHistory, go
 
         {/* Tasks */}
         <Text style={styles.sectionTitle}>Задания</Text>
-        {challengesLoading ? (
+        {challengesLoading && challenges.length === 0 ? (
           <ActivityIndicator color={BrandColors.green} style={styles.challengesLoader} />
-        ) : challengesError ? (
+        ) : challengesError && challenges.length === 0 ? (
           <Text style={styles.challengesErrorText}>Не удалось загрузить задания</Text>
         ) : challenges.length > 0 ? (
           <View style={styles.tasksList}>
@@ -280,11 +293,12 @@ export function SavingsView({ leaderboard, savings, token, goHome, goHistory, go
 }
 
 function TaskCard({ challenge }: { challenge: ChallengeItem }) {
-  const progressPct = Math.min(100, Math.round((challenge.quantity_current / challenge.quantity_target) * 100));
   const done = challenge.status === 'выполнено';
+  const progressPct = done ? 100 : Math.min(100, Math.round((challenge.quantity_current / Math.max(1, challenge.quantity_target)) * 100));
+  const rewardPoints = Math.round(challenge.reward_rub * 10 / 10) * 10;
 
   return (
-    <View style={styles.taskCard}>
+    <View style={[styles.taskCard, done && styles.taskCardDone]}>
       <View style={styles.taskTopRow}>
         <View style={styles.taskTextBlock}>
           <Text style={styles.taskTitle}>{challenge.title}</Text>
@@ -317,7 +331,7 @@ function TaskCard({ challenge }: { challenge: ChallengeItem }) {
       {/* Reward */}
       <View style={[styles.rewardBlock, { backgroundColor: done ? BrandColors.greenLight : BrandColors.rewardOrangeBg }]}>
         <View style={[styles.rewardDot, { backgroundColor: done ? BrandColors.green : BrandColors.gold }]} />
-        <Text style={styles.rewardText}>+{challenge.reward_rub} ₽ при выполнении</Text>
+        <Text style={styles.rewardText}>+{rewardPoints.toLocaleString('ru')} баллов{done ? ' · Выполнено' : ' при выполнении'}</Text>
       </View>
     </View>
   );
@@ -634,6 +648,10 @@ const styles = StyleSheet.create({
     borderColor: BrandColors.cardBorder,
     padding: 14,
     gap: 10,
+  },
+  taskCardDone: {
+    backgroundColor: BrandColors.greenLight,
+    borderColor: BrandColors.green,
   },
   taskTopRow: {
     flexDirection: 'row',
