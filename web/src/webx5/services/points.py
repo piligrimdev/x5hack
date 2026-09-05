@@ -42,7 +42,9 @@ class PointsService:
         self._repo = repo
 
     def award_for_task(self, session: Session, task: Task) -> int:
-        points = int(task.reward_rub)
+        rate = self._repo.get_rate(session)
+        raw = float(task.reward_rub) * rate
+        points = int(round(raw / 10) * 10)
         if points <= 0:
             logger.info(
                 "points.awarded.skipped_zero",

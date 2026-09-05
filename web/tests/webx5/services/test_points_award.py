@@ -29,6 +29,7 @@ def test_award_for_task_happy_path() -> None:
     task = _make_task("50")
     account = _account(task.loyalty_card_id)
     repo = MagicMock()
+    repo.get_rate.return_value = 10
     repo.get_or_create_account.return_value = account
     tx = PointsTransaction()
     tx.id = uuid.uuid4()
@@ -39,17 +40,20 @@ def test_award_for_task_happy_path() -> None:
 
     awarded = service.award_for_task(session, task)
 
-    assert awarded == 50
+    # reward_rub=50, rate=10 -> 50*10=500, already a multiple of 10
+    assert awarded == 500
+    repo.get_rate.assert_called_once_with(session)
     repo.get_or_create_account.assert_called_once_with(session, task.loyalty_card_id)
-    repo.insert_earn.assert_called_once_with(session, account.id, task.id, 50)
-    repo.bump_balance.assert_called_once_with(session, account, 50)
+    repo.insert_earn.assert_called_once_with(session, account.id, task.id, 500)
+    repo.bump_balance.assert_called_once_with(session, account, 500)
     # rate_at_time is not applied on earn (feature 007 clarification)
-    assert repo.insert_earn.call_args.args[3] == 50
+    assert repo.insert_earn.call_args.args[3] == 500
 
 
 def test_award_for_task_reward_zero_is_noop() -> None:
     task = _make_task("0")
     repo = MagicMock()
+    repo.get_rate.return_value = 10
     service = PointsService(repo=repo)
 
     awarded = service.award_for_task(MagicMock(), task)
@@ -64,6 +68,7 @@ def test_award_for_task_idempotent_when_earn_conflicts() -> None:
     task = _make_task("50")
     account = _account(task.loyalty_card_id, balance=100)
     repo = MagicMock()
+    repo.get_rate.return_value = 10
     repo.get_or_create_account.return_value = account
     repo.insert_earn.return_value = None  # simulate IntegrityError → duplicate
     service = PointsService(repo=repo)
@@ -75,11 +80,12 @@ def test_award_for_task_idempotent_when_earn_conflicts() -> None:
     assert account.balance == 100  # unchanged
 
 
-def test_award_for_task_reward_rub_decimal_is_floored() -> None:
-    # Decimal("50.99") → 50 points (integer floor)
+def test_award_for_task_reward_rub_scaled_and_rounded_to_nearest_10() -> None:
+    # Decimal("50.99") * rate(10) = 509.9 -> round to nearest 10 -> 510
     task = _make_task("50.99")
     account = _account(task.loyalty_card_id)
     repo = MagicMock()
+    repo.get_rate.return_value = 10
     repo.get_or_create_account.return_value = account
     repo.insert_earn.return_value = PointsTransaction()
     service = PointsService(repo=repo)
@@ -87,5 +93,22 @@ def test_award_for_task_reward_rub_decimal_is_floored() -> None:
 
     awarded = service.award_for_task(session, task)
 
-    assert awarded == 50
-    repo.insert_earn.assert_called_once_with(session, account.id, task.id, 50)
+    assert awarded == 510
+    repo.insert_earn.assert_called_once_with(session, account.id, task.id, 510)
+
+
+def test_award_for_task_uses_configured_rate() -> None:
+    # reward_rub=20 at rate=5 -> 20*5=100, already a multiple of 10
+    task = _make_task("20")
+    account = _account(task.loyalty_card_id)
+    repo = MagicMock()
+    repo.get_rate.return_value = 5
+    repo.get_or_create_account.return_value = account
+    repo.insert_earn.return_value = PointsTransaction()
+    service = PointsService(repo=repo)
+    session = MagicMock()
+
+    awarded = service.award_for_task(session, task)
+
+    assert awarded == 100
+    repo.insert_earn.assert_called_once_with(session, account.id, task.id, 100)
