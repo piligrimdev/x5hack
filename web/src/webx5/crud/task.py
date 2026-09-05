@@ -43,6 +43,33 @@ class TaskRepository:
             )
         ).scalar_one()
 
+    def get_last_criterion_per_slot(
+        self, session: Session, user_id: uuid.UUID
+    ) -> dict[str, tuple[str, uuid.UUID]]:
+        """For each `challenge_slot` this user has EVER had a task in (any
+        status — open, completed, expired, not just currently active),
+        return the `(criterion_type, criterion_entity_id)` pair from that
+        slot's most-recently-`issued_at` task. Used by
+        `ChallengeService.generate_batch` to avoid a slot repeating its own
+        previous cycle's exact target — a challenge that already ran once
+        for "milk" shouldn't come back as "milk" again next month.
+
+        Ordering by `(challenge_slot, issued_at DESC)` and keeping the
+        first row seen per slot is a portable way to get "most recent per
+        group" without a database-specific `DISTINCT ON`/window function.
+        """
+        rows = session.execute(
+            select(Task.challenge_slot, Task.criterion_type, Task.criterion_entity_id)
+            .where(Task.loyalty_card_id == user_id, Task.challenge_slot.is_not(None))
+            .order_by(Task.challenge_slot, Task.issued_at.desc())
+        ).all()
+
+        result: dict[str, tuple[str, uuid.UUID]] = {}
+        for slot, criterion_type, criterion_entity_id in rows:
+            if slot not in result:
+                result[slot] = (criterion_type, criterion_entity_id)
+        return result
+
     def get_history_for_user(
         self,
         session: Session,
