@@ -8,6 +8,7 @@ from synth.challenges import (
     PERSONAL_TARGET_QUANTITY,
     VIBE_CATEGORIES,
     backfill_target_sku,
+    build_basket_prompt,
     build_category_expansion_challenge,
     build_personal_prompt,
     build_spend_threshold_challenge,
@@ -301,6 +302,19 @@ def test_build_vibe_prompt_restricts_to_theme_categories_and_mentions_reward_cei
         assert cat in system
     assert "65" in system
     assert "Экономия и запасы" in user
+
+
+def test_build_basket_prompt_restricts_to_suggested_categories_and_mentions_reward_ceiling():
+    profile = _profile("promo_hunter", seed=1)
+    suggested = [
+        {"item": "Молоко 3.2%", "category": "молочные продукты и яйца", "weekly_quantity": 2},
+        {"item": "Хлеб белый", "category": "хлеб и выпечка", "weekly_quantity": 1},
+    ]
+    system, user = build_basket_prompt(profile, _config, max_reward_rub=65.0, suggested_items=suggested)
+    assert "Молоко 3.2%" in system
+    assert "Хлеб белый" in system
+    assert "65" in system
+    assert "Молоко 3.2%" in user
 
 
 def test_compute_frequency_saturation_true_for_already_optimal():

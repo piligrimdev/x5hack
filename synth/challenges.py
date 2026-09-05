@@ -584,6 +584,51 @@ def build_vibe_prompt(
     return system, user
 
 
+def build_basket_prompt(
+    profile: dict, config: SynthConfig, max_reward_rub: float, suggested_items: list[dict]
+) -> tuple[str, str]:
+    """Wraps the user's own deterministic weekly-purchase-frequency list
+    (`suggested_items` — from `BasketRepository.suggest_items`, the same
+    source `GET /basket/suggested` uses) into a challenge encouraging them
+    to buy their usual weekly basket. `target_categories` must stay within
+    the categories already present in `suggested_items` — enforced by
+    `parse_and_validate_challenge`'s `allowed_categories`, not by this
+    function. The caller (`generate_challenge_for_user`) never calls this
+    with an empty `suggested_items` — there is nothing to wrap into a
+    challenge for a user with no purchase history yet, so that case is
+    handled as a cold-start fallback before this function is ever reached."""
+    summary = summarize_purchase_pattern(profile, config)
+    items_text = "; ".join(
+        f"{item['item']} ({item['category']}, ~{item['weekly_quantity']}/нед.)" for item in suggested_items
+    )
+
+    system = (
+        "Ты — модуль персональных рекомендаций программы лояльности X5 "
+        "(Пятёрочка/Перекрёсток/Чижик). У пользователя есть обычная "
+        "недельная корзина — товары, которые он покупает регулярно. "
+        "Предложи ОДИН челлендж, поощряющий купить что-то из этой обычной "
+        "корзины на этой неделе (например, за нужное количество или всю "
+        "корзину целиком).\n\n"
+        f"Список обычных недельных покупок: {items_text}\n"
+        "target_categories обязаны быть подмножеством категорий из этого "
+        "списка — другие категории использовать нельзя.\n"
+        f"reward_rub не должен превышать {max_reward_rub:.0f} ₽ — это "
+        "ограничение по марже конкретно этого пользователя.\n\n"
+        "Ответь СТРОГО в виде одного JSON-объекта, без текста вне JSON:\n"
+        '{"challenge_title": string, "description": string, '
+        '"target_categories": [string, ...], "mechanic": string, '
+        '"reward_rub": number, "reasoning": string}'
+    )
+
+    user = (
+        f"Сеть: {profile['chain']}\n"
+        f"Обычная недельная корзина: {items_text}\n"
+        f"Чеков за 90 дней (train-период): {summary['n_receipts_90d_train']}\n"
+        f"Средний чек: {summary['mean_receipt_total_rub']:.0f} ₽\n"
+    )
+    return system, user
+
+
 def call_openrouter(
     model: str,
     system: str,
