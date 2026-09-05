@@ -60,7 +60,7 @@ docker compose up --build
 # Сервис доступен на http://localhost:8000
 # Проверка: curl http://localhost:8000/health → {"status":"ok"}
 # Документация: http://localhost:8000/docs (Scalar UI)
-# GET /challenges/current → 3 персональных задания пользователя (Bearer JWT)
+# GET /challenges/current → 4 персональных задания пользователя (Bearer JWT)
 # GET /points/balance → баланс кешбека (Bearer JWT)
 # POST /receipts с полем points_to_spend → списание баллов при оплате
 ```

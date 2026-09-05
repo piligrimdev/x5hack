@@ -15,13 +15,14 @@ from __future__ import annotations
 
 import uuid
 from collections import Counter
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from synth.challenges import pick_vibe_category
 from synth.config import SynthConfig
 from webx5.crud.task import TaskRepository
 from webx5.entities.category import Category
@@ -43,16 +44,39 @@ class ChallengeAdapter:
     def __init__(self, task_repo: TaskRepository) -> None:
         self.task_repo = task_repo
 
+    # ------- vibe-of-the-month resolution -------
+    def _resolve_vibe_category(self, session: Session, user: User) -> str:
+        """Return this user's "vibe" theme for the current calendar month.
+        Stable across generation calls within a month; auto-rotates at the
+        start of each new month via `pick_vibe_category` until a future
+        manual-selection feature lets a user pick their own — the
+        `vibe_category`/`vibe_month` columns exist for that reason, not
+        just as a cache."""
+        month_start = date.today().replace(day=1)
+        if user.vibe_category and user.vibe_month == month_start:
+            return user.vibe_category
+        vibe_category = pick_vibe_category(str(user.id), month_start.strftime("%Y-%m"))
+        user.vibe_category = vibe_category
+        user.vibe_month = month_start
+        session.flush()
+        return vibe_category
+
     # ------- ORM → dict-profile for synth --------
     def build_profile(self, session: Session, user_id: uuid.UUID, config: SynthConfig) -> dict:
         """Assemble the dict shape `synth.challenges.generate_challenge_for_user` expects.
 
         Only real fields sourced from the DB; margin per line is synthesized
         from `config.category_economics` because production DB doesn't store margin.
+
+        May assign and persist a new `vibe_category`/`vibe_month` on the
+        user's row via `_resolve_vibe_category` — this method is not
+        read-only despite its name.
         """
         user: User | None = session.get(User, user_id)
         if user is None:
             raise ValueError(f"User not found: {user_id}")
+
+        vibe_category = self._resolve_vibe_category(session, user)
 
         # Read last 90 days of receipts for this user.
         cutoff = datetime.now(timezone.utc) - timedelta(days=90)
@@ -117,6 +141,7 @@ class ChallengeAdapter:
             "family_size": 1,
             "habitual_categories": habitual,
             "receipts": receipts_dicts,
+            "vibe_category": vibe_category,
         }
 
     # ------- Product resolution -------
@@ -136,21 +161,27 @@ class ChallengeAdapter:
     def _lookup_product_by_sku(self, session: Session, sku_id: str) -> Product | None:
         return session.execute(select(Product).where(Product.sku_id == sku_id)).scalar_one_or_none()
 
-    # ------- dict-result → Task + TaskCriterion rows -------
-    def persist_challenge(
-        self,
-        session: Session,
-        user_id: uuid.UUID,
-        script_result: dict,
-    ) -> uuid.UUID:
-        """Map one non-'no_challenge' script result to a Task + TaskCriterion rows.
-        Returns the new task's id.
+    # ------- criterion resolution (no writes) -------
+    def resolve_criterion(self, session: Session, script_result: dict) -> tuple[str, uuid.UUID]:
+        """Resolve the `(criterion_type, criterion_entity_id)` pair a
+        script_result WOULD persist to, without creating any rows.
+
+        Used by `ChallengeService.generate_batch` to detect, before calling
+        `persist_challenge`, whether a slot would create a Task with the same
+        criterion pair as another slot in this batch or an already-active
+        task (e.g. `vibe` and `llm_habit` both landing on the same category)
+        — and reused by `persist_challenge` itself below, so the resolution
+        logic (target_sku_id → product lookup → category fallback) lives in
+        exactly one place.
+
+        Raises `ValueError` for the same reasons `persist_challenge` would
+        refuse to build a task: missing `target_categories`, or a category
+        name that isn't in the DB.
         """
         target_categories = script_result.get("target_categories") or []
         if not target_categories:
             raise ValueError("script_result missing target_categories")
 
-        # Resolve category (main criterion fallback).
         primary_category_name = target_categories[0]
         category = self._resolve_category(session, primary_category_name)
         if category is None:
@@ -170,11 +201,20 @@ class ChallengeAdapter:
                 product = self._lookup_product(session, item_name, category.id)
 
         if product is not None:
-            criterion_type = "product"
-            criterion_entity_id = product.id
-        else:
-            criterion_type = "category"
-            criterion_entity_id = category.id
+            return "product", product.id
+        return "category", category.id
+
+    # ------- dict-result → Task + TaskCriterion rows -------
+    def persist_challenge(
+        self,
+        session: Session,
+        user_id: uuid.UUID,
+        script_result: dict,
+    ) -> uuid.UUID:
+        """Map one non-'no_challenge' script result to a Task + TaskCriterion rows.
+        Returns the new task's id.
+        """
+        criterion_type, criterion_entity_id = self.resolve_criterion(session, script_result)
 
         # Reward amount — clamp to non-negative.
         reward_rub = Decimal(str(script_result.get("reward_rub", 0)))

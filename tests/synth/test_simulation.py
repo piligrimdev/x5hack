@@ -13,19 +13,33 @@ from synth.simulation import (
 _config = load_config("config/synth_schema.yaml")
 
 
-def test_route_for_simulation_matches_generate_challenge_for_user_routing():
-    # generate_challenge_for_user now returns up to 3 records (one per
-    # PERSONAL_CHALLENGE_SLOTS entry) — route_for_simulation still models
-    # one channel at a time, so compare against the matching slot.
-    from synth.challenges import generate_challenge_for_user
+def test_route_for_simulation_matches_underlying_signal_functions():
+    # generate_challenge_for_user (Task 6) no longer routes through
+    # receptiveness/saturation at all — it unconditionally issues all 4
+    # challenge slots (llm_habit/llm_discovery/generic/vibe) to every user,
+    # so its own output can no longer serve as a routing oracle here.
+    # route_for_simulation still models the old single-channel
+    # saturated/receptive/not decision on its own, via the same underlying
+    # signal functions (compute_frequency_saturation/compute_receptiveness,
+    # both still used by synth/simulation.py's offline effect model) — so
+    # verify it directly against those instead.
+    #
+    # n=100/seed=9 (same population as the spend_threshold sibling test
+    # below) is required, not n=30/seed=1: that smaller population never
+    # actually reaches the saturated/not-receptive branches this test's own
+    # body checks for — it was measured to only ever exercise the
+    # "receptive" (personal) branch, which is a weaker test than intended.
+    from synth.challenges import compute_frequency_saturation, compute_receptiveness
 
-    users, truth = population(n=30, seed=1, config=_config)
+    users, truth = population(n=100, seed=9, config=_config)
     for u in users:
-        expected = generate_challenge_for_user(u, _config, model="fake/model", dry_run=True)
-        expected_llm = next((r for r in expected if r.get("challenge_slot") == "llm"), expected[0])
-        expected_path = "personal" if expected_llm["path"] == "personal_dry_run" else expected_llm["path"]
+        saturated, _ = compute_frequency_saturation(u, _config)
         actual = route_for_simulation(u, _config)
-        assert actual["path"] == expected_path
+        if saturated:
+            assert actual["path"] == "no_challenge"
+            continue
+        receptive, _ = compute_receptiveness(u, _config)
+        assert actual["path"] == ("personal" if receptive else "generic")
 
 
 def test_simulate_user_response_no_challenge_is_always_zero():
@@ -98,15 +112,31 @@ def test_summarize_simulation_no_challenge_path_has_zero_response_rate():
         assert report["by_path"]["no_challenge"]["net_value_rub"] == 0.0
 
 
-def test_route_for_simulation_spend_threshold_matches_generate_challenge_for_user_routing():
-    from synth.challenges import generate_challenge_for_user
+def test_route_for_simulation_spend_threshold_matches_underlying_signal_functions():
+    # Same rationale as test_route_for_simulation_matches_underlying_signal_functions
+    # above: generate_challenge_for_user no longer has a "spend_threshold"
+    # slot to compare against (Task 6), so verify route_for_simulation's
+    # challenge_type="spend_threshold" branch directly against the same
+    # preserved signal/builder functions it calls internally.
+    from synth.challenges import (
+        build_spend_threshold_challenge,
+        compute_frequency_saturation,
+        compute_receptiveness,
+    )
 
     users, truth = population(n=100, seed=9, config=_config)
     for u in users:
-        expected = generate_challenge_for_user(u, _config, model="fake/model", dry_run=True)
-        expected_slot = next((r for r in expected if r.get("challenge_slot") == "spend_threshold"), expected[0])
+        saturated, _ = compute_frequency_saturation(u, _config)
         actual = route_for_simulation(u, _config, challenge_type="spend_threshold")
-        assert actual["path"] == expected_slot["path"]
+        if saturated:
+            assert actual["path"] == "no_challenge"
+            continue
+        receptive, _ = compute_receptiveness(u, _config)
+        if not receptive:
+            assert actual["path"] == "generic"
+            continue
+        challenge = build_spend_threshold_challenge(u, _config)
+        assert actual["path"] == ("personal" if challenge is not None else "generic_fallback")
 
 
 def test_simulate_user_response_spend_threshold_uses_basket_channel_when_responded():
