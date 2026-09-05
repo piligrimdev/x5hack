@@ -1,8 +1,8 @@
 """High-level challenge service: batch generation via `synth.challenges` +
 resolving current-active list for API.
 
-New synth API (single call → list[dict] of up to 3 records, each with
-`challenge_slot ∈ {'llm', 'spend_threshold', 'category_expansion'}`).
+Synth API (single call → list[dict] of exactly 4 records, each with
+`challenge_slot ∈ {'llm_habit', 'llm_discovery', 'generic', 'vibe'}`).
 De-dup with active tasks is done via `task.challenge_slot`.
 """
 
@@ -19,7 +19,6 @@ from synth.challenges import generate_challenge_for_user
 from synth.config import SynthConfig
 from webx5.crud.challenge_log import ChallengeLogRepository
 from webx5.crud.task import TaskRepository
-from webx5.entities.challenge_log import ChallengeGenerationLog
 from webx5.entities.receipt import Receipt
 from webx5.entities.task import Task
 from webx5.services.challenge_adapter import ChallengeAdapter
@@ -27,7 +26,7 @@ from webx5.services.openrouter_capturing import capture_openrouter_io
 
 logger = structlog.get_logger("challenges")
 
-ALL_SLOTS: tuple[str, ...] = ("spend_threshold", "category_expansion", "llm")
+ALL_SLOTS: tuple[str, ...] = ("llm_habit", "llm_discovery", "generic", "vibe")
 
 
 class ChallengeService:
@@ -49,14 +48,14 @@ class ChallengeService:
 
     def generate_batch(self, session: Session, user_id: uuid.UUID, count: int) -> list[uuid.UUID]:
         """Generate up to `count` new tasks for `user_id`, filling missing challenge slots.
-        Respects invariant "no more than 3 active tasks" (FR-001).
+        Respects invariant "no more than 4 active tasks" (FR-001).
 
-        New synth API: one call → list[dict] with 1 (`no_challenge`) or 3 records.
+        Synth API: one call → list[dict] with exactly 4 records.
         We filter the returned records by challenge_slot to skip slots the user
         already has active, then persist up to `count` of the remaining.
         """
         active_tasks = self.task_repo.get_active_for_user(session, user_id)
-        remaining_slots = 3 - len(active_tasks)
+        remaining_slots = 4 - len(active_tasks)
         want = min(count, remaining_slots)
         if want <= 0:
             logger.info(
@@ -205,7 +204,7 @@ class ChallengeService:
     # ------- read side (for GET /challenges/current) -------
     def get_current(self, session: Session, user_id: uuid.UUID) -> tuple[list[Task], str]:
         """Returns (list of active tasks, empty_reason).
-        empty_reason ∈ {'none', 'no_history', 'saturated'}."""
+        empty_reason ∈ {'none', 'no_history'}."""
         active = self.task_repo.get_active_for_user(session, user_id)
         if active:
             return active, "none"
@@ -215,14 +214,5 @@ class ChallengeService:
         ).scalar()
         if not has_receipts:
             return [], "no_history"
-
-        last_log = session.execute(
-            select(ChallengeGenerationLog)
-            .where(ChallengeGenerationLog.user_id == user_id)
-            .order_by(ChallengeGenerationLog.created_at.desc())
-            .limit(1)
-        ).scalar_one_or_none()
-        if last_log is not None and last_log.path == "no_challenge":
-            return [], "saturated"
 
         return [], "none"

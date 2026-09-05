@@ -1,11 +1,11 @@
 """Unit tests for ChallengeService.generate_batch — orchestration only.
 
-The new synth API returns a list of up to 3 records with `challenge_slot`
+The new synth API returns a list of up to 4 records with `challenge_slot`
 in one call. Tests mock that call and assert:
   * every returned record is audit-logged (FR-018)
   * `no_challenge` path skips persistence (FR-022)
   * script exception is caught & logged
-  * invariant "no more than 3 active tasks" is respected (FR-001)
+  * invariant "no more than 4 active tasks" is respected (FR-001)
   * slots already active are skipped
 """
 
@@ -51,30 +51,31 @@ def _canned(slot: str, path: str = "personal") -> dict:
         "mechanic": f"mech {slot}",
         "reward_rub": 45.0,
         "target_quantity": 2,
-        "model": "test-model" if slot == "llm" else None,
+        "model": "test-model" if slot.startswith("llm") else None,
         "reasoning": "test",
     }
 
 
-def _batch_all_three() -> list[dict]:
+def _batch_all_four() -> list[dict]:
     return [
-        _canned("spend_threshold"),
-        _canned("category_expansion"),
-        _canned("llm"),
+        _canned("llm_habit"),
+        _canned("llm_discovery"),
+        _canned("generic"),
+        _canned("vibe"),
     ]
 
 
-def test_generate_batch_persists_all_three_slots():
+def test_generate_batch_persists_all_four_slots():
     service, task_repo, log_repo, adapter = _service_with_mocks()
 
-    with patch("webx5.services.challenge.generate_challenge_for_user", return_value=_batch_all_three()), \
+    with patch("webx5.services.challenge.generate_challenge_for_user", return_value=_batch_all_four()), \
          patch("webx5.services.challenge.capture_openrouter_io") as mock_capture:
         mock_capture.return_value.__enter__.return_value = {}
-        created = service.generate_batch(MagicMock(), uuid.uuid4(), count=3)
+        created = service.generate_batch(MagicMock(), uuid.uuid4(), count=4)
 
-    assert len(created) == 3
-    assert log_repo.record.call_count == 3
-    assert adapter.persist_challenge.call_count == 3
+    assert len(created) == 4
+    assert log_repo.record.call_count == 4
+    assert adapter.persist_challenge.call_count == 4
 
 
 def test_generate_batch_no_challenge_returns_empty_but_logs():
@@ -84,7 +85,7 @@ def test_generate_batch_no_challenge_returns_empty_but_logs():
     with patch("webx5.services.challenge.generate_challenge_for_user", return_value=no_challenge_batch), \
          patch("webx5.services.challenge.capture_openrouter_io") as mock_capture:
         mock_capture.return_value.__enter__.return_value = {}
-        created = service.generate_batch(MagicMock(), uuid.uuid4(), count=3)
+        created = service.generate_batch(MagicMock(), uuid.uuid4(), count=4)
 
     assert created == []
     assert log_repo.record.call_count == 1
@@ -100,7 +101,7 @@ def test_generate_batch_script_exception_logs_and_returns_empty():
     with patch("webx5.services.challenge.generate_challenge_for_user", side_effect=raise_boom), \
          patch("webx5.services.challenge.capture_openrouter_io") as mock_capture:
         mock_capture.return_value.__enter__.return_value = {}
-        created = service.generate_batch(MagicMock(), uuid.uuid4(), count=3)
+        created = service.generate_batch(MagicMock(), uuid.uuid4(), count=4)
 
     assert created == []
     log_repo.record.assert_called_once()
@@ -109,31 +110,31 @@ def test_generate_batch_script_exception_logs_and_returns_empty():
     assert "simulated LLM outage" in kwargs["script_result"]["error"]
 
 
-def test_generate_batch_no_slots_when_3_active():
+def test_generate_batch_no_slots_when_4_active():
     service, task_repo, log_repo, adapter = _service_with_mocks()
-    task_repo.get_active_for_user.return_value = [MagicMock(), MagicMock(), MagicMock()]
+    task_repo.get_active_for_user.return_value = [MagicMock(), MagicMock(), MagicMock(), MagicMock()]
 
-    created = service.generate_batch(MagicMock(), uuid.uuid4(), count=3)
+    created = service.generate_batch(MagicMock(), uuid.uuid4(), count=4)
     assert created == []
     log_repo.record.assert_not_called()
 
 
 def test_generate_batch_skips_slot_already_active():
-    """If user already has an 'llm' task active, the 'llm' record from the batch is skipped."""
+    """If user already has an 'llm_habit' task active, that record from the batch is skipped."""
     service, task_repo, log_repo, adapter = _service_with_mocks()
 
     llm_active_task = MagicMock()
-    llm_active_task.challenge_slot = "llm"
+    llm_active_task.challenge_slot = "llm_habit"
     task_repo.get_active_for_user.return_value = [llm_active_task]
 
-    with patch("webx5.services.challenge.generate_challenge_for_user", return_value=_batch_all_three()), \
+    with patch("webx5.services.challenge.generate_challenge_for_user", return_value=_batch_all_four()), \
          patch("webx5.services.challenge.capture_openrouter_io") as mock_capture:
         mock_capture.return_value.__enter__.return_value = {}
-        created = service.generate_batch(MagicMock(), uuid.uuid4(), count=2)
+        created = service.generate_batch(MagicMock(), uuid.uuid4(), count=3)
 
-    assert len(created) == 2
+    assert len(created) == 3
     persisted_slots = [
         call.args[2]["challenge_slot"] for call in adapter.persist_challenge.call_args_list
     ]
-    assert "llm" not in persisted_slots
-    assert set(persisted_slots) == {"spend_threshold", "category_expansion"}
+    assert "llm_habit" not in persisted_slots
+    assert set(persisted_slots) == {"llm_discovery", "generic", "vibe"}

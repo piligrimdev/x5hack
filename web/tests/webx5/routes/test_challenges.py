@@ -58,15 +58,15 @@ def _make_task(user_id: uuid.UUID):
     return t
 
 
-def test_get_current_returns_3_tasks(client, user_id):
+def test_get_current_returns_active_tasks(client, user_id):
     tc, session = client
     task = _make_task(user_id)
 
-    with patch("webx5.core.challenges.challenge_service.get_current", return_value=([task, task, task], "none")):
+    with patch("webx5.core.challenges.challenge_service.get_current", return_value=([task, task, task, task], "none")):
         resp = tc.get("/challenges/current", headers={"Authorization": "Bearer fake"})
     assert resp.status_code == 200
     body = resp.json()
-    assert len(body["items"]) == 3
+    assert len(body["items"]) == 4
     assert body["empty_reason"] == "none"
 
 
@@ -78,14 +78,6 @@ def test_get_current_empty_no_history(client, user_id):
     body = resp.json()
     assert body["items"] == []
     assert body["empty_reason"] == "no_history"
-
-
-def test_get_current_saturated(client, user_id):
-    tc, session = client
-    with patch("webx5.core.challenges.challenge_service.get_current", return_value=([], "saturated")):
-        resp = tc.get("/challenges/current", headers={"Authorization": "Bearer fake"})
-    assert resp.status_code == 200
-    assert resp.json()["empty_reason"] == "saturated"
 
 
 def test_get_current_401_without_bearer():

@@ -18,7 +18,7 @@ logger = structlog.get_logger("tasks.generation")
 
 
 @celery_app.task(name="webx5.tasks.generation.generate_challenges", queue="challenges")
-def generate_challenges(user_id: str, count: int = 3) -> dict:
+def generate_challenges(user_id: str, count: int = 4) -> dict:
     from webx5.core.challenges import challenge_service
     from webx5.core.db import db
 
