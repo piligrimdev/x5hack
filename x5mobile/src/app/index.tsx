@@ -153,7 +153,7 @@ function AppContent({ token }: { token: string }) {
       </View>
       <CustomTabBar
         activeScreen={screen as TabScreen}
-        onTabPress={(tab) => navigate(tab)}
+        onTabPress={(tab) => navigate(tab === 'cart' ? 'savings' : tab)}
       />
     </View>
   );

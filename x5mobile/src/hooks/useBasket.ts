@@ -23,10 +23,40 @@ interface CheckoutResponse {
   total_saved: number;
 }
 
+export interface BasketPreviewItem {
+  product_id: string;
+  product_name: string;
+  quantity: number;
+  base_price: number;
+  paid_price: number;
+  discount_id: string | null;
+  discounted_amount: number;
+}
+
+export interface BasketPreviewCashback {
+  points_available: number;
+  points_to_apply: number;
+  cashback_rub: number;
+  total_paid_rub: number;
+  points_balance_after: number;
+  points_capped_by: 'none' | 'balance' | 'receipt_total';
+  rate_points_per_rub: number;
+}
+
+export interface BasketPreview {
+  items: BasketPreviewItem[];
+  total_base: number;
+  total_paid: number;
+  total_saved: number;
+  cashback: BasketPreviewCashback | null;
+}
+
 export function useBasket(token: string | null, onOrderPlaced?: () => void) {
   const [items, setItems] = useState<BasketItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [preview, setPreview] = useState<BasketPreview | null>(null);
+  const [spendPoints, setSpendPoints] = useState(false);
 
   useEffect(() => {
     if (!token) return;
@@ -36,6 +66,19 @@ export function useBasket(token: string | null, onOrderPlaced?: () => void) {
       .catch((e: Error) => setMessage(e.message))
       .finally(() => setLoading(false));
   }, [token]);
+
+  useEffect(() => {
+    if (!token) return;
+    apiFetch<BasketPreview>('/basket/preview', token, {
+      method: 'POST',
+      body: JSON.stringify({
+        items: items.map((i) => ({ product_id: i.product_id, quantity: i.quantity })),
+        points_to_spend: spendPoints ? 'all' : null,
+      }),
+    })
+      .then(setPreview)
+      .catch(() => setPreview(null));
+  }, [token, items, spendPoints]);
 
   async function sendInstruction(instruction: string) {
     if (!token || !instruction.trim()) return;
@@ -65,9 +108,12 @@ export function useBasket(token: string | null, onOrderPlaced?: () => void) {
         method: 'POST',
         body: JSON.stringify({
           items: items.map((i) => ({ product_id: i.product_id, quantity: i.quantity })),
+          points_to_spend: spendPoints ? 'all' : null,
         }),
       });
       setItems([]);
+      setPreview(null);
+      setSpendPoints(false);
       setMessage(`Заказ оформлен! Сэкономлено ${Math.round(res.total_saved)} ₽`);
       onOrderPlaced?.();
     } catch (e: unknown) {
@@ -77,5 +123,5 @@ export function useBasket(token: string | null, onOrderPlaced?: () => void) {
     }
   }
 
-  return { items, loading, message, sendInstruction, checkout };
+  return { items, loading, message, sendInstruction, checkout, preview, spendPoints, setSpendPoints };
 }
