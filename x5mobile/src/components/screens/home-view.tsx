@@ -23,9 +23,10 @@ interface HomeViewProps {
   onChallenges: () => void;
   onPoints?: () => void;
   onOpenBasket: () => void;
+  onOpenAppi?: () => void;
 }
 
-export function HomeView({ token, onHistory, onChallenges, onPoints, onOpenBasket }: HomeViewProps) {
+export function HomeView({ token, onHistory, onChallenges, onPoints, onOpenBasket, onOpenAppi }: HomeViewProps) {
   const insets = useSafeAreaInsets();
   const { economy, loading: eLoading } = useEconomy(token);
   const { receipts } = useReceipts(token);
@@ -258,19 +259,18 @@ export function HomeView({ token, onHistory, onChallenges, onPoints, onOpenBaske
             </TouchableOpacity>
           </View>
 
-          {/* Соберите 3 в ряд */}
-          <View style={[styles.promoCard, { backgroundColor: '#F0F7F1' }]}>
-            <Text style={styles.promoCardTitle}>Соберите 3 в ряд</Text>
-            <Text style={styles.promoCardSub}>Откройте скидку{'\n'}на любимый кофе</Text>
-            <View style={styles.puzzleGrid}>
-              {['🍅','🥑','🧀','🧀','🍅','🥑','🥑','🧀','🍅'].map((e, i) => (
-                <Text key={i} style={styles.puzzleEmoji}>{e}</Text>
-              ))}
+          {/* Колесо фортуны */}
+          <TouchableOpacity
+            style={[styles.promoCard, { backgroundColor: '#F0F7F1' }]}
+            activeOpacity={0.85}
+            onPress={onOpenAppi}>
+            <Text style={styles.promoCardTitle}>Колесо фортуны</Text>
+            <Text style={styles.promoCardSub}>Кешбэк, скидка{'\n'}или подарок от Аппи</Text>
+            <Text style={styles.promoEmoji}>🎡</Text>
+            <View style={styles.promoGreenBtn}>
+              <Text style={styles.promoGreenBtnText}>Крутить</Text>
             </View>
-            <TouchableOpacity style={styles.promoGreenBtn} activeOpacity={0.8}>
-              <Text style={styles.promoGreenBtnText}>Играть</Text>
-            </TouchableOpacity>
-          </View>
+          </TouchableOpacity>
         </View>
 
       </ScrollView>
@@ -437,10 +437,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8, paddingHorizontal: 14, alignSelf: 'flex-start', marginTop: 4,
   },
   promoOrangeBtnText: { color: '#fff', fontSize: 13, fontWeight: '700' },
-  puzzleGrid: {
-    flexDirection: 'row', flexWrap: 'wrap', width: '100%', marginVertical: 6, gap: 2,
-  },
-  puzzleEmoji: { fontSize: 22, width: '30%', textAlign: 'center' },
   promoGreenBtn: {
     backgroundColor: GREEN_ACTIVE, borderRadius: 100,
     paddingVertical: 8, paddingHorizontal: 14, alignSelf: 'flex-start', marginTop: 2,
