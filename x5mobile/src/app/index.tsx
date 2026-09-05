@@ -125,7 +125,6 @@ function AppContent({ token }: { token: string }) {
         )}
         {screen === 'savings' && (
           <SavingsView
-            tasks={data.tasks}
             leaderboard={data.leaderboard}
             savings={{ paid: totalPaid, withoutDiscount: totalPaid + totalSaved }}
             token={token}

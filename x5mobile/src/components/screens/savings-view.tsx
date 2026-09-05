@@ -4,10 +4,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BrandColors } from '@/constants/theme';
 import { BasketItem, useBasket } from '@/hooks/useBasket';
-import { LeaderboardEntry, Savings, Task } from '@/mock-data';
+import { ChallengeItem, useChallenges } from '@/hooks/useChallenges';
+import { LeaderboardEntry, Savings } from '@/mock-data';
 
 interface SavingsViewProps {
-  tasks: Task[];
   leaderboard: LeaderboardEntry[];
   savings: Savings;
   token: string;
@@ -17,8 +17,9 @@ interface SavingsViewProps {
   onOrderPlaced: () => void;
 }
 
-export function SavingsView({ tasks, leaderboard, savings, token, goHome, goHistory, goChallenges, onOrderPlaced }: SavingsViewProps) {
+export function SavingsView({ leaderboard, savings, token, goHome, goHistory, goChallenges, onOrderPlaced }: SavingsViewProps) {
   const insets = useSafeAreaInsets();
+  const { current: challenges } = useChallenges(token);
   const {
     items: basketItems,
     loading: basketLoading,
@@ -206,8 +207,8 @@ export function SavingsView({ tasks, leaderboard, savings, token, goHome, goHist
         {/* Tasks */}
         <Text style={styles.sectionTitle}>Задания</Text>
         <View style={styles.tasksList}>
-          {tasks.map(task => (
-            <TaskCard key={task.id} task={task} />
+          {challenges.map(challenge => (
+            <TaskCard key={challenge.id} challenge={challenge} />
           ))}
         </View>
 
@@ -223,23 +224,24 @@ export function SavingsView({ tasks, leaderboard, savings, token, goHome, goHist
   );
 }
 
-function TaskCard({ task }: { task: Task }) {
-  const progressPct = Math.round((task.progress / task.total) * 100);
+function TaskCard({ challenge }: { challenge: ChallengeItem }) {
+  const progressPct = Math.min(100, Math.round((challenge.quantity_current / challenge.quantity_target) * 100));
+  const done = challenge.status === 'выполнено';
 
   return (
     <View style={styles.taskCard}>
       <View style={styles.taskTopRow}>
         <View style={styles.taskTextBlock}>
-          <Text style={styles.taskTitle}>{task.title}</Text>
-          <Text style={styles.taskSub}>{task.sub}</Text>
+          <Text style={styles.taskTitle}>{challenge.title}</Text>
+          <Text style={styles.taskSub}>{challenge.description}</Text>
         </View>
-        {task.done ? (
+        {done ? (
           <View style={styles.doneCircle}>
             <Text style={styles.doneCheck}>✓</Text>
           </View>
         ) : (
           <View style={styles.progressPill}>
-            <Text style={styles.progressPillText}>{task.progress}/{task.total}</Text>
+            <Text style={styles.progressPillText}>{challenge.quantity_current}/{challenge.quantity_target}</Text>
           </View>
         )}
       </View>
@@ -251,16 +253,16 @@ function TaskCard({ task }: { task: Task }) {
             styles.taskProgressFill,
             {
               width: `${progressPct}%` as `${number}%`,
-              backgroundColor: task.done ? BrandColors.green : BrandColors.red,
+              backgroundColor: done ? BrandColors.green : BrandColors.red,
             },
           ]}
         />
       </View>
 
       {/* Reward */}
-      <View style={[styles.rewardBlock, { backgroundColor: task.done ? BrandColors.greenLight : BrandColors.rewardOrangeBg }]}>
-        <View style={[styles.rewardDot, { backgroundColor: task.done ? BrandColors.green : BrandColors.gold }]} />
-        <Text style={styles.rewardText}>{task.reward}</Text>
+      <View style={[styles.rewardBlock, { backgroundColor: done ? BrandColors.greenLight : BrandColors.rewardOrangeBg }]}>
+        <View style={[styles.rewardDot, { backgroundColor: done ? BrandColors.green : BrandColors.gold }]} />
+        <Text style={styles.rewardText}>+{challenge.reward_rub} ₽ при выполнении</Text>
       </View>
     </View>
   );
