@@ -200,6 +200,37 @@ class TestPostBasketPreview:
         resp = client.post("/basket/preview", json={"items": []})
         assert resp.status_code == 401
 
+    def test_forwards_items_and_points_to_spend(self) -> None:
+        from webx5.schemas.receipt import CalculateResponse
+
+        captured: dict = {}
+
+        def _fake_preview(self, session, user_id, items, points_to_spend=None):
+            captured["items"] = items
+            captured["points_to_spend"] = points_to_spend
+            return CalculateResponse(
+                store_id=uuid.uuid4(),
+                loyalty_card_id=user_id,
+                items=[],
+                total_base=Decimal("0"),
+                total_paid=Decimal("0"),
+                total_saved=Decimal("0"),
+                cashback=None,
+            )
+
+        product_id = str(uuid.uuid4())
+        with patch("webx5.services.basket_assistant.BasketService.preview", _fake_preview):
+            resp = client.post(
+                "/basket/preview",
+                json={"items": [{"product_id": product_id, "quantity": 3}], "points_to_spend": "all"},
+                headers=_bearer(_token()),
+            )
+        assert resp.status_code == 200
+        assert len(captured["items"]) == 1
+        assert str(captured["items"][0].product_id) == product_id
+        assert captured["items"][0].quantity == 3
+        assert captured["points_to_spend"] == "all"
+
     def test_empty_items_is_valid_request(self) -> None:
         from webx5.schemas.receipt import CalculateResponse
 
