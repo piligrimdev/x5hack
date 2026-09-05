@@ -15,13 +15,14 @@ from __future__ import annotations
 
 import uuid
 from collections import Counter
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from synth.challenges import pick_vibe_category
 from synth.config import SynthConfig
 from webx5.crud.task import TaskRepository
 from webx5.entities.category import Category
@@ -43,6 +44,23 @@ class ChallengeAdapter:
     def __init__(self, task_repo: TaskRepository) -> None:
         self.task_repo = task_repo
 
+    # ------- vibe-of-the-month resolution -------
+    def _resolve_vibe_category(self, session: Session, user: User) -> str:
+        """Return this user's "vibe" theme for the current calendar month.
+        Stable across generation calls within a month; auto-rotates at the
+        start of each new month via `pick_vibe_category` until a future
+        manual-selection feature lets a user pick their own — the
+        `vibe_category`/`vibe_month` columns exist for that reason, not
+        just as a cache."""
+        month_start = date.today().replace(day=1)
+        if user.vibe_category and user.vibe_month == month_start:
+            return user.vibe_category
+        vibe_category = pick_vibe_category(str(user.id), month_start.strftime("%Y-%m"))
+        user.vibe_category = vibe_category
+        user.vibe_month = month_start
+        session.flush()
+        return vibe_category
+
     # ------- ORM → dict-profile for synth --------
     def build_profile(self, session: Session, user_id: uuid.UUID, config: SynthConfig) -> dict:
         """Assemble the dict shape `synth.challenges.generate_challenge_for_user` expects.
@@ -53,6 +71,8 @@ class ChallengeAdapter:
         user: User | None = session.get(User, user_id)
         if user is None:
             raise ValueError(f"User not found: {user_id}")
+
+        vibe_category = self._resolve_vibe_category(session, user)
 
         # Read last 90 days of receipts for this user.
         cutoff = datetime.now(timezone.utc) - timedelta(days=90)
@@ -117,6 +137,7 @@ class ChallengeAdapter:
             "family_size": 1,
             "habitual_categories": habitual,
             "receipts": receipts_dicts,
+            "vibe_category": vibe_category,
         }
 
     # ------- Product resolution -------
