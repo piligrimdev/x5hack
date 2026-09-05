@@ -1,6 +1,9 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 
 import { apiFetch } from '@/api/client';
+
+const STORAGE_KEY = '@x5hack/weeklyBasket';
 
 export interface BasketItem {
   product_id: string;
@@ -57,15 +60,29 @@ export function useBasket(token: string | null, onOrderPlaced?: () => void) {
   const [message, setMessage] = useState<string | null>(null);
   const [preview, setPreview] = useState<BasketPreview | null>(null);
   const [spendPoints, setSpendPoints] = useState(false);
+  const [hasCollected, setHasCollected] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    if (!token) return;
-    setLoading(true);
-    apiFetch<SuggestedBasketResponse>('/basket/suggested', token)
-      .then((data) => setItems(data.items))
-      .catch((e: Error) => setMessage(e.message))
-      .finally(() => setLoading(false));
-  }, [token]);
+    (async () => {
+      try {
+        const raw = await AsyncStorage.getItem(STORAGE_KEY);
+        if (raw !== null) {
+          setItems(JSON.parse(raw));
+          setHasCollected(true);
+        }
+      } catch {
+        // corrupt or unavailable storage — start with an empty, uncollected basket
+      } finally {
+        setHydrated(true);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated || !hasCollected) return;
+    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(items)).catch(() => {});
+  }, [items, hasCollected, hydrated]);
 
   useEffect(() => {
     if (!token || items.length === 0) {
@@ -82,6 +99,20 @@ export function useBasket(token: string | null, onOrderPlaced?: () => void) {
       .then(setPreview)
       .catch(() => setPreview(null));
   }, [token, items, spendPoints]);
+
+  async function collectWeeklyBasket() {
+    if (!token) return;
+    setLoading(true);
+    try {
+      const data = await apiFetch<SuggestedBasketResponse>('/basket/suggested', token);
+      setItems(data.items);
+      setHasCollected(true);
+    } catch (e: unknown) {
+      setMessage(e instanceof Error ? e.message : 'Ошибка сбора корзины');
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function sendInstruction(instruction: string) {
     if (!token || !instruction.trim()) return;
@@ -115,8 +146,10 @@ export function useBasket(token: string | null, onOrderPlaced?: () => void) {
         }),
       });
       setItems([]);
+      setHasCollected(false);
       setPreview(null);
       setSpendPoints(false);
+      AsyncStorage.removeItem(STORAGE_KEY).catch(() => {});
       setMessage(`Заказ оформлен! Сэкономлено ${Math.round(res.total_saved)} ₽`);
       onOrderPlaced?.();
     } catch (e: unknown) {
@@ -126,5 +159,17 @@ export function useBasket(token: string | null, onOrderPlaced?: () => void) {
     }
   }
 
-  return { items, loading, message, sendInstruction, checkout, preview, spendPoints, setSpendPoints };
+  return {
+    items,
+    loading,
+    message,
+    sendInstruction,
+    checkout,
+    preview,
+    spendPoints,
+    setSpendPoints,
+    hasCollected,
+    hydrated,
+    collectWeeklyBasket,
+  };
 }

@@ -29,6 +29,9 @@ export function SavingsView({ leaderboard, savings, token, goHome, goHistory, go
     preview,
     spendPoints,
     setSpendPoints,
+    hasCollected,
+    hydrated,
+    collectWeeklyBasket,
   } = useBasket(token, onOrderPlaced);
   const [instructionText, setInstructionText] = useState('');
 
@@ -109,7 +112,9 @@ export function SavingsView({ leaderboard, savings, token, goHome, goHistory, go
         {/* Weekly basket */}
         <Text style={styles.sectionTitle}>Корзина на неделю</Text>
         <View style={styles.basketCard}>
-          {basketLoading && basketItems.length === 0 ? (
+          {!hydrated ? (
+            <ActivityIndicator color={BrandColors.textSecondary} />
+          ) : basketLoading && basketItems.length === 0 ? (
             <ActivityIndicator color={BrandColors.textSecondary} />
           ) : basketItems.length > 0 ? (
             pricedItems.map(({ item, unitBase, lineTotal }) => {
@@ -130,7 +135,23 @@ export function SavingsView({ leaderboard, savings, token, goHome, goHistory, go
               );
             })
           ) : !basketMessage?.startsWith('Заказ оформлен') ? (
-            <Text style={styles.basketEmptyText}>Пока нечего предложить — мало истории покупок</Text>
+            <View style={styles.basketCollectBlock}>
+              <Text style={styles.basketEmptyText}>
+                {hasCollected
+                  ? 'Пока нечего предложить — мало истории покупок'
+                  : 'Соберите корзину на неделю на основе своих покупок'}
+              </Text>
+              <TouchableOpacity
+                style={[styles.collectBtn, basketLoading && styles.collectBtnDisabled]}
+                onPress={collectWeeklyBasket}
+                activeOpacity={0.7}
+                disabled={basketLoading}>
+                {basketLoading
+                  ? <ActivityIndicator color="#fff" size="small" />
+                  : <Text style={styles.collectBtnText}>Собрать корзину на неделю</Text>
+                }
+              </TouchableOpacity>
+            </View>
           ) : null}
           {basketMessage && <Text style={styles.basketMessage}>{basketMessage}</Text>}
           <Text style={styles.appiLabel}>🍊 Спроси Аппи</Text>
@@ -482,6 +503,26 @@ const styles = StyleSheet.create({
   basketEmptyText: {
     fontSize: 13,
     color: BrandColors.textSecondary,
+  },
+  basketCollectBlock: {
+    gap: 10,
+    alignItems: 'flex-start',
+  },
+  collectBtn: {
+    backgroundColor: BrandColors.dark,
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  collectBtnDisabled: {
+    backgroundColor: BrandColors.cardBorder,
+  },
+  collectBtnText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '700',
   },
   basketMessage: {
     fontSize: 12.5,
