@@ -19,7 +19,7 @@ interface SavingsViewProps {
 
 export function SavingsView({ leaderboard, savings, token, goHome, goHistory, goChallenges, onOrderPlaced }: SavingsViewProps) {
   const insets = useSafeAreaInsets();
-  const { current: challenges } = useChallenges(token);
+  const { current: challenges, loading: challengesLoading, error: challengesError } = useChallenges(token);
   const {
     items: basketItems,
     loading: basketLoading,
@@ -231,11 +231,22 @@ export function SavingsView({ leaderboard, savings, token, goHome, goHistory, go
 
         {/* Tasks */}
         <Text style={styles.sectionTitle}>Задания</Text>
-        <View style={styles.tasksList}>
-          {challenges.map(challenge => (
-            <TaskCard key={challenge.id} challenge={challenge} />
-          ))}
-        </View>
+        {challengesLoading ? (
+          <ActivityIndicator color={BrandColors.green} style={styles.challengesLoader} />
+        ) : challengesError ? (
+          <Text style={styles.challengesErrorText}>Не удалось загрузить задания</Text>
+        ) : challenges.length > 0 ? (
+          <View style={styles.tasksList}>
+            {challenges.map(challenge => (
+              <TaskCard key={challenge.id} challenge={challenge} />
+            ))}
+          </View>
+        ) : (
+          <View style={styles.challengesEmptyState}>
+            <Text style={styles.challengesEmptyIcon}>🎯</Text>
+            <Text style={styles.challengesEmptyText}>Нет активных заданий</Text>
+          </View>
+        )}
 
         {/* Leaderboard */}
         <Text style={styles.sectionTitle}>Рейтинг экономии</Text>
@@ -430,6 +441,27 @@ const styles = StyleSheet.create({
   },
   tasksList: {
     gap: 12,
+  },
+  challengesLoader: {
+    marginVertical: 24,
+  },
+  challengesErrorText: {
+    fontSize: 15,
+    color: BrandColors.textSecondary,
+    textAlign: 'center',
+    marginVertical: 24,
+  },
+  challengesEmptyState: {
+    alignItems: 'center',
+    paddingVertical: 32,
+    gap: 12,
+  },
+  challengesEmptyIcon: {
+    fontSize: 40,
+  },
+  challengesEmptyText: {
+    fontSize: 15,
+    color: BrandColors.textSecondary,
   },
   basketCard: {
     backgroundColor: BrandColors.cardBg,

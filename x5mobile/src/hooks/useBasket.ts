@@ -68,8 +68,11 @@ export function useBasket(token: string | null, onOrderPlaced?: () => void) {
       try {
         const raw = await AsyncStorage.getItem(STORAGE_KEY);
         if (raw !== null) {
-          setItems(JSON.parse(raw));
-          setHasCollected(true);
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) {
+            setItems(parsed);
+            setHasCollected(true);
+          }
         }
       } catch {
         // corrupt or unavailable storage — start with an empty, uncollected basket

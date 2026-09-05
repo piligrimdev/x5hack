@@ -148,7 +148,7 @@ class TaskCompletionService:
                 return False
 
         # 4) All criteria passed — award cashback points + mark completed atomically.
-        # Feature 007: reward = points (not Discount). Points awarded as-is: int(reward_rub).
+        # Feature 007: reward = points (not Discount), scaled by the configured spend rate.
         from webx5.core.points import points_service
 
         points_service.award_for_task(session, task)
