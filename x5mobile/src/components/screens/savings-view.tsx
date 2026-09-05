@@ -94,16 +94,16 @@ export function SavingsView({ tasks, leaderboard, savings, token, goHome, goHist
         <View style={styles.basketCard}>
           {basketLoading && basketItems.length === 0 ? (
             <ActivityIndicator color={BrandColors.textSecondary} />
-          ) : basketItems.length === 0 ? (
-            <Text style={styles.basketEmptyText}>Пока нечего предложить — мало истории покупок</Text>
-          ) : (
+          ) : basketItems.length > 0 ? (
             basketItems.map((item: BasketItem) => (
               <View key={item.product_id} style={styles.basketRow}>
                 <Text style={styles.basketItemName}>{item.name}</Text>
                 <Text style={styles.basketItemQty}>{item.quantity} шт</Text>
               </View>
             ))
-          )}
+          ) : !basketMessage?.startsWith('Заказ оформлен') ? (
+            <Text style={styles.basketEmptyText}>Пока нечего предложить — мало истории покупок</Text>
+          ) : null}
           {basketMessage && <Text style={styles.basketMessage}>{basketMessage}</Text>}
           <Text style={styles.appiLabel}>🍊 Спроси Аппи</Text>
           <View style={styles.basketInputRow}>
