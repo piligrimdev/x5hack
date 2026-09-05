@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { apiFetch } from '@/api/client';
 
@@ -13,7 +13,7 @@ export function useEconomy(token: string | null) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const refetch = useCallback(() => {
     if (!token) return;
     setLoading(true);
     setError(null);
@@ -23,5 +23,9 @@ export function useEconomy(token: string | null) {
       .finally(() => setLoading(false));
   }, [token]);
 
-  return { economy, loading, error };
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
+
+  return { economy, loading, error, refetch };
 }

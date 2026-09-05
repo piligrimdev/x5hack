@@ -19,7 +19,11 @@ interface AssistantResponse {
   message: string | null;
 }
 
-export function useBasket(token: string | null) {
+interface CheckoutResponse {
+  total_saved: number;
+}
+
+export function useBasket(token: string | null, onOrderPlaced?: () => void) {
   const [items, setItems] = useState<BasketItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -53,5 +57,25 @@ export function useBasket(token: string | null) {
     }
   }
 
-  return { items, loading, message, sendInstruction };
+  async function checkout() {
+    if (!token || items.length === 0) return;
+    setLoading(true);
+    try {
+      const res = await apiFetch<CheckoutResponse>('/basket/checkout', token, {
+        method: 'POST',
+        body: JSON.stringify({
+          items: items.map((i) => ({ product_id: i.product_id, quantity: i.quantity })),
+        }),
+      });
+      setItems([]);
+      setMessage(`Заказ оформлен! Сэкономлено ${Math.round(res.total_saved)} ₽`);
+      onOrderPlaced?.();
+    } catch (e: unknown) {
+      setMessage(e instanceof Error ? e.message : 'Ошибка оформления заказа');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return { items, loading, message, sendInstruction, checkout };
 }
