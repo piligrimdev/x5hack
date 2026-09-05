@@ -32,3 +32,7 @@ class AssistantResponse(BaseModel):
     items: list[BasketItem]
     applied: bool
     message: str | None = None
+
+
+class CheckoutRequest(BaseModel):
+    items: list[BasketItemIn]

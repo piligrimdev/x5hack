@@ -4,7 +4,13 @@ from fastapi import APIRouter
 
 from webx5.dependencies.auth import CurrentUserUUID
 from webx5.dependencies.db import SessionDep
-from webx5.schemas.basket import AssistantRequest, AssistantResponse, SuggestedBasketResponse
+from webx5.schemas.basket import (
+    AssistantRequest,
+    AssistantResponse,
+    CheckoutRequest,
+    SuggestedBasketResponse,
+)
+from webx5.schemas.receipt import ReceiptResponse
 
 basket_router = APIRouter(prefix="/basket", tags=["Basket"])
 
@@ -26,3 +32,14 @@ def post_basket_assistant(
     from webx5.core.basket import basket_service
 
     return basket_service.apply_instruction(session, items=data.items, instruction=data.instruction)
+
+
+@basket_router.post("/checkout", response_model=ReceiptResponse, status_code=201)
+def post_basket_checkout(
+    data: CheckoutRequest,
+    session: SessionDep,
+    user_id: CurrentUserUUID,
+) -> ReceiptResponse:
+    from webx5.core.basket import basket_service
+
+    return basket_service.checkout(session, user_id, data.items)
