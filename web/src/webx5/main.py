@@ -5,6 +5,7 @@ import structlog
 import uvicorn
 from dotenv import load_dotenv
 
+from webx5.core.langfuse_client import init_langfuse
 from webx5.core.logging_config import configure_logging, default_log_dir
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -17,6 +18,9 @@ structlog.get_logger("app.startup").info(
     service=os.getenv("SERVICE_NAME", "webx5"),
     log_dir=str(default_log_dir()),
 )
+
+# Initialize Langfuse at startup — gracefully degrades when API key missing
+init_langfuse()
 
 
 def main() -> None:

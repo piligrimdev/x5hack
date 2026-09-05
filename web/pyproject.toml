@@ -5,7 +5,7 @@ description = "Backend services for x5hack"
 authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
-requires-python = ">=3.12"
+requires-python = ">=3.11,<4.0"
 dependencies = [
     "fastapi>=0.115.0,<1.0.0",
     "uvicorn[standard]>=0.30.0,<1.0.0",
@@ -25,6 +25,9 @@ dependencies = [
     "redis>=5.0.0,<6.0.0",
     "pyyaml>=6.0,<7.0.0",
     "requests>=2.32.0,<3.0.0",
+    "prometheus-client>=0.19.0,<1.0.0",
+    "langfuse>=2.0.0,<3.0.0",
+    "flower>=2.0.0,<3.0.0",
 ]
 
 [dependency-groups]

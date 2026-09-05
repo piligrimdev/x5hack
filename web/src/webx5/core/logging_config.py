@@ -17,9 +17,12 @@ def configure_logging() -> None:
         structlog.stdlib.add_logger_name,
         structlog.stdlib.add_log_level,
         structlog.processors.TimeStamper(fmt="iso"),
+        _add_service_name,
     ]
 
-    if os.getenv("ENV", "dev") == "prod":
+    # Use JSON renderer unless explicitly in dev console mode
+    log_format = os.getenv("LOG_FORMAT", "json" if _running_in_container() else "console")
+    if log_format == "json":
         renderer = structlog.processors.JSONRenderer()
     else:
         renderer = structlog.dev.ConsoleRenderer()
@@ -32,6 +35,7 @@ def configure_logging() -> None:
         logger_factory=structlog.stdlib.LoggerFactory(),
         wrapper_class=structlog.stdlib.BoundLogger,
         cache_logger_on_first_use=True,
+        context_class=dict,
     )
 
     formatter = structlog.stdlib.ProcessorFormatter(
@@ -45,3 +49,12 @@ def configure_logging() -> None:
     root_logger = logging.getLogger()
     root_logger.addHandler(handler)
     root_logger.setLevel(log_level)
+
+
+def _running_in_container() -> bool:
+    return os.path.exists("/.dockerenv") or os.getenv("CONTAINER", "") == "true"
+
+
+def _add_service_name(logger, method, event_dict):  # noqa: ANN001
+    event_dict.setdefault("service_name", os.getenv("SERVICE_NAME", "webx5"))
+    return event_dict

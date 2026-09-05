@@ -22,6 +22,9 @@ def generate_challenges(user_id: str, count: int = 3) -> dict:
     from webx5.core.challenges import challenge_service
     from webx5.core.db import db
 
+    from webx5.utils.contextvars_utils import user_id_context
+
+    user_id_context.set(user_id)
     logger.info("generate_challenges.enter", user_id=user_id, requested_count=count)
 
     uid = uuid.UUID(user_id)
