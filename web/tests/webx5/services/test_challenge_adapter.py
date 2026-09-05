@@ -79,20 +79,25 @@ def test_resolve_vibe_category_is_deterministic_for_the_same_user_and_month():
 
 def test_suggested_basket_items_converts_product_quantity_pairs_to_plain_dicts():
     adapter = _adapter()
+    session = MagicMock()
+    category_id = uuid.uuid4()
     product = MagicMock()
     product.name = "Молоко 3.2%"
-    product.category.name = "молочные продукты и яйца"
+    product.category_id = category_id
     adapter.basket_repo.suggest_items.return_value = [(product, 2)]
+    session.execute.return_value.all.return_value = [(category_id, "молочные продукты и яйца")]
 
-    result = adapter._suggested_basket_items(MagicMock(), uuid.uuid4())
+    result = adapter._suggested_basket_items(session, uuid.uuid4())
 
     assert result == [{"item": "Молоко 3.2%", "category": "молочные продукты и яйца", "weekly_quantity": 2}]
 
 
 def test_suggested_basket_items_empty_when_no_suggestions():
     adapter = _adapter()
+    session = MagicMock()
     adapter.basket_repo.suggest_items.return_value = []
 
-    result = adapter._suggested_basket_items(MagicMock(), uuid.uuid4())
+    result = adapter._suggested_basket_items(session, uuid.uuid4())
 
     assert result == []
+    session.execute.assert_not_called()

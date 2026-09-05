@@ -68,10 +68,26 @@ class ChallengeAdapter:
         """Convert `BasketRepository.suggest_items`'s `(Product, quantity)`
         pairs into the plain-dict shape `synth.challenges.build_basket_prompt`
         expects — keeps `synth.challenges` free of any ORM dependency, same
-        reason `build_profile` converts receipts/products to dicts too."""
+        reason `build_profile` converts receipts/products to dicts too.
+
+        Resolves each product's category NAME via a separate batched query
+        on `product.category_id` rather than the `Product.category`
+        relationship — `BasketRepository.suggest_items` deliberately runs
+        its query with `noload(Product.category)` (to keep its own
+        `GROUP BY Product.id` valid), so `product.category` is always
+        `None` on the rows it returns; reading `product.category.name`
+        here raises `AttributeError` for every user with any suggested
+        items at all.
+        """
         suggested = self.basket_repo.suggest_items(session, user_id)
+        if not suggested:
+            return []
+        category_ids = {product.category_id for product, _ in suggested}
+        category_name_by_id = dict(
+            session.execute(select(Category.id, Category.name).where(Category.id.in_(category_ids))).all()
+        )
         return [
-            {"item": product.name, "category": product.category.name, "weekly_quantity": qty}
+            {"item": product.name, "category": category_name_by_id[product.category_id], "weekly_quantity": qty}
             for product, qty in suggested
         ]
 
