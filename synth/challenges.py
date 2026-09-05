@@ -704,10 +704,12 @@ def compute_frequency_saturation(
     return saturated, {"n_receipts_train": n_receipts_train, "threshold": min_receipts_for_no_challenge}
 
 
-# The three independent "personal" challenge slots every non-saturated user
-# now gets a shot at, one attempt each — not a single either/or choice
-# between them like the old `challenge_type` CLI flag was.
-PERSONAL_CHALLENGE_SLOTS = ("llm", "spend_threshold", "category_expansion")
+# The four independent challenge slots every user gets, one attempt each,
+# unconditionally — no receptiveness/saturation gate decides who gets
+# personalization any more (see `compute_receptiveness`/
+# `compute_frequency_saturation`, still used by `synth/simulation.py`'s
+# offline effect model, but no longer by `generate_challenge_for_user`).
+CHALLENGE_SLOTS = ("llm_habit", "llm_discovery", "generic", "vibe")
 
 
 def _pick_distinct_generic_offer(user_id: str, config: SynthConfig, used_indices: list[int]) -> dict:
@@ -732,116 +734,93 @@ def generate_challenge_for_user(
     model: str,
     api_key: str | None = None,
     dry_run: bool = False,
+    vibe_month_key: str | None = None,
 ) -> list[dict]:
-    """Route one profile to no-challenge, or up to `PERSONAL_CHALLENGE_SLOTS`
-    challenges (one per slot: `llm`, `spend_threshold`, `category_expansion`).
+    """Route one profile to exactly `len(CHALLENGE_SLOTS)` records — one per
+    slot (`llm_habit`, `llm_discovery`, `generic`, `vibe`) — for EVERY user,
+    regardless of purchase-pattern strength or frequency. There is no
+    saturation/receptiveness gate here any more: a thin/noisy purchase
+    history degrades gracefully through the LLM prompt
+    (`summarize_purchase_pattern` already renders "—" for empty fields)
+    rather than being rejected upfront.
 
-    Saturated users (`compute_frequency_saturation`) get a single
-    `no_challenge` record and nothing else — an additional challenge isn't
-    worth its reward cost for someone already buying at max frequency.
+    `llm_habit` and `llm_discovery` both call the LLM
+    (`build_personal_prompt` with `focus="habit"`/`"discovery"`) — same
+    failure/fallback handling, different instructions. `generic` is the
+    deterministic `GENERIC_CHALLENGES` pool, unconditionally attempted for
+    everyone (not just as a fallback, unlike before). `vibe` calls the LLM
+    constrained to the user's monthly theme: `profile["vibe_category"]` if
+    the caller already resolved/persisted one (the web layer always does,
+    see `ChallengeAdapter._resolve_vibe_category`), otherwise
+    `pick_vibe_category` picks one deterministically from `vibe_month_key`
+    (defaults to the current UTC year-month) so offline/dry-run calls
+    without a DB-backed profile still get a stable answer.
 
-    Everyone else gets exactly `len(PERSONAL_CHALLENGE_SLOTS)` records, one
-    per slot. If the user isn't `receptive` (`compute_receptiveness`), none
-    of the three builders are even attempted — all three slots fall back to
-    a distinct generic offer (`path="generic"`). If receptive, each slot's
-    builder is attempted independently; a slot whose builder fails on its
-    own criteria (thin favorite-item history for `spend_threshold`, an LLM
-    network/validation error for `llm` — `category_expansion` has no
-    additional failure mode once there's any purchase history) falls back
-    to its own distinct generic offer (`path="generic_fallback"`,
-    `challenge_slot` still names which slot it's replacing) rather than
-    dropping the slot or shipping an unvalidated result. So the mix a user
-    ends up with ranges from 3 personal (strong pattern) through 2
-    generic + 1 personal down to 3 generic (weak pattern / everything
-    failed) — never fewer than 3 records for a non-saturated user.
+    Any LLM-backed slot whose call/validation fails falls back to a
+    (slot-distinct) generic offer, `path="generic_fallback"` — same as the
+    old single `llm` slot's behavior — never drops the slot.
     """
-    saturated, frequency_signal = compute_frequency_saturation(profile, config)
-    if saturated:
-        return [{
-            "user_id": profile["user_id"],
-            "path": "no_challenge",
-            "frequency_signal": frequency_signal,
-            "model": None,
-            "reasoning": "Purchase frequency is already unusually high — an additional challenge is unlikely to be worth its reward cost.",
-        }]
-
-    receptive, signal = compute_receptiveness(profile, config)
     used_generic_indices: list[int] = []
 
     def _generic(slot: str, path: str, error: str | None = None, model_attempted: str | None = None) -> dict:
         offer = _pick_distinct_generic_offer(profile["user_id"], config, used_generic_indices)
         record = {
-            "user_id": profile["user_id"], "path": path, "receptiveness_signal": signal,
+            "user_id": profile["user_id"], "path": path,
             "model": model_attempted, "challenge_slot": slot, **offer,
         }
         if error is not None:
             record["error"] = error
         return record
 
+    max_reward = estimate_max_reward_rub(profile)
     results: list[dict] = []
 
-    if not receptive:
-        for slot in PERSONAL_CHALLENGE_SLOTS:
-            results.append(_generic(slot, "generic"))
-        return results
-
-    # slot: spend_threshold — deterministic, no API call
-    challenge = build_spend_threshold_challenge(profile, config)
-    if challenge is None:
-        results.append(_generic(
-            "spend_threshold", "generic_fallback",
-            error="not enough train-period history to identify a favorite product",
-        ))
-    else:
-        results.append({
-            "user_id": profile["user_id"], "path": "personal", "receptiveness_signal": signal,
-            "model": None, "challenge_slot": "spend_threshold", **challenge,
-        })
-
-    # slot: category_expansion — deterministic, no API call
-    challenge = build_category_expansion_challenge(profile, config)
-    if challenge is None:
-        results.append(_generic(
-            "category_expansion", "generic_fallback",
-            error="not enough train-period history to compute category counts",
-        ))
-    else:
-        results.append({
-            "user_id": profile["user_id"], "path": "personal", "receptiveness_signal": signal,
-            "model": None, "challenge_slot": "category_expansion", **challenge,
-        })
-
-    # slot: llm
-    max_reward = estimate_max_reward_rub(profile)
-    if dry_run:
-        results.append({
-            "user_id": profile["user_id"], "path": "personal_dry_run", "receptiveness_signal": signal,
-            "model": model, "challenge_slot": "llm", "max_reward_rub": max_reward,
-            "note": "dry run — no LLM call made",
-        })
-    else:
-        system, user_msg = build_personal_prompt(profile, config, max_reward)
+    def _run_llm_slot(slot: str, system: str, user_msg: str, allowed_categories: set[str] | None = None) -> None:
+        if dry_run:
+            results.append({
+                "user_id": profile["user_id"], "path": "personal_dry_run",
+                "model": model, "challenge_slot": slot, "max_reward_rub": max_reward,
+                "note": "dry run — no LLM call made",
+            })
+            return
         try:
             raw = call_openrouter(model, system, user_msg, api_key)
-            challenge = parse_and_validate_challenge(raw, config, max_reward)
-            # The LLM only names a category, never a specific item — pick one
-            # deterministically so progress can be tracked against a single SKU.
+            challenge = parse_and_validate_challenge(raw, config, max_reward, allowed_categories=allowed_categories)
             challenge["target_quantity"] = PERSONAL_TARGET_QUANTITY
-            sku = pick_sku_in_category(config, challenge["target_categories"][0], seed_key=f"{profile['user_id']}:sku:llm")
+            sku = pick_sku_in_category(config, challenge["target_categories"][0], seed_key=f"{profile['user_id']}:sku:{slot}")
             challenge["target_sku_id"] = sku.sku_id if sku else None
             if sku is not None:
-                # The LLM's description talks about the whole category —
-                # replace it with the concrete item/count actually tracked,
-                # keeping the LLM's own (personalized) challenge_title.
                 challenge["description"] = item_action_description(
                     sku.item, PERSONAL_TARGET_QUANTITY, challenge["reward_rub"]
                 )
             results.append({
-                "user_id": profile["user_id"], "path": "personal", "receptiveness_signal": signal,
-                "model": model, "challenge_slot": "llm", **challenge,
+                "user_id": profile["user_id"], "path": "personal",
+                "model": model, "challenge_slot": slot, **challenge,
             })
         except Exception as e:  # noqa: BLE001 — deliberately broad: any failure must fall back, not propagate
-            results.append(_generic("llm", "generic_fallback", error=str(e), model_attempted=model))
+            results.append(_generic(slot, "generic_fallback", error=str(e), model_attempted=model))
+
+    # slot: llm_habit
+    system, user_msg = build_personal_prompt(profile, config, max_reward, focus="habit")
+    _run_llm_slot("llm_habit", system, user_msg)
+
+    # slot: llm_discovery
+    system, user_msg = build_personal_prompt(profile, config, max_reward, focus="discovery")
+    _run_llm_slot("llm_discovery", system, user_msg)
+
+    # slot: generic — deterministic, no API call, always attempted for everyone
+    offer = _pick_distinct_generic_offer(profile["user_id"], config, used_generic_indices)
+    results.append({
+        "user_id": profile["user_id"], "path": "generic",
+        "model": None, "challenge_slot": "generic", **offer,
+    })
+
+    # slot: vibe
+    vibe_category = profile.get("vibe_category") or pick_vibe_category(
+        profile["user_id"], vibe_month_key or date.today().strftime("%Y-%m")
+    )
+    system, user_msg = build_vibe_prompt(profile, config, max_reward, vibe_category)
+    _run_llm_slot("vibe", system, user_msg, allowed_categories=set(VIBE_CATEGORIES[vibe_category]))
 
     return results
 
