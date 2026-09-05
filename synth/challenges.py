@@ -588,15 +588,17 @@ def build_basket_prompt(
     profile: dict, config: SynthConfig, max_reward_rub: float, suggested_items: list[dict]
 ) -> tuple[str, str]:
     """Wraps the user's own deterministic weekly-purchase-frequency list
-    (`suggested_items` — from `BasketRepository.suggest_items`, the same
-    source `GET /basket/suggested` uses) into a challenge encouraging them
-    to buy their usual weekly basket. `target_categories` must stay within
+    (`suggested_items` — from `BasketRepository.suggest_items`, which
+    ranks products by how often the user buys them weekly) into a
+    challenge encouraging them to buy their usual weekly basket.
+    `target_categories` must stay within
     the categories already present in `suggested_items` — enforced by
     `parse_and_validate_challenge`'s `allowed_categories`, not by this
     function. The caller (`generate_challenge_for_user`) never calls this
     with an empty `suggested_items` — there is nothing to wrap into a
     challenge for a user with no purchase history yet, so that case is
     handled as a cold-start fallback before this function is ever reached."""
+    suggested_items = suggested_items[:20]
     summary = summarize_purchase_pattern(profile, config)
     items_text = "; ".join(
         f"{item['item']} ({item['category']}, ~{item['weekly_quantity']}/нед.)" for item in suggested_items
