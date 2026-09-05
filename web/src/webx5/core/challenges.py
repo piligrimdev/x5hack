@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import os
 
+from webx5.core.basket import basket_repo
 from webx5.crud.challenge_log import ChallengeLogRepository
 from webx5.crud.task import TaskRepository
 from webx5.services.challenge import ChallengeService
@@ -22,7 +23,7 @@ task_repo = TaskRepository()
 challenge_log_repo = ChallengeLogRepository()
 
 # --- adapter (ORM ↔ synth dict-profile) ---
-challenge_adapter = ChallengeAdapter(task_repo=task_repo)
+challenge_adapter = ChallengeAdapter(task_repo=task_repo, basket_repo=basket_repo)
 
 # --- LLM config from env ---
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "")
