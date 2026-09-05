@@ -474,6 +474,46 @@ def test_generate_challenge_for_user_vibe_slot_falls_back_when_llm_picks_categor
     assert "outside allowed set" in vibe_result["error"]
 
 
+def test_generate_challenge_for_user_recovers_from_unrecognized_vibe_category(monkeypatch):
+    # profile["vibe_category"] is a nullable free-text column with no CHECK
+    # constraint at the DB level (by design — flexible for a future
+    # manual-selection feature), so nothing guarantees a persisted value is
+    # still one of the 6 known VIBE_CATEGORIES keys. An unrecognized value
+    # must not crash the whole function (dropping all 4 slots) — it must
+    # fall back to a freshly-picked valid theme for the vibe slot only.
+    profile = _profile("bakes_on_weekends", seed=4)
+    profile = {**profile, "vibe_category": "not-a-real-theme"}
+
+    def fake_call(model, system, user, api_key=None, timeout=60.0, max_retries=3):
+        return json.dumps({
+            "challenge_title": "Test",
+            "description": "desc",
+            "target_categories": ["бакалея"],
+            "mechanic": "скидка",
+            "reward_rub": 30,
+        })
+
+    monkeypatch.setattr("synth.challenges.call_openrouter", fake_call)
+    results = generate_challenge_for_user(profile, _config, model="fake/model", api_key="fake-key")
+    assert len(results) == len(CHALLENGE_SLOTS)
+    vibe_result = _by_slot(results)["vibe"]
+    assert vibe_result["path"] in ("personal", "generic_fallback")
+    if vibe_result["path"] == "personal":
+        assert vibe_result["target_categories"] == ["бакалея"]
+
+
+def test_generate_challenge_for_user_all_llm_fallbacks_get_distinct_generic_offers(monkeypatch):
+    def fail_if_called(*args, **kwargs):
+        raise RuntimeError("simulated LLM outage")
+
+    monkeypatch.setattr("synth.challenges.call_openrouter", fail_if_called)
+    profile = _profile("bakes_on_weekends", seed=4)
+    results = generate_challenge_for_user(profile, _config, model="fake/model", api_key="fake-key")
+    assert len(results) == len(CHALLENGE_SLOTS)
+    assert len({r["challenge_title"] for r in results}) == len(CHALLENGE_SLOTS)
+    assert len({r["target_sku_id"] for r in results}) == len(CHALLENGE_SLOTS)
+
+
 def test_score_against_answer_key_basic():
     challenges = [
         {"user_id": "a", "path": "personal", "target_categories": ["овощи"], "mechanic": "скидка"},

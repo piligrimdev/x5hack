@@ -819,6 +819,15 @@ def generate_challenge_for_user(
     vibe_category = profile.get("vibe_category") or pick_vibe_category(
         profile["user_id"], vibe_month_key or date.today().strftime("%Y-%m")
     )
+    if vibe_category not in VIBE_CATEGORIES:
+        # `vibe_category` is a nullable free-text column with no CHECK
+        # constraint (by design, to stay flexible for a future
+        # manual-selection feature) — nothing guarantees a persisted value
+        # is still one of the 6 known theme keys. Never let an unrecognized
+        # value crash all 4 slots; fall back to a freshly-picked valid one.
+        vibe_category = pick_vibe_category(
+            profile["user_id"], vibe_month_key or date.today().strftime("%Y-%m")
+        )
     system, user_msg = build_vibe_prompt(profile, config, max_reward, vibe_category)
     _run_llm_slot("vibe", system, user_msg, allowed_categories=set(VIBE_CATEGORIES[vibe_category]))
 
