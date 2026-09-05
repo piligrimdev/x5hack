@@ -43,7 +43,9 @@ def _make_store() -> Store:
 
 @pytest.fixture()
 def repo() -> MagicMock:
-    return MagicMock(spec=BasketRepository)
+    repo = MagicMock(spec=BasketRepository)
+    repo.get_shopping_context.return_value = {"purchases": [], "challenges": []}
+    return repo
 
 
 @pytest.fixture()
@@ -80,7 +82,7 @@ def service(
     receipt_service: MagicMock,
     points_service: MagicMock,
 ) -> BasketService:
-    return BasketService(
+    service = BasketService(
         repo=repo,
         receipt_repo=receipt_repo,
         store_repo=store_repo,
@@ -89,6 +91,8 @@ def service(
         points_service=points_service,
         model="fake/model",
     )
+    service._catalog_prices = MagicMock(side_effect=lambda session, user, catalog: {pid: p.current_price for pid, p in catalog.items()})
+    return service
 
 
 @pytest.fixture()
@@ -97,28 +101,112 @@ def session() -> MagicMock:
 
 
 class TestSuggest:
-    def test_maps_repo_pairs_to_basket_items(
-        self, service: BasketService, repo: MagicMock, session: MagicMock
-    ) -> None:
-        product = _make_product("sku_0001", "Молоко", price="89.90")
-        repo.suggest_items.return_value = [(product, 2)]
-
-        items = service.suggest(session, uuid.uuid4())
-
-        assert len(items) == 1
-        assert items[0].product_id == product.id
-        assert items[0].name == "Молоко"
-        assert items[0].quantity == 2
+    def test_llm_selects_weekly_quantities_with_personal_context(
+        self, service, repo, session, monkeypatch,
+    ):
+        milk = _make_product("sku_0001", "Молоко", "89.90")
+        repo.get_full_catalog.return_value = [milk]
+        repo.get_shopping_context.return_value = {"purchases": [{"sku_id": "sku_0001", "weekly_quantity": 4}]}
+        call = MagicMock(return_value=[ToolCall("replace_basket", {"items": [{"sku_id": "sku_0001", "quantity": 4}]})])
+        monkeypatch.setattr("webx5.services.basket_assistant.call_openrouter_tools", call)
+        user = uuid.uuid4()
+        items = service.suggest(session, user)
+        assert items[0].quantity == 4
         assert items[0].price == Decimal("89.90")
+        repo.get_shopping_context.assert_called_once_with(session, user)
+        assert '"weekly_quantity":4' in call.call_args.kwargs["system"]
+        repo.suggest_items.assert_not_called()
 
-    def test_empty_history_returns_empty_list(
-        self, service: BasketService, repo: MagicMock, session: MagicMock
-    ) -> None:
-        repo.suggest_items.return_value = []
-        assert service.suggest(session, uuid.uuid4()) == []
+    def test_new_user_is_also_served_by_llm(self, service, repo, session, monkeypatch):
+        repo.get_full_catalog.return_value = [_make_product("milk", "Молоко")]
+        monkeypatch.setattr("webx5.services.basket_assistant.call_openrouter_tools", lambda **kw: [
+            ToolCall("replace_basket", {"items": [{"sku_id": "milk", "quantity": 2}]})])
+        assert service.suggest(session, uuid.uuid4())[0].quantity == 2
+
+    @pytest.mark.parametrize("items", [[], [{"sku_id": "unknown", "quantity": 1}],
+        [{"sku_id": "milk", "quantity": True}], [{"sku_id": "milk", "quantity": 51}],
+        [{"sku_id": "milk", "quantity": 1}, {"sku_id": "milk", "quantity": 2}]])
+    def test_invalid_output_fails_without_statistical_fallback(self, service, repo, session, monkeypatch, items):
+        repo.get_full_catalog.return_value = [_make_product("milk", "Молоко")]
+        monkeypatch.setattr("webx5.services.basket_assistant.call_openrouter_tools", lambda **kw: [ToolCall("replace_basket", {"items": items})])
+        with pytest.raises(HTTPException) as exc:
+            service.suggest(session, uuid.uuid4())
+        assert exc.value.status_code == 503
+        repo.suggest_items.assert_not_called()
+
+    def test_network_failure_is_retryable(self, service, repo, session, monkeypatch):
+        repo.get_full_catalog.return_value = [_make_product("milk", "Молоко")]
+        monkeypatch.setattr("webx5.services.basket_assistant.call_openrouter_tools", MagicMock(side_effect=RuntimeError("offline")))
+        with pytest.raises(HTTPException) as exc:
+            service.suggest(session, uuid.uuid4())
+        assert exc.value.status_code == 503
 
 
 class TestApplyInstruction:
+    def test_recipe_tool_counts_existing_ingredients_and_keeps_missing_notice(self, service, repo, session, monkeypatch):
+        chicken, salad, milk = _make_product("chicken", "Курица"), _make_product("salad", "Салат"), _make_product("milk", "Молоко")
+        repo.get_full_catalog.return_value = [chicken, salad, milk]
+        monkeypatch.setattr("webx5.services.basket_assistant.call_openrouter_tools", lambda **kw: [
+            ToolCall("add_recipe_ingredients", {"items": [{"sku_id": "chicken", "quantity": 1}, {"sku_id": "salad", "quantity": 1}],
+                                                "missing_ingredients": ["Пармезан"]})])
+        initial = [BasketItemIn(product_id=chicken.id, quantity=2), BasketItemIn(product_id=milk.id, quantity=1)]
+        result = service.apply_instruction(session, items=initial, instruction="цезарь")
+        assert {i.product_id: i.quantity for i in result.items} == {chicken.id: 2, milk.id: 1, salad.id: 1}
+        assert "Пармезан" in result.message
+        repeated = service.apply_instruction(session, items=[BasketItemIn(product_id=i.product_id, quantity=i.quantity) for i in result.items], instruction="цезарь")
+        assert not repeated.applied
+        assert repeated.items == result.items
+
+    def test_invalid_recipe_is_atomic(self, service, repo, session, monkeypatch):
+        milk = _make_product("milk", "Молоко")
+        repo.get_full_catalog.return_value = [milk]
+        monkeypatch.setattr("webx5.services.basket_assistant.call_openrouter_tools", lambda **kw: [
+            ToolCall("add_recipe_ingredients", {"items": [{"sku_id": "milk", "quantity": 2}, {"sku_id": "unknown", "quantity": 1}], "missing_ingredients": []})])
+        result = service.apply_instruction(session, items=[BasketItemIn(product_id=milk.id, quantity=1)], instruction="ингредиенты")
+        assert not result.applied and result.items[0].quantity == 1
+
+
+    def test_recipe_adds_multiple_ingredients_and_preserves_other_items(self, service, repo, session, monkeypatch):
+        milk = _make_product("milk", "Молоко")
+        chicken = _make_product("chicken", "Куриное филе")
+        salad = _make_product("salad", "Салат романо")
+        repo.get_full_catalog.return_value = [milk, chicken, salad]
+        call = MagicMock(return_value=[
+            ToolCall("add_item", {"sku_id": "chicken", "quantity": 1}),
+            ToolCall("add_item", {"sku_id": "salad", "quantity": 1}),
+        ])
+        monkeypatch.setattr("webx5.services.basket_assistant.call_openrouter_tools", call)
+        result = service.apply_instruction(session, items=[BasketItemIn(product_id=milk.id, quantity=2)], instruction="ингридиенты для цезаря")
+        assert result.applied
+        assert {item.product_id: item.quantity for item in result.items} == {milk.id: 2, chicken.id: 1, salad.id: 1}
+        assert call.call_args.kwargs["tool_choice"] == "required"
+
+    @pytest.mark.parametrize("add_available", [False, True])
+    def test_explanation_is_returned_with_or_without_changes(self, service, repo, session, monkeypatch, add_available):
+        milk = _make_product("milk", "Молоко")
+        repo.get_full_catalog.return_value = [milk]
+        calls = [ToolCall("explain", {"message": "Салата романо сейчас нет в каталоге"})]
+        if add_available:
+            calls.insert(0, ToolCall("add_item", {"sku_id": "milk", "quantity": 1}))
+        monkeypatch.setattr("webx5.services.basket_assistant.call_openrouter_tools", lambda **kw: calls)
+        result = service.apply_instruction(session, items=[], instruction="нужны молоко и романо")
+        assert result.applied is add_available
+        assert result.message == "Салата романо сейчас нет в каталоге"
+
+
+    def test_replace_basket_uses_user_context(self, service, repo, session, monkeypatch):
+        milk = _make_product("milk", "Молоко")
+        bread = _make_product("bread", "Хлеб")
+        repo.get_full_catalog.return_value = [milk, bread]
+        monkeypatch.setattr("webx5.services.basket_assistant.call_openrouter_tools", lambda **kw: [
+            ToolCall("replace_basket", {"items": [{"sku_id": "bread", "quantity": 2}]})])
+        user = uuid.uuid4()
+        result = service.apply_instruction(session, items=[BasketItemIn(product_id=milk.id, quantity=1)], instruction="собери заново", user_id=user)
+        assert result.applied
+        assert [item.product_id for item in result.items] == [bread.id]
+        repo.get_shopping_context.assert_called_once_with(session, user)
+
+
     def test_add_item_tool_call_adds_product(
         self, service: BasketService, repo: MagicMock, session: MagicMock, monkeypatch: pytest.MonkeyPatch
     ) -> None:

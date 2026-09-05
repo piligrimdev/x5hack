@@ -6,7 +6,7 @@ from webx5.crud.basket import BasketRepository
 from webx5.crud.store import StoreRepository
 from webx5.services.basket_assistant import BasketService
 
-BASKET_LLM_MODEL = os.environ.get("BASKET_LLM_MODEL", "anthropic/claude-haiku-4.5")
+BASKET_LLM_MODEL = os.environ.get("BASKET_LLM_MODEL", "google/gemini-3.1-flash-lite")
 
 basket_repo = BasketRepository()
 basket_service = BasketService(

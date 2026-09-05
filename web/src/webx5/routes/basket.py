@@ -39,11 +39,11 @@ def post_basket_preview(
 def post_basket_assistant(
     data: AssistantRequest,
     session: SessionDep,
-    _user_id: CurrentUserUUID,
+    user_id: CurrentUserUUID,
 ) -> AssistantResponse:
     from webx5.core.basket import basket_service
 
-    return basket_service.apply_instruction(session, items=data.items, instruction=data.instruction)
+    return basket_service.apply_instruction(session, items=data.items, instruction=data.instruction, user_id=user_id)
 
 
 @basket_router.post("/checkout", response_model=ReceiptResponse, status_code=201)

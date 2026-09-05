@@ -24,6 +24,7 @@ def call_openrouter_tools(
     api_key: str | None = None,
     timeout: float = 30.0,
     max_retries: int = 3,
+    tool_choice: str | dict = "auto",
 ) -> list[ToolCall]:
     """Call OpenRouter chat completions with tool-calling enabled.
 
@@ -56,7 +57,7 @@ def call_openrouter_tools(
                         {"role": "user", "content": user},
                     ],
                     "tools": tools,
-                    "tool_choice": "auto",
+                    "tool_choice": tool_choice,
                     "temperature": 0.2,
                 },
                 timeout=timeout,
@@ -81,6 +82,8 @@ def call_openrouter_tools(
         try:
             arguments = json.loads(fn.get("arguments", "{}"))
         except json.JSONDecodeError:
+            continue
+        if not isinstance(arguments, dict):
             continue
         result.append(ToolCall(name=name, arguments=arguments))
     return result

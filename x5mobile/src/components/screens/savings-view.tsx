@@ -3,7 +3,7 @@ import { ActivityIndicator, ScrollView, StyleSheet, Switch, Text, TextInput, Tou
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BrandColors } from '@/constants/theme';
-import { BasketItem, useBasket } from '@/hooks/useBasket';
+import { BasketItem, BasketState } from '@/hooks/useBasket';
 import { ChallengeItem, useChallenges } from '@/hooks/useChallenges';
 import { LeaderboardEntry, Savings } from '@/mock-data';
 
@@ -15,11 +15,10 @@ interface SavingsViewProps {
   goHistory: () => void;
   goChallenges: () => void;
   onOrderPlaced: () => void;
-  autoCollect: boolean;
-  onAutoCollectHandled: () => void;
+  basket: BasketState;
 }
 
-export function SavingsView({ leaderboard, savings, token, goHome, goHistory, goChallenges, onOrderPlaced, autoCollect, onAutoCollectHandled }: SavingsViewProps) {
+export function SavingsView({ leaderboard, savings, token, goHome, goHistory, goChallenges, onOrderPlaced, basket }: SavingsViewProps) {
   const insets = useSafeAreaInsets();
   const { current: challenges, loading: challengesLoading, error: challengesError, refetch: refetchChallenges, clearCompleted } = useChallenges(token, true);
   const challengeRefreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -57,25 +56,8 @@ export function SavingsView({ leaderboard, savings, token, goHome, goHistory, go
     hasCollected,
     hydrated,
     collectWeeklyBasket,
-  } = useBasket(token, handleOrderPlaced);
+  } = basket;
   const [instructionText, setInstructionText] = useState('');
-
-  const autoCollectConsumed = useRef(false);
-
-  useEffect(() => {
-    if (!autoCollect) {
-      autoCollectConsumed.current = false;
-      return;
-    }
-    if (!hydrated || autoCollectConsumed.current) return;
-    // Consume the request even when a saved basket already exists. Otherwise
-    // checkout would empty the basket and trigger this old request again.
-    autoCollectConsumed.current = true;
-    onAutoCollectHandled();
-    if (!hasCollected && basketItems.length === 0) {
-      collectWeeklyBasket();
-    }
-  }, [autoCollect, hydrated, hasCollected, basketItems.length, collectWeeklyBasket, onAutoCollectHandled]);
 
   function handleSendInstruction() {
     const text = instructionText.trim();
@@ -84,8 +66,8 @@ export function SavingsView({ leaderboard, savings, token, goHome, goHistory, go
     setInstructionText('');
   }
 
-  function handleCheckout() {
-    checkout();
+  async function handleCheckout() {
+    if (await checkout()) handleOrderPlaced();
   }
   const savedAmount = savings.withoutDiscount - savings.paid;
   const savedPct = Math.round((savedAmount / savings.withoutDiscount) * 100);
@@ -157,7 +139,10 @@ export function SavingsView({ leaderboard, savings, token, goHome, goHistory, go
           {!hydrated ? (
             <ActivityIndicator color={BrandColors.textSecondary} />
           ) : basketLoading && basketItems.length === 0 ? (
-            <ActivityIndicator color={BrandColors.textSecondary} />
+            <View style={styles.basketCollectBlock}>
+              <ActivityIndicator color={BrandColors.green} />
+              <Text style={styles.basketEmptyText}>Аппи собирает корзину на неделю…</Text>
+            </View>
           ) : basketItems.length > 0 ? (
             pricedItems.map(({ item, unitBase, lineTotal }) => {
               const hasDiscount = lineTotal < Math.round(unitBase * item.quantity);
@@ -176,12 +161,12 @@ export function SavingsView({ leaderboard, savings, token, goHome, goHistory, go
                 </View>
               );
             })
-          ) : !basketMessage?.startsWith('Заказ оформлен') ? (
+          ) : (
             <View style={styles.basketCollectBlock}>
               <Text style={styles.basketEmptyText}>
                 {hasCollected
-                  ? 'Пока нечего предложить — мало истории покупок'
-                  : 'Соберите корзину на неделю на основе своих покупок'}
+                  ? 'Корзина пуста — попросите Аппи собрать новую'
+                  : 'Аппи подберёт продукты на неделю с учётом ваших покупок'}
               </Text>
               <TouchableOpacity
                 style={[styles.collectBtn, basketLoading && styles.collectBtnDisabled]}
@@ -194,7 +179,7 @@ export function SavingsView({ leaderboard, savings, token, goHome, goHistory, go
                 }
               </TouchableOpacity>
             </View>
-          ) : null}
+          )}
           {basketMessage && <Text style={styles.basketMessage}>{basketMessage}</Text>}
           <Text style={styles.appiLabel}>🍊 Спроси Аппи</Text>
           <View style={styles.basketInputRow}>

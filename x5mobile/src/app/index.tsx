@@ -11,6 +11,7 @@ import { PointsView } from '@/components/screens/points-view';
 import { ReceiptDetailView } from '@/components/screens/receipt-detail-view';
 import { SavingsView } from '@/components/screens/savings-view';
 import { BrandColors } from '@/constants/theme';
+import { useBasket } from '@/hooks/useBasket';
 import { useEconomy } from '@/hooks/useEconomy';
 import { useMockData } from '@/mock-data';
 
@@ -88,7 +89,7 @@ function AppContent({ token }: { token: string }) {
   const [screen, setScreen] = useState<Screen>('home');
   const [prevScreen, setPrevScreen] = useState<Screen>('home');
   const [selectedReceiptId, setSelectedReceiptId] = useState<string | null>(null);
-  const [autoCollectBasket, setAutoCollectBasket] = useState(false);
+  const basket = useBasket(token);
   const data = useMockData();
   const { economy, refetch: refetchEconomy } = useEconomy(token);
 
@@ -96,7 +97,6 @@ function AppContent({ token }: { token: string }) {
   const totalPaid = economy?.total_paid ?? 0;
 
   function navigate(next: Screen) {
-    if (next !== 'savings') setAutoCollectBasket(false);
     setPrevScreen(screen);
     setScreen(next);
   }
@@ -119,10 +119,7 @@ function AppContent({ token }: { token: string }) {
             onHistory={() => navigate('history')}
             onChallenges={() => navigate('challenges')}
             onPoints={() => navigate('points')}
-            onOpenBasket={() => {
-              setAutoCollectBasket(true);
-              navigate('savings');
-            }}
+            onOpenBasket={() => navigate('savings')}
           />
         )}
         {screen === 'points' && (
@@ -137,8 +134,7 @@ function AppContent({ token }: { token: string }) {
             goHistory={() => navigate('history')}
             goChallenges={() => navigate('challenges')}
             onOrderPlaced={refetchEconomy}
-            autoCollect={autoCollectBasket}
-            onAutoCollectHandled={() => setAutoCollectBasket(false)}
+            basket={basket}
           />
         )}
         {screen === 'history' && (
