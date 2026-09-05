@@ -6,6 +6,12 @@ import time
 from dataclasses import dataclass, field
 
 import httpx
+import structlog
+
+from webx5.core.langfuse_client import start_llm_trace
+from webx5.utils.contextvars_utils import user_id_context
+
+_log = structlog.get_logger(__name__)
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 
@@ -84,3 +90,48 @@ def call_openrouter_tools(
             continue
         result.append(ToolCall(name=name, arguments=arguments))
     return result
+
+
+def call_openrouter_tools_traced(
+    model: str,
+    system: str,
+    user: str,
+    tools: list[dict],
+    api_key: str | None = None,
+    timeout: float = 30.0,
+    max_retries: int = 3,
+    trace_name: str | None = None,
+) -> list[ToolCall]:
+    """call_openrouter_tools wrapped with Langfuse tracing and Prometheus metrics.
+
+    Falls back to untraced call when Langfuse is unavailable — never blocks execution.
+    """
+    from webx5.utils.metrics import LLM_GENERATION_SUCCESS, LLM_GENERATION_FAILED
+
+    user_id = user_id_context.get()
+    llm_trace = start_llm_trace(
+        trace_name or "openrouter_tool_call",
+        model,
+        {"system": system, "user": user, "tools": tools},
+    )
+
+    try:
+        result = call_openrouter_tools(model, system, user, tools, api_key, timeout, max_retries)
+        LLM_GENERATION_SUCCESS.labels(model=model).inc()
+        llm_trace.end_success([{"name": tc.name, "arguments": tc.arguments} for tc in result])
+
+        _log.info(
+            "llm.call_completed",
+            model=model,
+            tool_calls_count=len(result),
+            duration_ms=llm_trace.duration_ms,
+            user_id=user_id,
+        )
+        return result
+
+    except Exception as exc:
+        error_type = type(exc).__name__
+        LLM_GENERATION_FAILED.labels(model=model, error_type=error_type).inc()
+        llm_trace.end_error(exc)
+        _log.error("llm.call_failed", model=model, error_type=error_type, duration_ms=llm_trace.duration_ms)
+        raise

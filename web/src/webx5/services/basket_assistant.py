@@ -7,7 +7,7 @@ import structlog
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from webx5.core.llm import call_openrouter_tools
+from webx5.core.llm import call_openrouter_tools_traced
 from webx5.crud.basket import BasketRepository
 from webx5.crud.receipt import ReceiptRepository
 from webx5.crud.store import StoreRepository
@@ -120,8 +120,9 @@ class BasketService:
 
         system = self._build_system_prompt(current, catalog_by_id)
         try:
-            tool_calls = call_openrouter_tools(
-                model=self.model, system=system, user=instruction, tools=TOOLS, api_key=api_key
+            tool_calls = call_openrouter_tools_traced(
+                model=self.model, system=system, user=instruction, tools=TOOLS, api_key=api_key,
+                trace_name="basket_assistant",
             )
         except Exception as e:  # noqa: BLE001 — any LLM failure must fall back, not propagate
             logger.warning("basket_assistant.llm_call_failed", error=str(e))

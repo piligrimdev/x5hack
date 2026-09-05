@@ -14,3 +14,11 @@ dist/
 # mounted into the web/worker containers via docker-compose's
 # ./dataset:/data mount) — large, regenerable, not source.
 dataset/*
+
+# Observability stack data (monitoring)
+monitoring/*/data/
+monitoring/*/logs/
+langfuse_db/
+prometheus_data/
+loki_data/
+grafana_data/
