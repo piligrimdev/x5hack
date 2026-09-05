@@ -45,6 +45,13 @@ export function SavingsView({ tasks, leaderboard, savings, token, goHome, goHist
   const savedPct = Math.round((savedAmount / savings.withoutDiscount) * 100);
   const paidPct = (savings.paid / savings.withoutDiscount) * 100;
   const greenPct = (savedAmount / savings.withoutDiscount) * 100;
+  const pricedItems = basketItems.map((item: BasketItem) => {
+    const previewItem = preview?.items.find((p) => p.product_id === item.product_id);
+    const unitPaid = previewItem?.paid_price ?? item.price;
+    const unitBase = previewItem?.base_price ?? item.price;
+    return { item, unitPaid, unitBase, lineTotal: Math.round(unitPaid * item.quantity) };
+  });
+  const roundedItemsTotal = pricedItems.reduce((sum, p) => sum + p.lineTotal, 0);
 
   return (
     <View style={styles.root}>
@@ -104,11 +111,8 @@ export function SavingsView({ tasks, leaderboard, savings, token, goHome, goHist
           {basketLoading && basketItems.length === 0 ? (
             <ActivityIndicator color={BrandColors.textSecondary} />
           ) : basketItems.length > 0 ? (
-            basketItems.map((item: BasketItem) => {
-              const previewItem = preview?.items.find((p) => p.product_id === item.product_id);
-              const unitPaid = previewItem?.paid_price ?? item.price;
-              const unitBase = previewItem?.base_price ?? item.price;
-              const hasDiscount = unitPaid < unitBase;
+            pricedItems.map(({ item, unitBase, lineTotal }) => {
+              const hasDiscount = lineTotal < Math.round(unitBase * item.quantity);
               return (
                 <View key={item.product_id} style={styles.basketRow}>
                   <View style={styles.basketItemInfo}>
@@ -119,7 +123,7 @@ export function SavingsView({ tasks, leaderboard, savings, token, goHome, goHist
                     {hasDiscount && (
                       <Text style={styles.basketItemBasePrice}>{Math.round(unitBase * item.quantity)} ₽</Text>
                     )}
-                    <Text style={styles.basketItemPaidPrice}>{Math.round(unitPaid * item.quantity)} ₽</Text>
+                    <Text style={styles.basketItemPaidPrice}>{lineTotal} ₽</Text>
                   </View>
                 </View>
               );
@@ -127,11 +131,35 @@ export function SavingsView({ tasks, leaderboard, savings, token, goHome, goHist
           ) : !basketMessage?.startsWith('Заказ оформлен') ? (
             <Text style={styles.basketEmptyText}>Пока нечего предложить — мало истории покупок</Text>
           ) : null}
+          {basketMessage && <Text style={styles.basketMessage}>{basketMessage}</Text>}
+          <Text style={styles.appiLabel}>🍊 Спроси Аппи</Text>
+          <View style={styles.basketInputRow}>
+            <TextInput
+              style={styles.basketInput}
+              placeholder="Например: добавь молоко"
+              placeholderTextColor={BrandColors.textSecondary}
+              value={instructionText}
+              onChangeText={setInstructionText}
+              editable={!basketLoading}
+              returnKeyType="send"
+              onSubmitEditing={handleSendInstruction}
+            />
+            <TouchableOpacity
+              style={styles.basketSendBtn}
+              onPress={handleSendInstruction}
+              activeOpacity={0.7}
+              disabled={basketLoading || !instructionText.trim()}>
+              {basketLoading
+                ? <ActivityIndicator color="#fff" size="small" />
+                : <Text style={styles.basketSendBtnText}>→</Text>
+              }
+            </TouchableOpacity>
+          </View>
           {preview && basketItems.length > 0 && (
             <View style={styles.basketTotals}>
               <View style={styles.basketTotalsRow}>
                 <Text style={styles.basketTotalsLabel}>Итого</Text>
-                <Text style={styles.basketTotalsValue}>{Math.round(preview.total_paid)} ₽</Text>
+                <Text style={styles.basketTotalsValue}>{roundedItemsTotal} ₽</Text>
               </View>
               {preview.total_base > preview.total_paid && (
                 <View style={styles.basketTotalsRow}>
@@ -163,30 +191,6 @@ export function SavingsView({ tasks, leaderboard, savings, token, goHome, goHist
               )}
             </View>
           )}
-          {basketMessage && <Text style={styles.basketMessage}>{basketMessage}</Text>}
-          <Text style={styles.appiLabel}>🍊 Спроси Аппи</Text>
-          <View style={styles.basketInputRow}>
-            <TextInput
-              style={styles.basketInput}
-              placeholder="Например: добавь молоко"
-              placeholderTextColor={BrandColors.textSecondary}
-              value={instructionText}
-              onChangeText={setInstructionText}
-              editable={!basketLoading}
-              returnKeyType="send"
-              onSubmitEditing={handleSendInstruction}
-            />
-            <TouchableOpacity
-              style={styles.basketSendBtn}
-              onPress={handleSendInstruction}
-              activeOpacity={0.7}
-              disabled={basketLoading || !instructionText.trim()}>
-              {basketLoading
-                ? <ActivityIndicator color="#fff" size="small" />
-                : <Text style={styles.basketSendBtnText}>→</Text>
-              }
-            </TouchableOpacity>
-          </View>
           <TouchableOpacity
             style={[styles.checkoutBtn, (basketLoading || basketItems.length === 0) && styles.checkoutBtnDisabled]}
             onPress={handleCheckout}

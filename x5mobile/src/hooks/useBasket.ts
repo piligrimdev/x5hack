@@ -68,7 +68,10 @@ export function useBasket(token: string | null, onOrderPlaced?: () => void) {
   }, [token]);
 
   useEffect(() => {
-    if (!token) return;
+    if (!token || items.length === 0) {
+      setPreview(null);
+      return;
+    }
     apiFetch<BasketPreview>('/basket/preview', token, {
       method: 'POST',
       body: JSON.stringify({
