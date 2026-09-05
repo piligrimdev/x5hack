@@ -160,7 +160,11 @@ export function SavingsView({ leaderboard, savings, token, goHome, goHistory, go
             <View style={styles.basketTotals}>
               <View style={styles.basketTotalsRow}>
                 <Text style={styles.basketTotalsLabel}>Итого</Text>
-                <Text style={styles.basketTotalsValue}>{roundedItemsTotal} ₽</Text>
+                <Text style={styles.basketTotalsValue}>
+                  {spendPoints && preview.cashback && preview.cashback.cashback_rub > 0
+                    ? Math.round(preview.cashback.total_paid_rub)
+                    : roundedItemsTotal} ₽
+                </Text>
               </View>
               {preview.total_base > preview.total_paid && (
                 <View style={styles.basketTotalsRow}>
@@ -184,9 +188,9 @@ export function SavingsView({ leaderboard, savings, token, goHome, goHistory, go
               )}
               {spendPoints && preview.cashback && preview.cashback.cashback_rub > 0 && (
                 <View style={styles.basketTotalsRow}>
-                  <Text style={styles.basketTotalsLabel}>Итого с баллами</Text>
-                  <Text style={styles.basketTotalsValueGreen}>
-                    {Math.round(preview.cashback.total_paid_rub)} ₽
+                  <Text style={styles.basketTotalsLabel}>Баллами</Text>
+                  <Text style={styles.basketTotalsDiscount}>
+                    −{preview.cashback.cashback_rub} ₽
                   </Text>
                 </View>
               )}
