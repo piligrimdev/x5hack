@@ -29,23 +29,34 @@
 
 **Роуты:**
 
-| Метод | Путь                | Назначение                            |
-| ----- | ------------------- | ------------------------------------- |
-| GET   | /health             | Healthcheck                           |
-| POST  | /register           | Регистрация по номеру телефона        |
-| POST  | /login              | Логин по номеру телефона              |
-| POST  | /refresh            | Обновление пары токенов               |
-| GET   | /me                 | Текущий пользователь (Bearer)         |
-| GET   | /terminal/ping      | Пинг для терминала (X-Terminal-Token) |
-| POST  | /receipts           | Создание чека кассой (X-Terminal-Token) |
-| POST  | /receipts/calculate | Предварительный расчёт скидок          |
-| GET   | /receipts           | История чеков пользователя (Bearer)    |
-| GET   | /receipts/economy   | Сводка экономии пользователя (Bearer)  |
-| GET   | /challenges/current | 3 активных задания пользователя (Bearer) |
+| Метод | Путь                  | Назначение                                              |
+| ----- | --------------------- | ------------------------------------------------------- |
+| GET   | /health               | Healthcheck                                             |
+| POST  | /register             | Регистрация по номеру телефона                          |
+| POST  | /login                | Логин по номеру телефона                                |
+| POST  | /refresh              | Обновление пары токенов                                 |
+| GET   | /me                   | Текущий пользователь (Bearer)                           |
+| GET   | /terminal/ping        | Пинг для терминала (X-Terminal-Token)                   |
+| POST  | /receipts             | Создание чека кассой (X-Terminal-Token)                 |
+| POST  | /receipts/calculate   | Предварительный расчёт скидок                           |
+| GET   | /receipts             | История чеков пользователя (Bearer)                     |
+| GET   | /receipts/economy     | Сводка экономии пользователя (Bearer)                   |
+| GET   | /challenges/current   | 3 активных задания пользователя (Bearer)                |
+| GET   | /basket/suggested     | Персональная корзина по истории покупок (Bearer)        |
+| POST  | /basket/preview       | Расчёт цен и кэшбека для корзины без создания чека      |
+| POST  | /basket/assistant     | LLM-редактирование корзины по текстовой инструкции      |
+| POST  | /basket/checkout      | Оформление корзины → создаёт настоящий чек (Bearer)     |
 
 **Авторизация:** JWT stateless. Access + refresh — оба возвращаются в теле ответа (не HttpOnly cookie). Refresh принимается в теле запроса (не cookie). Отличается от целевой схемы из правил — см. трейд-оффы.
 
 **Аутентификация терминала (POS):** `X-Terminal-Token` header, статический секрет из env. Отдельный `Depends` (`TerminalTokenDep`).
+
+**Внешние зависимости (runtime):**
+
+| Зависимость | Назначение | Настройка |
+|---|---|---|
+| OpenRouter API | LLM tool-calling для ассистента корзины | `OPENROUTER_API_KEY` env; модель — `BASKET_LLM_MODEL` (default: `anthropic/claude-haiku-4.5`) |
+| httpx | Синхронный HTTP-клиент для OpenRouter | `[main]` зависимость в `pyproject.toml` |
 
 ### База данных
 
@@ -67,7 +78,31 @@
 
 ### Мобильное приложение (`x5mobile/`)
 
-Expo Router, tab-навигация (Home / Explore). Экран Home отображает **хардкоженные** данные: экономия 2 450 ₽, уровень 5. Никакой интеграции с API нет. Авторизации нет.
+Expo Router, tab-навигация (Home / Savings). Авторизация работает через Bearer JWT (AsyncStorage). Экран «Экономия» интегрирован с API:
+
+- `GET /receipts/economy` → итоговая экономия пользователя
+- `GET /challenges/current` → реальные задания (заменили моковые данные)
+- `GET /basket/suggested` + `POST /basket/assistant` + `POST /basket/preview` + `POST /basket/checkout` → полный флоу корзины на неделю
+
+Корзина персистируется на устройстве через `@react-native-async-storage/async-storage` (ключ `@x5hack/weeklyBasket`). Собирается явно по кнопке, переживает переходы между экранами, сбрасывается после успешного checkout.
+
+### Ключевые бизнес-правила (реализованы)
+
+**Начисление баллов за задание:**
+```
+points = round(task.reward_rub × rate_points_per_rub / 10) × 10
+```
+Где `rate_points_per_rub = 10` (из `PointsSettings`). Округление до 10 — чтобы итог читался красиво. До этой версии было `points = int(reward_rub)` — десятикратный дисбаланс.
+
+**Персонализация корзины (`suggest_items`):**
+```
+weekly_frequency = purchase_count / max((max_date − min_date).days / 7, 1)
+included if weekly_frequency >= 0.5  # ≥1 покупки в 2 недели
+quantity = max(1, round(avg_quantity))
+```
+
+**Выбор магазина при checkout:**
+Последний магазин из истории чеков пользователя → первый в БД (fallback). Явный выбор пользователем — в BACKLOG.
 
 ---
 
@@ -116,6 +151,13 @@ Expo Router, tab-навигация (Home / Explore). Экран Home отобр
                          │  LLM Provider (Claude / GPT)    │
                          │  - Генерация челленджей         │
                          │  - reasoning field в ответе     │
+                         └─────────────────────────────────┘
+                                      │ OpenRouter API (httpx sync)
+                         ┌────────────▼────────────────────┐
+                         │  OpenRouter (claude-haiku-4.5)  │
+                         │  - Basket assistant tool-calls  │
+                         │  - 3 tools: add/remove/set_qty  │
+                         │  - Retry: 429/5xx, exp backoff  │
                          └─────────────────────────────────┘
 
 POS (касса) — MOCK:
@@ -183,6 +225,34 @@ Fallback для `generate_challenges`: при LLM-ошибке → выдаёт�
 | Купоны           | не кэшируются        | всегда свежие                    |
 
 Паттерн: stale-while-revalidate. Сначала показываем кэш, в фоне проверяем `/me/version` — если изменилось, тянем свежие данные.
+
+---
+
+## Трейд-оффы (Basket AI, добавлено в ветке `dima`)
+
+### 8. LLM-ассистент синхронно в хендлере (не через Celery)
+
+**Выбор:** sync httpx в хендлере.
+
+В отличие от генерации челленджей (тяжёлый LLM → Celery, 202), ассистент корзины вызывает LLM синхронно прямо в запросе. Задержка 1–3 секунды приемлема для интерактивного редактирования. Celery-оверхед (сериализация, очередь, polling) для интерактивной механики избыточен. Retry (429/5xx, exponential backoff до 3 раз) — встроен в `core/llm.py`.
+
+### 9. Lazy import `basket_service` в роутах
+
+**Выбор:** `from webx5.core.basket import basket_service` внутри каждого хендлера (не на уровне модуля).
+
+Остальные роуты импортируют сервисы на уровне модуля. Здесь — обход потенциального circular import: `server.py` → `routes/basket.py` → `core/basket.py` → цепочка зависимостей. Lazy import дороже при первом вызове (один раз), но не при последующих. Технический долг — перенести в BACKLOG.
+
+### 10. `apply_discount` сделана публичной
+
+**Выбор:** убрать `_` префикс у `discount_calculator._apply_discount`.
+
+Функция нужна в `receipt.py` (устранение дублирования формулы). Альтернатива — метод на `DiscountCalculatorService`. Выбрано модульное переиспользование без создания лишнего сервиса. Нарушает принцип «internal detail», но логически корректна (формула — чистая функция, не бизнес-логика сервиса).
+
+### 11. Синтетические телефоны только в диапазоне +7900
+
+**Выбор:** суффикс 7 знаков из SHA-256 от user_id, префикс +7900 (MegaFon).
+
+Пространство — 10M номеров. При засеве более ~3M уникальных пользователей коллизии становятся вероятными. Алгоритм retry (до 20 попыток с incrementing attempt) страхует от конкретной коллизии, но не от исчерпания пространства. Для PoC с синтетикой — приемлемо.
 
 ---
 

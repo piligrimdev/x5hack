@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -33,6 +34,16 @@ class AssistantResponse(BaseModel):
     items: list[BasketItem]
     applied: bool
     message: str | None = None
+
+
+class AssistantTaskEnqueuedResponse(BaseModel):
+    task_id: str
+    status: Literal["pending"] = "pending"
+
+
+class AssistantTaskResultResponse(BaseModel):
+    status: Literal["pending", "complete", "failed"]
+    result: AssistantResponse | None = None
 
 
 class CheckoutRequest(BaseModel):
