@@ -760,11 +760,24 @@ def compute_frequency_saturation(
 CHALLENGE_SLOTS = ("llm_habit", "llm_discovery", "llm_basket", "generic", "vibe")
 
 
-def _pick_distinct_generic_offer(user_id: str, config: SynthConfig, used_indices: list[int]) -> dict:
+def _pick_distinct_generic_offer(
+    user_id: str, config: SynthConfig, used_indices: list[int], cycle_offset: int = 0
+) -> dict:
     """Like `pick_generic_challenge`, but skips any offer index already used
     for this user's other slots — so a user who falls back to generic on
-    more than one slot gets distinct offers, not duplicate cards."""
-    idx = _hash_index(f"{user_id}:generic", len(GENERIC_CHALLENGES))
+    more than one slot gets distinct offers, not duplicate cards.
+
+    `cycle_offset` rotates the STARTING index by a fixed amount before the
+    within-batch distinctness check — used only by the dedicated `generic`
+    slot in `generate_challenge_for_user` (via `profile["generic_cycle_index"]`,
+    a count of that user's past `generic`-slot tasks), so the same user's
+    generic offer actually changes across generation cycles instead of
+    being pinned forever by `ChallengeService.generate_batch`'s cross-cycle
+    dedup check (the hash-based pick alone is 100% stable per user with no
+    cycle component). Left at its default (0) for every OTHER caller — the
+    `_generic()` fallback used by `llm_habit`/`llm_discovery`/`llm_basket`/
+    `vibe` on failure — whose own repeat behavior is unrelated to this."""
+    idx = (_hash_index(f"{user_id}:generic", len(GENERIC_CHALLENGES)) + cycle_offset) % len(GENERIC_CHALLENGES)
     while idx in used_indices:
         idx = (idx + 1) % len(GENERIC_CHALLENGES)
     used_indices.append(idx)
@@ -867,7 +880,14 @@ def generate_challenge_for_user(
     # offer never depends on whether an earlier LLM slot happened to fail
     # this cycle (a failed LLM slot also draws from this same
     # used_generic_indices pool via `_generic`/`_pick_distinct_generic_offer`).
-    offer = _pick_distinct_generic_offer(profile["user_id"], config, used_generic_indices)
+    # `cycle_offset` rotates the pick across generation cycles (see
+    # `_pick_distinct_generic_offer`'s docstring) — without it, the
+    # cross-cycle dedup check in `ChallengeService.generate_batch` would
+    # skip this slot forever after its first cycle.
+    generic_cycle_index = profile.get("generic_cycle_index", 0)
+    offer = _pick_distinct_generic_offer(
+        profile["user_id"], config, used_generic_indices, cycle_offset=generic_cycle_index
+    )
     results.append({
         "user_id": profile["user_id"], "path": "generic",
         "model": None, "challenge_slot": "generic", **offer,

@@ -7,6 +7,7 @@ from synth.challenges import (
     GENERIC_CHALLENGES,
     PERSONAL_TARGET_QUANTITY,
     VIBE_CATEGORIES,
+    _pick_distinct_generic_offer,
     backfill_target_sku,
     build_basket_prompt,
     build_category_expansion_challenge,
@@ -629,6 +630,44 @@ def test_generate_challenge_for_user_all_llm_fallbacks_get_distinct_generic_offe
     assert len(results) == len(CHALLENGE_SLOTS)
     assert len({r["challenge_title"] for r in results}) == len(CHALLENGE_SLOTS)
     assert len({r["target_sku_id"] for r in results}) == len(CHALLENGE_SLOTS)
+
+
+def test_generic_slot_rotates_offer_by_generic_cycle_index():
+    profile = _profile("promo_hunter", seed=1)
+    profile_cycle0 = {**profile, "generic_cycle_index": 0}
+    profile_cycle1 = {**profile, "generic_cycle_index": 1}
+
+    results0 = generate_challenge_for_user(profile_cycle0, _config, model="fake/model", dry_run=True)
+    results1 = generate_challenge_for_user(profile_cycle1, _config, model="fake/model", dry_run=True)
+
+    generic0 = _by_slot(results0)["generic"]
+    generic1 = _by_slot(results1)["generic"]
+    assert generic0["challenge_title"] != generic1["challenge_title"]
+
+
+def test_generic_slot_defaults_to_cycle_zero_when_not_set():
+    profile = _profile("promo_hunter", seed=1)
+    profile_explicit_zero = {**profile, "generic_cycle_index": 0}
+
+    results_default = generate_challenge_for_user(profile, _config, model="fake/model", dry_run=True)
+    results_explicit = generate_challenge_for_user(profile_explicit_zero, _config, model="fake/model", dry_run=True)
+
+    assert _by_slot(results_default)["generic"]["challenge_title"] == _by_slot(results_explicit)["generic"]["challenge_title"]
+
+
+def test_pick_distinct_generic_offer_cycle_offset_rotates_the_pick():
+    """Direct unit check of the rotation mechanism in isolation (no shared
+    `used_indices` with another slot, which could otherwise mask or shift
+    the effect via the pre-existing within-batch collision-avoidance)."""
+    offer_cycle0 = _pick_distinct_generic_offer("user-1", _config, used_indices=[], cycle_offset=0)
+    offer_cycle1 = _pick_distinct_generic_offer("user-1", _config, used_indices=[], cycle_offset=1)
+    assert offer_cycle0["challenge_title"] != offer_cycle1["challenge_title"]
+
+
+def test_pick_distinct_generic_offer_cycle_offset_defaults_to_zero():
+    offer_default = _pick_distinct_generic_offer("user-1", _config, used_indices=[])
+    offer_explicit_zero = _pick_distinct_generic_offer("user-1", _config, used_indices=[], cycle_offset=0)
+    assert offer_default == offer_explicit_zero
 
 
 def test_score_against_answer_key_basic():

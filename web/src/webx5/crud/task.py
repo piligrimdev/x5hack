@@ -43,6 +43,21 @@ class TaskRepository:
             )
         ).scalar_one()
 
+    def count_tasks_for_slot(self, session: Session, user_id: uuid.UUID, slot: str) -> int:
+        """Count of this user's tasks EVER issued for `slot` (any status —
+        open, completed, expired). Used to rotate the `generic` slot's
+        offer across generation cycles (see
+        `synth.challenges._pick_distinct_generic_offer`'s `cycle_offset`) —
+        without a cycle-varying component, its hash-based pick is 100%
+        stable per user and would collide with its own history forever
+        after the first cycle under `ChallengeService.generate_batch`'s
+        cross-cycle dedup check."""
+        return session.execute(
+            select(func.count(Task.id)).where(
+                Task.loyalty_card_id == user_id, Task.challenge_slot == slot
+            )
+        ).scalar_one()
+
     def get_last_criterion_per_slot(
         self, session: Session, user_id: uuid.UUID
     ) -> dict[str, tuple[str, uuid.UUID]]:
