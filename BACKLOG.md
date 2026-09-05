@@ -125,16 +125,3 @@
   (`session.get(Store, ...)`, `select(Product.id)`), который сейчас лежит прямо в
   `calculate_discounts`, нарушая RSI (роут не должен делать SQL напрямую)
 - Не сделано в рамках текущего плана — узкий скоуп, оставлено как есть
-
-### Персональные челленджи: receptiveness/saturation-гейтинг живой выдачи
-
-`compute_receptiveness` и `compute_frequency_saturation` (`synth/challenges.py`)
-больше не определяют, какой микс челленджей получит живой пользователь —
-с 2026-09-05 каждый пользователь получает одинаковый 4-слотовый микс
-(`llm_habit`, `llm_discovery`, `generic`, `vibe`) независимо от силы
-покупательского паттерна или частоты покупок. Обе функции, а также
-`build_spend_threshold_challenge`/`build_category_expansion_challenge`,
-остаются в коде и используются `synth/simulation.py` для офлайн-симуляции
-экономического эффекта — удалять их нельзя. Решение отказаться от
-гейтинга в живой выдаче принято сознательно (см.
-`docs/superpowers/specs/2026-09-05-challenge-mix-vibe-design.md`), не баг.
