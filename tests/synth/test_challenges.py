@@ -374,12 +374,12 @@ def _by_slot(results: list[dict]) -> dict[str, dict]:
     return {r["challenge_slot"]: r for r in results if "challenge_slot" in r}
 
 
-def test_generate_challenge_for_user_always_returns_four_slots_regardless_of_pattern_strength(monkeypatch):
+def test_generate_challenge_for_user_always_returns_five_slots_regardless_of_pattern_strength(monkeypatch):
     """The receptiveness/saturation gates are gone from the live routing
     function — these three profile classes used to hit three DIFFERENT old
-    branches (strong pattern -> mostly personal, weak pattern -> all
-    generic, already_optimal -> zero records). Now all three get the exact
-    same 4-slot shape."""
+    branches. Now all three get the exact same 5-slot shape. `llm_basket`
+    falls back to generic here because `_profile()` never sets
+    `suggested_basket_items` on the returned profile dict (cold start)."""
     def fail_if_called(*args, **kwargs):
         raise AssertionError("call_openrouter should not be called under dry_run")
 
@@ -392,8 +392,65 @@ def test_generate_challenge_for_user_always_returns_four_slots_regardless_of_pat
         assert set(by_slot) == set(CHALLENGE_SLOTS)
         assert by_slot["llm_habit"]["path"] == "personal_dry_run"
         assert by_slot["llm_discovery"]["path"] == "personal_dry_run"
-        assert by_slot["vibe"]["path"] == "personal_dry_run"
         assert by_slot["generic"]["path"] == "generic"
+        assert by_slot["vibe"]["path"] == "personal_dry_run"
+        assert by_slot["llm_basket"]["path"] == "generic_fallback"
+
+
+def test_generate_challenge_for_user_llm_basket_personal_path_with_mocked_llm(monkeypatch):
+    profile = _profile("bakes_on_weekends", seed=4)
+    profile = {**profile, "suggested_basket_items": [
+        {"item": "Молоко 3.2%", "category": "молочные продукты и яйца", "weekly_quantity": 2},
+    ]}
+
+    def fake_call(model, system, user, api_key=None, timeout=60.0, max_retries=3):
+        return json.dumps({
+            "challenge_title": "Собери свою обычную корзину",
+            "description": "desc",
+            "target_categories": ["молочные продукты и яйца"],
+            "mechanic": "бонус",
+            "reward_rub": 40,
+        })
+
+    monkeypatch.setattr("synth.challenges.call_openrouter", fake_call)
+    results = generate_challenge_for_user(profile, _config, model="fake/model", api_key="fake-key")
+    basket_result = _by_slot(results)["llm_basket"]
+    assert basket_result["path"] == "personal"
+    assert basket_result["target_categories"] == ["молочные продукты и яйца"]
+
+
+def test_generate_challenge_for_user_llm_basket_falls_back_when_llm_picks_category_outside_suggested(monkeypatch):
+    profile = _profile("bakes_on_weekends", seed=4)
+    profile = {**profile, "suggested_basket_items": [
+        {"item": "Молоко 3.2%", "category": "молочные продукты и яйца", "weekly_quantity": 2},
+    ]}
+
+    def fake_call(model, system, user, api_key=None, timeout=60.0, max_retries=3):
+        return json.dumps({
+            "challenge_title": "Скидка на бакалею",
+            "description": "desc",
+            "target_categories": ["бакалея"],
+            "mechanic": "скидка",
+            "reward_rub": 30,
+        })
+
+    monkeypatch.setattr("synth.challenges.call_openrouter", fake_call)
+    results = generate_challenge_for_user(profile, _config, model="fake/model", api_key="fake-key")
+    basket_result = _by_slot(results)["llm_basket"]
+    assert basket_result["path"] == "generic_fallback"
+    assert "outside allowed set" in basket_result["error"]
+
+
+def test_generate_challenge_for_user_llm_basket_falls_back_without_calling_llm_when_no_suggestions(monkeypatch):
+    def fail_if_called(*args, **kwargs):
+        raise AssertionError("call_openrouter should not be called with no suggested_basket_items")
+
+    monkeypatch.setattr("synth.challenges.call_openrouter", fail_if_called)
+    profile = _profile("bakes_on_weekends", seed=4)
+    # no suggested_basket_items key at all — same as a brand-new user
+    results = generate_challenge_for_user(profile, _config, model="fake/model", api_key="fake-key")
+    basket_result = _by_slot(results)["llm_basket"]
+    assert basket_result["path"] == "generic_fallback"
 
 
 def test_build_category_expansion_challenge_targets_least_bought_category():

@@ -750,12 +750,12 @@ def compute_frequency_saturation(
     return saturated, {"n_receipts_train": n_receipts_train, "threshold": min_receipts_for_no_challenge}
 
 
-# The four independent challenge slots every user gets, one attempt each,
+# The five independent challenge slots every user gets, one attempt each,
 # unconditionally — no receptiveness/saturation gate decides who gets
 # personalization any more (see `compute_receptiveness`/
 # `compute_frequency_saturation`, still used by `synth/simulation.py`'s
 # offline effect model, but no longer by `generate_challenge_for_user`).
-CHALLENGE_SLOTS = ("llm_habit", "llm_discovery", "generic", "vibe")
+CHALLENGE_SLOTS = ("llm_habit", "llm_discovery", "llm_basket", "generic", "vibe")
 
 
 def _pick_distinct_generic_offer(user_id: str, config: SynthConfig, used_indices: list[int]) -> dict:
@@ -783,10 +783,10 @@ def generate_challenge_for_user(
     vibe_month_key: str | None = None,
 ) -> list[dict]:
     """Route one profile to exactly `len(CHALLENGE_SLOTS)` records — one per
-    slot (`llm_habit`, `llm_discovery`, `generic`, `vibe`) — for EVERY user,
-    regardless of purchase-pattern strength or frequency. There is no
-    saturation/receptiveness gate here any more: a thin/noisy purchase
-    history degrades gracefully through the LLM prompt
+    slot (`llm_habit`, `llm_discovery`, `llm_basket`, `generic`, `vibe`) —
+    for EVERY user, regardless of purchase-pattern strength or frequency.
+    There is no saturation/receptiveness gate here any more: a thin/noisy
+    purchase history degrades gracefully through the LLM prompt
     (`summarize_purchase_pattern` already renders "—" for empty fields)
     rather than being rejected upfront.
 
@@ -804,6 +804,15 @@ def generate_challenge_for_user(
     `pick_vibe_category` picks one deterministically from `vibe_month_key`
     (defaults to the current UTC year-month) so offline/dry-run calls
     without a DB-backed profile still get a stable answer.
+
+    `llm_basket` wraps the user's own deterministic weekly-purchase-
+    frequency list (`profile.get("suggested_basket_items")`, populated by
+    the web layer from `BasketRepository.suggest_items` — see
+    `ChallengeAdapter._suggested_basket_items`) into a challenge via
+    `build_basket_prompt`. If there are no suggested items (new user, no
+    purchase history), this slot never calls the LLM at all — it falls
+    straight to a generic offer, the same way the old deterministic
+    builders returned `None` on insufficient history.
 
     Any LLM-backed slot whose call/validation fails falls back to a
     (slot-distinct) generic offer, `path="generic_fallback"` — same as the
@@ -885,6 +894,18 @@ def generate_challenge_for_user(
         )
     system, user_msg = build_vibe_prompt(profile, config, max_reward, vibe_category)
     _run_llm_slot("vibe", system, user_msg, allowed_categories=set(VIBE_CATEGORIES[vibe_category]))
+
+    # slot: llm_basket
+    suggested_items = profile.get("suggested_basket_items") or []
+    if not suggested_items:
+        results.append(_generic(
+            "llm_basket", "generic_fallback",
+            error="no suggested weekly-basket items — no purchase history to build from",
+        ))
+    else:
+        system, user_msg = build_basket_prompt(profile, config, max_reward, suggested_items)
+        allowed_categories = {item["category"] for item in suggested_items}
+        _run_llm_slot("llm_basket", system, user_msg, allowed_categories=allowed_categories)
 
     return results
 
