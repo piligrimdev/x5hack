@@ -6,6 +6,7 @@ from synth.challenges import (
     GENERIC_CHALLENGES,
     PERSONAL_CHALLENGE_SLOTS,
     PERSONAL_TARGET_QUANTITY,
+    VIBE_CATEGORIES,
     backfill_target_sku,
     build_category_expansion_challenge,
     build_personal_prompt,
@@ -20,6 +21,7 @@ from synth.challenges import (
     parse_and_validate_challenge,
     pick_generic_challenge,
     pick_sku_in_category,
+    pick_vibe_category,
     rewrite_descriptions_for_tracked_item,
     score_against_answer_key,
 )
@@ -37,6 +39,31 @@ def test_generic_challenges_never_target_a_forbidden_category():
     forbidden = set(_config.forbidden_categories)
     for offer in GENERIC_CHALLENGES:
         assert not (set(offer["target_categories"]) & forbidden)
+
+
+def test_vibe_categories_partition_all_non_forbidden_categories_without_overlap():
+    all_vibe_categories = [c for cats in VIBE_CATEGORIES.values() for c in cats]
+    assert len(all_vibe_categories) == len(set(all_vibe_categories))
+    expected = {c.name for c in _config.categories} - set(_config.forbidden_categories)
+    assert set(all_vibe_categories) == expected
+
+
+def test_pick_vibe_category_is_deterministic():
+    assert pick_vibe_category("user-1", "2026-09") == pick_vibe_category("user-1", "2026-09")
+
+
+def test_pick_vibe_category_varies_by_user():
+    themes = {pick_vibe_category(f"user-{i}", "2026-09") for i in range(30)}
+    assert len(themes) > 1
+
+
+def test_pick_vibe_category_can_change_across_months():
+    themes = {pick_vibe_category("user-1", f"2026-{m:02d}") for m in range(1, 13)}
+    assert len(themes) > 1
+
+
+def test_pick_vibe_category_always_returns_a_known_theme():
+    assert pick_vibe_category("user-1", "2026-09") in VIBE_CATEGORIES
 
 
 def test_pick_generic_challenge_is_deterministic():

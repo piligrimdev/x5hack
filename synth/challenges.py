@@ -97,6 +97,35 @@ GENERIC_CHALLENGES: list[dict] = [
     },
 ]
 
+# Partition of every non-forbidden catalog category into 6 monthly "vibe"
+# themes. A user is assigned exactly one theme per calendar month
+# (`pick_vibe_category` / `ChallengeAdapter._resolve_vibe_category`), and
+# their "vibe" challenge slot is constrained to this theme's categories —
+# see `build_vibe_prompt`. No overlap by design (checked by
+# `test_vibe_categories_partition_all_non_forbidden_categories_without_overlap`),
+# though nothing technically requires that if the list changes later.
+VIBE_CATEGORIES: dict[str, list[str]] = {
+    "Здоровье и лёгкость": [
+        "молочные продукты и яйца", "овощи", "фрукты",
+        "мясо и птица", "рыба и морепродукты", "орехи и сухофрукты",
+    ],
+    "Экономия и запасы": [
+        "бакалея", "консервация", "масла и жиры", "соусы и приправы",
+    ],
+    "Побаловать себя": [
+        "кондитерка", "сладости и снеки", "напитки",
+    ],
+    "Уют и порядок дома": [
+        "товары для дома", "бытовая химия", "личная гигиена",
+    ],
+    "Быстро и просто": [
+        "готовая еда", "хлеб и выпечка", "заморозка",
+    ],
+    "Забота о питомце": [
+        "товары для животных",
+    ],
+}
+
 _REQUIRED_FIELDS = ("challenge_title", "description", "target_categories", "mechanic", "reward_rub")
 
 
@@ -176,6 +205,18 @@ def compute_receptiveness(
 
 def _hash_index(seed_key: str, n: int) -> int:
     return int(hashlib.sha256(seed_key.encode("utf-8")).hexdigest(), 16) % n
+
+
+def pick_vibe_category(user_id: str, month_key: str) -> str:
+    """Deterministic pick of this user's "vibe" theme for `month_key`
+    (`"YYYY-MM"`) — same style as `pick_generic_challenge`/
+    `pick_sku_in_category`: a hash of `user_id` + `month_key`, not
+    `random`, so the same user always gets the same theme for a given
+    month without needing anything persisted. The web layer persists the
+    result anyway (`ChallengeAdapter._resolve_vibe_category`), as a seat
+    for a future manual-selection feature that would overwrite it."""
+    names = list(VIBE_CATEGORIES)
+    return names[_hash_index(f"{user_id}:vibe:{month_key}", len(names))]
 
 
 def pick_sku_in_category(config: SynthConfig, category: str, seed_key: str) -> SKU | None:
