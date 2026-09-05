@@ -66,27 +66,27 @@ dict[str, tuple[str, uuid.UUID]]` — для каждого `challenge_slot` п�
 challenge_slot ORDER BY issued_at DESC)`, независимо от `task_status`
 — то есть завершённые и истёкшие тоже считаются "было").
 
-**Применение:** `ChallengeService.generate_batch` вызывает этот метод один
-раз в начале (рядом с построением `existing_criteria`), получает
-`previous_by_slot`. После резолва кандидата через
-`self.adapter.resolve_criterion(...)`, ПЕРЕД проверкой на `existing_criteria`
-(cross-slot), добавляется вторая проверка: если резолвленный критерий совпадает
-с `previous_by_slot.get(slot)` — тот же слот повторил свою же прошлую цель —
-слот тоже пропускается (не персистится), с отдельным логом
-(`generate_batch.repeats_previous_cycle_skip`). Пропущенный слот **не**
-пытается перегенерироваться в этом же вызове — это тот же "просто пропусти,
-не пытайся героически чинить" паттерн, что уже используется для cross-slot
-коллизий и сбоев `persist_challenge`. Такой пользователь в этом цикле
-недополучит один слот (как и при любом другом сбое билдера) — при следующем
-триггере генерации (новый чек / завершение задания) `generate_batch` снова
-попробует заполнить недостающий слот.
+**Применение (единый механизм для ВСЕХ 5 слотов, включая `generic`):**
+`ChallengeService.generate_batch` вызывает этот метод один раз в начале
+(рядом с построением `existing_criteria`), получает `previous_by_slot`.
+После резолва кандидата через `self.adapter.resolve_criterion(...)`, ПЕРЕД
+проверкой на `existing_criteria` (cross-slot), добавляется вторая проверка:
+если резолвленный критерий совпадает с `previous_by_slot.get(slot)` — тот
+же слот повторил свою же прошлую цель — слот тоже пропускается (не
+персистится), с отдельным логом (`generate_batch.repeats_previous_cycle_skip`).
+Это ОДИН и тот же код путь для всех пяти слотов, включая `generic` — никакого
+специального механизма для него не нужно: `resolve_criterion` уже резолвит
+`generic`-оффер до `(criterion_type, criterion_entity_id)` точно так же, как
+любой другой слот, так что сравнение с историей работает единообразно
+(отдельная идея с "предзаполненным индексом в `_pick_distinct_generic_offer`"
+была бы дублирующим, более сложным путём к тому же результату — отброшена).
 
-**Слот `generic`:** отдельный путь не нужен — `_pick_distinct_generic_offer`
-уже устроен так, что принимает `used_indices: list[int]` и продвигает индекс,
-если он уже занят. Досеиваем этот список индексом прошлого цикла для
-`generic`-слота этого пользователя (если известен), передавая его как
-предзаполненный `used_generic_indices` в `generate_challenge_for_user` —
-новый необязательный параметр `previous_generic_index: int | None = None`.
+Пропущенный слот **не** пытается перегенерироваться в этом же вызове — тот
+же "просто пропусти, не пытайся героически чинить" паттерн, что уже
+используется для cross-slot коллизий и сбоев `persist_challenge`. Такой
+пользователь в этом цикле недополучит один слот (как при любом другом сбое
+билдера) — при следующем триггере генерации `generate_batch` снова попробует
+заполнить недостающий слот.
 
 **LLM-слоты (`llm_habit`/`llm_discovery`/`llm_basket`/`vibe`):** дедуп только
 детектирует повтор постфактум (сравнение резолвленного критерия), не пытается
@@ -99,7 +99,6 @@ challenge_slot ORDER BY issued_at DESC)`, независимо от `task_status
 
 - `synth/challenges.py`: `CHALLENGE_SLOTS` → 5 элементов; `build_basket_prompt`
   (новая функция, после `build_vibe_prompt`); `generate_challenge_for_user`
-  получает новые параметры `previous_generic_index: int | None = None`,
   читает `profile.get("suggested_basket_items")`; новый слот `llm_basket`
   между `llm_discovery` и `vibe`.
 - `web/src/webx5/crud/task.py`: новый метод `get_last_criterion_per_slot`.
@@ -107,8 +106,7 @@ challenge_slot ORDER BY issued_at DESC)`, независимо от `task_status
   `basket_repo`; `build_profile` кладёт `suggested_basket_items` в профиль.
 - `web/src/webx5/services/challenge.py`: `generate_batch` вызывает
   `get_last_criterion_per_slot`, добавляет проверку "повтор прошлого цикла"
-  рядом с существующей cross-slot проверкой; прокидывает индекс прошлого
-  `generic`-оффера в `generate_challenge_for_user`.
+  (единый путь для всех 5 слотов) рядом с существующей cross-slot проверкой.
 - `web/src/webx5/core/challenges.py`: DI — `ChallengeAdapter(task_repo,
   basket_repo)`, импорт `basket_repo` из `core/basket.py`.
 - `web/tests/webx5/services/test_challenge_service.py`,
