@@ -25,11 +25,12 @@ OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 # model, not a value derived from the offer's own text.
 PERSONAL_TARGET_QUANTITY = 2
 
-# Fixed pool of non-personalized "partner brand" offers for users where no
-# reliable purchase pattern was detected. None of these target a
-# forbidden_categories entry. Picked deterministically per user (hash of
-# user_id), not randomly — same user always gets the same generic offer for
-# a given catalog version, and nothing here needs an LLM call.
+# Fixed pool of non-personalized "partner brand" offers. Drawn for EVERY
+# user unconditionally via the `generic` slot (not just as a fallback for a
+# weak/undetected purchase pattern — see `CHALLENGE_SLOTS`). None of these
+# target a forbidden_categories entry. Picked deterministically per user
+# (hash of user_id), not randomly — same user always gets the same generic
+# offer for a given catalog version, and nothing here needs an LLM call.
 GENERIC_CHALLENGES: list[dict] = [
     {
         "challenge_title": "Скидка партнёра на молочную продукцию",
@@ -748,7 +749,10 @@ def generate_challenge_for_user(
     (`build_personal_prompt` with `focus="habit"`/`"discovery"`) — same
     failure/fallback handling, different instructions. `generic` is the
     deterministic `GENERIC_CHALLENGES` pool, unconditionally attempted for
-    everyone (not just as a fallback, unlike before). `vibe` calls the LLM
+    everyone (not just as a fallback, unlike before) — it is drawn FIRST in
+    the code below, before any LLM slot is attempted, so its own offer
+    never depends on whether an earlier LLM slot happened to fail and
+    consume a `used_generic_indices` pool slot this cycle. `vibe` calls the LLM
     constrained to the user's monthly theme: `profile["vibe_category"]` if
     the caller already resolved/persisted one (the web layer always does,
     see `ChallengeAdapter._resolve_vibe_category`), otherwise
@@ -796,9 +800,22 @@ def generate_challenge_for_user(
             results.append({
                 "user_id": profile["user_id"], "path": "personal",
                 "model": model, "challenge_slot": slot, **challenge,
+                "prompt": f"[SYSTEM]\n{system}\n\n[USER]\n{user_msg}",
+                "response": raw,
             })
         except Exception as e:  # noqa: BLE001 — deliberately broad: any failure must fall back, not propagate
             results.append(_generic(slot, "generic_fallback", error=str(e), model_attempted=model))
+
+    # slot: generic — deterministic, no API call, always attempted for
+    # everyone. Drawn FIRST, before any LLM slot is attempted, so its own
+    # offer never depends on whether an earlier LLM slot happened to fail
+    # this cycle (a failed LLM slot also draws from this same
+    # used_generic_indices pool via `_generic`/`_pick_distinct_generic_offer`).
+    offer = _pick_distinct_generic_offer(profile["user_id"], config, used_generic_indices)
+    results.append({
+        "user_id": profile["user_id"], "path": "generic",
+        "model": None, "challenge_slot": "generic", **offer,
+    })
 
     # slot: llm_habit
     system, user_msg = build_personal_prompt(profile, config, max_reward, focus="habit")
@@ -807,13 +824,6 @@ def generate_challenge_for_user(
     # slot: llm_discovery
     system, user_msg = build_personal_prompt(profile, config, max_reward, focus="discovery")
     _run_llm_slot("llm_discovery", system, user_msg)
-
-    # slot: generic — deterministic, no API call, always attempted for everyone
-    offer = _pick_distinct_generic_offer(profile["user_id"], config, used_generic_indices)
-    results.append({
-        "user_id": profile["user_id"], "path": "generic",
-        "model": None, "challenge_slot": "generic", **offer,
-    })
 
     # slot: vibe
     vibe_category = profile.get("vibe_category") or pick_vibe_category(

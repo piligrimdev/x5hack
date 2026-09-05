@@ -13,7 +13,7 @@ from synth.simulation import (
 _config = load_config("config/synth_schema.yaml")
 
 
-def test_route_for_simulation_matches_generate_challenge_for_user_routing():
+def test_route_for_simulation_matches_underlying_signal_functions():
     # generate_challenge_for_user (Task 6) no longer routes through
     # receptiveness/saturation at all — it unconditionally issues all 4
     # challenge slots (llm_habit/llm_discovery/generic/vibe) to every user,
@@ -23,9 +23,15 @@ def test_route_for_simulation_matches_generate_challenge_for_user_routing():
     # signal functions (compute_frequency_saturation/compute_receptiveness,
     # both still used by synth/simulation.py's offline effect model) — so
     # verify it directly against those instead.
+    #
+    # n=100/seed=9 (same population as the spend_threshold sibling test
+    # below) is required, not n=30/seed=1: that smaller population never
+    # actually reaches the saturated/not-receptive branches this test's own
+    # body checks for — it was measured to only ever exercise the
+    # "receptive" (personal) branch, which is a weaker test than intended.
     from synth.challenges import compute_frequency_saturation, compute_receptiveness
 
-    users, truth = population(n=30, seed=1, config=_config)
+    users, truth = population(n=100, seed=9, config=_config)
     for u in users:
         saturated, _ = compute_frequency_saturation(u, _config)
         actual = route_for_simulation(u, _config)
@@ -106,8 +112,8 @@ def test_summarize_simulation_no_challenge_path_has_zero_response_rate():
         assert report["by_path"]["no_challenge"]["net_value_rub"] == 0.0
 
 
-def test_route_for_simulation_spend_threshold_matches_generate_challenge_for_user_routing():
-    # Same rationale as test_route_for_simulation_matches_generate_challenge_for_user_routing
+def test_route_for_simulation_spend_threshold_matches_underlying_signal_functions():
+    # Same rationale as test_route_for_simulation_matches_underlying_signal_functions
     # above: generate_challenge_for_user no longer has a "spend_threshold"
     # slot to compare against (Task 6), so verify route_for_simulation's
     # challenge_type="spend_threshold" branch directly against the same

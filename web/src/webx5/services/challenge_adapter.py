@@ -67,6 +67,10 @@ class ChallengeAdapter:
 
         Only real fields sourced from the DB; margin per line is synthesized
         from `config.category_economics` because production DB doesn't store margin.
+
+        May assign and persist a new `vibe_category`/`vibe_month` on the
+        user's row via `_resolve_vibe_category` — this method is not
+        read-only despite its name.
         """
         user: User | None = session.get(User, user_id)
         if user is None:
@@ -157,21 +161,27 @@ class ChallengeAdapter:
     def _lookup_product_by_sku(self, session: Session, sku_id: str) -> Product | None:
         return session.execute(select(Product).where(Product.sku_id == sku_id)).scalar_one_or_none()
 
-    # ------- dict-result → Task + TaskCriterion rows -------
-    def persist_challenge(
-        self,
-        session: Session,
-        user_id: uuid.UUID,
-        script_result: dict,
-    ) -> uuid.UUID:
-        """Map one non-'no_challenge' script result to a Task + TaskCriterion rows.
-        Returns the new task's id.
+    # ------- criterion resolution (no writes) -------
+    def resolve_criterion(self, session: Session, script_result: dict) -> tuple[str, uuid.UUID]:
+        """Resolve the `(criterion_type, criterion_entity_id)` pair a
+        script_result WOULD persist to, without creating any rows.
+
+        Used by `ChallengeService.generate_batch` to detect, before calling
+        `persist_challenge`, whether a slot would create a Task with the same
+        criterion pair as another slot in this batch or an already-active
+        task (e.g. `vibe` and `llm_habit` both landing on the same category)
+        — and reused by `persist_challenge` itself below, so the resolution
+        logic (target_sku_id → product lookup → category fallback) lives in
+        exactly one place.
+
+        Raises `ValueError` for the same reasons `persist_challenge` would
+        refuse to build a task: missing `target_categories`, or a category
+        name that isn't in the DB.
         """
         target_categories = script_result.get("target_categories") or []
         if not target_categories:
             raise ValueError("script_result missing target_categories")
 
-        # Resolve category (main criterion fallback).
         primary_category_name = target_categories[0]
         category = self._resolve_category(session, primary_category_name)
         if category is None:
@@ -191,11 +201,20 @@ class ChallengeAdapter:
                 product = self._lookup_product(session, item_name, category.id)
 
         if product is not None:
-            criterion_type = "product"
-            criterion_entity_id = product.id
-        else:
-            criterion_type = "category"
-            criterion_entity_id = category.id
+            return "product", product.id
+        return "category", category.id
+
+    # ------- dict-result → Task + TaskCriterion rows -------
+    def persist_challenge(
+        self,
+        session: Session,
+        user_id: uuid.UUID,
+        script_result: dict,
+    ) -> uuid.UUID:
+        """Map one non-'no_challenge' script result to a Task + TaskCriterion rows.
+        Returns the new task's id.
+        """
+        criterion_type, criterion_entity_id = self.resolve_criterion(session, script_result)
 
         # Reward amount — clamp to non-negative.
         reward_rub = Decimal(str(script_result.get("reward_rub", 0)))

@@ -502,6 +502,52 @@ def test_generate_challenge_for_user_recovers_from_unrecognized_vibe_category(mo
         assert vibe_result["target_categories"] == ["бакалея"]
 
 
+def test_generate_challenge_for_user_llm_slots_carry_their_own_prompt_and_response(monkeypatch):
+    """Regression for the audit-log mismatch: `llm_habit`/`llm_discovery`
+    (and `vibe`) must each carry THEIR OWN prompt/response on the result
+    dict, not another slot's — this is what lets the web layer
+    (`ChallengeService.generate_batch`) log the right prompt/response per
+    `challenge_generation_log` row instead of reusing whichever slot
+    happened to call the LLM last."""
+    profile = _profile("bakes_on_weekends", seed=4)
+
+    def fake_call(model, system, user, api_key=None, timeout=60.0, max_retries=3):
+        # habit vs discovery focus instructions are textually distinct
+        # (build_personal_prompt) — use that to return a distinct, slot-
+        # identifiable response for each call.
+        if "почти" in system:  # discovery-focus marker
+            return json.dumps({
+                "challenge_title": "Discovery title",
+                "description": "discovery desc",
+                "target_categories": ["бакалея"],
+                "mechanic": "скидка",
+                "reward_rub": 20,
+            })
+        return json.dumps({
+            "challenge_title": "Habit title",
+            "description": "habit desc",
+            "target_categories": ["бакалея"],
+            "mechanic": "скидка",
+            "reward_rub": 25,
+        })
+
+    monkeypatch.setattr("synth.challenges.call_openrouter", fake_call)
+    results = generate_challenge_for_user(profile, _config, model="fake/model", api_key="fake-key")
+    by_slot = _by_slot(results)
+    habit, discovery = by_slot["llm_habit"], by_slot["llm_discovery"]
+
+    assert habit["prompt"] != discovery["prompt"]
+    assert "почти" not in habit["prompt"]
+    assert "почти" in discovery["prompt"]
+    assert habit["response"] != discovery["response"]
+    assert json.loads(habit["response"])["challenge_title"] == "Habit title"
+    assert json.loads(discovery["response"])["challenge_title"] == "Discovery title"
+
+    # generic never calls the LLM — must not carry a prompt/response at all.
+    assert "prompt" not in by_slot["generic"]
+    assert "response" not in by_slot["generic"]
+
+
 def test_generate_challenge_for_user_all_llm_fallbacks_get_distinct_generic_offers(monkeypatch):
     def fail_if_called(*args, **kwargs):
         raise RuntimeError("simulated LLM outage")

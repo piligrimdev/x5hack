@@ -15,7 +15,7 @@ import structlog
 from sqlalchemy import exists, select
 from sqlalchemy.orm import Session
 
-from synth.challenges import generate_challenge_for_user
+from synth.challenges import CHALLENGE_SLOTS, generate_challenge_for_user
 from synth.config import SynthConfig
 from webx5.crud.challenge_log import ChallengeLogRepository
 from webx5.crud.task import TaskRepository
@@ -25,8 +25,6 @@ from webx5.services.challenge_adapter import ChallengeAdapter
 from webx5.services.openrouter_capturing import capture_openrouter_io
 
 logger = structlog.get_logger("challenges")
-
-ALL_SLOTS: tuple[str, ...] = ("llm_habit", "llm_discovery", "generic", "vibe")
 
 
 class ChallengeService:
@@ -55,7 +53,7 @@ class ChallengeService:
         already has active, then persist up to `count` of the remaining.
         """
         active_tasks = self.task_repo.get_active_for_user(session, user_id)
-        remaining_slots = 4 - len(active_tasks)
+        remaining_slots = len(CHALLENGE_SLOTS) - len(active_tasks)
         want = min(count, remaining_slots)
         if want <= 0:
             logger.info(
@@ -67,6 +65,14 @@ class ChallengeService:
             return []
 
         active_slots = {t.challenge_slot for t in active_tasks if t.challenge_slot}
+        # Cross-slot duplicate guard: two independently-LLM-routed
+        # slots (or a new slot and an already-active task) can land on the
+        # same (criterion_type, criterion_entity_id) pair — e.g. `vibe`
+        # genuinely overlapping a user's habitual top category — which would
+        # otherwise create two functionally-duplicate challenge cards.
+        existing_criteria: set[tuple[str, uuid.UUID]] = {
+            (t.criterion_type, t.criterion_entity_id) for t in active_tasks if t.criterion_type and t.criterion_entity_id
+        }
         profile = self.adapter.build_profile(session, user_id, self.synth_config)
 
         logger.info(
@@ -109,13 +115,21 @@ class ChallengeService:
         for script_result in script_results:
             slot = script_result.get("challenge_slot") or "unknown"
 
+            # Per-slot prompt/response (set by `synth.challenges._run_llm_slot`
+            # on its own successful "personal" record) — NOT the batch-level
+            # `captured_prompt`/`captured_response` above, which only ever
+            # holds the LAST LLM call made inside this `generate_batch` run
+            # and would otherwise get logged against every slot's row,
+            # including slots that never called the LLM at all (`generic`)
+            # or whose own call failed (`generic_fallback`) — `.get(...)`
+            # already returns None for those, which is the honest answer.
             log_id = self.log_repo.record(
                 session,
                 user_id=user_id,
                 challenge_type=slot,
                 script_result=script_result,
-                prompt=captured_prompt,
-                response=captured_response,
+                prompt=script_result.get("prompt"),
+                response=script_result.get("response"),
             )
 
             logger.info(
@@ -165,6 +179,27 @@ class ChallengeService:
                 continue
 
             try:
+                criterion = self.adapter.resolve_criterion(session, script_result)
+            except Exception as e:  # noqa: BLE001 — same failure modes persist_challenge would hit
+                logger.error(
+                    "generation.persist_failed",
+                    user_id=str(user_id),
+                    challenge_slot=slot,
+                    error=str(e),
+                )
+                continue
+
+            if criterion in existing_criteria:
+                logger.info(
+                    "generate_batch.duplicate_criterion_skip",
+                    user_id=str(user_id),
+                    challenge_slot=slot,
+                    criterion_type=criterion[0],
+                    criterion_entity_id=str(criterion[1]),
+                )
+                continue
+
+            try:
                 task_id = self.adapter.persist_challenge(session, user_id, script_result)
             except Exception as e:  # noqa: BLE001
                 logger.error(
@@ -177,6 +212,7 @@ class ChallengeService:
 
             self.log_repo.attach_task(session, log_id, task_id)
             active_slots.add(slot)
+            existing_criteria.add(criterion)
             created_ids.append(task_id)
             logger.info(
                 "generate_batch.task_created",

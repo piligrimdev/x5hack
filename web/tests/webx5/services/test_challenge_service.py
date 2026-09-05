@@ -27,6 +27,11 @@ def _service_with_mocks():
     adapter = MagicMock()
     adapter.build_profile.return_value = {"user_id": "u", "receipts": []}
     adapter.persist_challenge.side_effect = lambda session, uid, r: uuid.uuid4()
+    # Default: every script_result resolves to its own distinct criterion
+    # pair, so the cross-slot duplicate guard never fires unless a test
+    # deliberately overrides this to force a collision (see
+    # test_generate_batch_skips_duplicate_criterion_across_slots below).
+    adapter.resolve_criterion.side_effect = lambda session, r: ("category", uuid.uuid4())
     synth_config = MagicMock()
 
     service = ChallengeService(
@@ -138,3 +143,67 @@ def test_generate_batch_skips_slot_already_active():
     ]
     assert "llm_habit" not in persisted_slots
     assert set(persisted_slots) == {"llm_discovery", "generic", "vibe"}
+
+
+def test_generate_batch_skips_duplicate_criterion_across_slots():
+    """Two independently-routed slots (here: llm_habit and vibe) resolving
+    to the IDENTICAL (criterion_type, criterion_entity_id) pair must not
+    both be persisted as separate Task rows — only the first one wins, and
+    the second is logged as a skip, not silently dropped."""
+    service, task_repo, log_repo, adapter = _service_with_mocks()
+
+    same_criterion = ("category", uuid.uuid4())
+
+    def resolve(session, script_result):
+        if script_result["challenge_slot"] in ("llm_habit", "vibe"):
+            return same_criterion
+        return ("category", uuid.uuid4())
+
+    adapter.resolve_criterion.side_effect = resolve
+
+    with patch("webx5.services.challenge.generate_challenge_for_user", return_value=_batch_all_four()), \
+         patch("webx5.services.challenge.capture_openrouter_io") as mock_capture:
+        mock_capture.return_value.__enter__.return_value = {}
+        created = service.generate_batch(MagicMock(), uuid.uuid4(), count=4)
+
+    # 4 records total; llm_habit and vibe collide on the same criterion pair
+    # so only one of them is persisted — 3 tasks created, not 4.
+    assert len(created) == 3
+    assert log_repo.record.call_count == 4
+    persisted_slots = [
+        call.args[2]["challenge_slot"] for call in adapter.persist_challenge.call_args_list
+    ]
+    assert persisted_slots.count("llm_habit") + persisted_slots.count("vibe") == 1
+    assert "llm_discovery" in persisted_slots
+    assert "generic" in persisted_slots
+
+
+def test_generate_batch_existing_active_task_criterion_blocks_new_duplicate():
+    """A slot that would resolve to the same criterion as an ALREADY-ACTIVE
+    task (not just another slot in this batch) must also be skipped."""
+    service, task_repo, log_repo, adapter = _service_with_mocks()
+
+    active_criterion = ("category", uuid.uuid4())
+    active_task = MagicMock()
+    active_task.challenge_slot = "spend_threshold"  # not one of this batch's slots
+    active_task.criterion_type = active_criterion[0]
+    active_task.criterion_entity_id = active_criterion[1]
+    task_repo.get_active_for_user.return_value = [active_task]
+
+    def resolve(session, script_result):
+        if script_result["challenge_slot"] == "llm_habit":
+            return active_criterion
+        return ("category", uuid.uuid4())
+
+    adapter.resolve_criterion.side_effect = resolve
+
+    with patch("webx5.services.challenge.generate_challenge_for_user", return_value=_batch_all_four()), \
+         patch("webx5.services.challenge.capture_openrouter_io") as mock_capture:
+        mock_capture.return_value.__enter__.return_value = {}
+        created = service.generate_batch(MagicMock(), uuid.uuid4(), count=4)
+
+    assert len(created) == 3
+    persisted_slots = [
+        call.args[2]["challenge_slot"] for call in adapter.persist_challenge.call_args_list
+    ]
+    assert "llm_habit" not in persisted_slots
