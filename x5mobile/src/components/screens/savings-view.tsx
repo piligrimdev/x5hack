@@ -60,12 +60,22 @@ export function SavingsView({ leaderboard, savings, token, goHome, goHistory, go
   } = useBasket(token, handleOrderPlaced);
   const [instructionText, setInstructionText] = useState('');
 
+  const autoCollectConsumed = useRef(false);
+
   useEffect(() => {
-    if (autoCollect && hydrated && !hasCollected && basketItems.length === 0) {
-      collectWeeklyBasket();
-      onAutoCollectHandled();
+    if (!autoCollect) {
+      autoCollectConsumed.current = false;
+      return;
     }
-  }, [autoCollect, hydrated, hasCollected, basketItems.length]);
+    if (!hydrated || autoCollectConsumed.current) return;
+    // Consume the request even when a saved basket already exists. Otherwise
+    // checkout would empty the basket and trigger this old request again.
+    autoCollectConsumed.current = true;
+    onAutoCollectHandled();
+    if (!hasCollected && basketItems.length === 0) {
+      collectWeeklyBasket();
+    }
+  }, [autoCollect, hydrated, hasCollected, basketItems.length, collectWeeklyBasket, onAutoCollectHandled]);
 
   function handleSendInstruction() {
     const text = instructionText.trim();

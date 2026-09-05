@@ -96,6 +96,7 @@ function AppContent({ token }: { token: string }) {
   const totalPaid = economy?.total_paid ?? 0;
 
   function navigate(next: Screen) {
+    if (next !== 'savings') setAutoCollectBasket(false);
     setPrevScreen(screen);
     setScreen(next);
   }
