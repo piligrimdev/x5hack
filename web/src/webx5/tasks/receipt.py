@@ -13,6 +13,7 @@ import uuid
 import structlog
 from sqlalchemy import select
 
+from synth.challenges import CHALLENGE_SLOTS
 from webx5.core.celery_app import celery_app
 from webx5.entities.receipt import Receipt
 from webx5.entities.user import User
@@ -59,14 +60,14 @@ def process_receipt(receipt_id: str) -> dict:
                 active_task_ids=[str(t.id) for t in active],
             )
 
-            # First-receipt trigger (R9): no active tasks → generate 4.
+            # First-receipt trigger (R9): no active tasks → generate all slots.
             if not active:
                 logger.info(
                     "process_receipt.first_receipt_trigger",
                     user_id=str(user_id),
                     receipt_id=receipt_id,
                 )
-                generate_challenges.apply_async(args=[str(user_id), 4], queue="challenges")
+                generate_challenges.apply_async(args=[str(user_id), len(CHALLENGE_SLOTS)], queue="challenges")
                 return {"status": "first_receipt_generation_enqueued", "user_id": str(user_id)}
 
             # US2: increment progress + reward.

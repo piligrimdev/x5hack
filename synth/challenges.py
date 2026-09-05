@@ -879,6 +879,18 @@ def generate_challenge_for_user(
     system, user_msg = build_personal_prompt(profile, config, max_reward, focus="discovery")
     _run_llm_slot("llm_discovery", system, user_msg)
 
+    # slot: llm_basket
+    suggested_items = profile.get("suggested_basket_items") or []
+    if not suggested_items:
+        results.append(_generic(
+            "llm_basket", "generic_fallback",
+            error="no suggested weekly-basket items — no purchase history to build from",
+        ))
+    else:
+        system, user_msg = build_basket_prompt(profile, config, max_reward, suggested_items)
+        allowed_categories = {item["category"] for item in suggested_items}
+        _run_llm_slot("llm_basket", system, user_msg, allowed_categories=allowed_categories)
+
     # slot: vibe
     vibe_category = profile.get("vibe_category") or pick_vibe_category(
         profile["user_id"], vibe_month_key or date.today().strftime("%Y-%m")
@@ -894,18 +906,6 @@ def generate_challenge_for_user(
         )
     system, user_msg = build_vibe_prompt(profile, config, max_reward, vibe_category)
     _run_llm_slot("vibe", system, user_msg, allowed_categories=set(VIBE_CATEGORIES[vibe_category]))
-
-    # slot: llm_basket
-    suggested_items = profile.get("suggested_basket_items") or []
-    if not suggested_items:
-        results.append(_generic(
-            "llm_basket", "generic_fallback",
-            error="no suggested weekly-basket items — no purchase history to build from",
-        ))
-    else:
-        system, user_msg = build_basket_prompt(profile, config, max_reward, suggested_items)
-        allowed_categories = {item["category"] for item in suggested_items}
-        _run_llm_slot("llm_basket", system, user_msg, allowed_categories=allowed_categories)
 
     return results
 

@@ -16,6 +16,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from synth.challenges import CHALLENGE_SLOTS
 from webx5.services.challenge import ChallengeService
 
 
@@ -71,6 +72,16 @@ def _batch_all_four() -> list[dict]:
     ]
 
 
+def _batch_all_five() -> list[dict]:
+    return [
+        _canned("llm_habit"),
+        _canned("llm_discovery"),
+        _canned("llm_basket"),
+        _canned("generic"),
+        _canned("vibe"),
+    ]
+
+
 def test_generate_batch_persists_all_four_slots():
     service, task_repo, log_repo, adapter = _service_with_mocks()
 
@@ -82,6 +93,19 @@ def test_generate_batch_persists_all_four_slots():
     assert len(created) == 4
     assert log_repo.record.call_count == 4
     assert adapter.persist_challenge.call_count == 4
+
+
+def test_generate_batch_persists_all_five_slots():
+    service, task_repo, log_repo, adapter = _service_with_mocks()
+
+    with patch("webx5.services.challenge.generate_challenge_for_user", return_value=_batch_all_five()), \
+         patch("webx5.services.challenge.capture_openrouter_io") as mock_capture:
+        mock_capture.return_value.__enter__.return_value = {}
+        created = service.generate_batch(MagicMock(), uuid.uuid4(), count=len(CHALLENGE_SLOTS))
+
+    assert len(created) == 5
+    persisted_slots = [call.args[2]["challenge_slot"] for call in adapter.persist_challenge.call_args_list]
+    assert "llm_basket" in persisted_slots
 
 
 def test_generate_batch_no_challenge_returns_empty_but_logs():

@@ -11,6 +11,7 @@ import uuid
 import structlog
 from sqlalchemy import select
 
+from synth.challenges import CHALLENGE_SLOTS
 from webx5.core.celery_app import celery_app
 from webx5.entities.user import User
 
@@ -18,7 +19,7 @@ logger = structlog.get_logger("tasks.generation")
 
 
 @celery_app.task(name="webx5.tasks.generation.generate_challenges", queue="challenges")
-def generate_challenges(user_id: str, count: int = 4) -> dict:
+def generate_challenges(user_id: str, count: int = len(CHALLENGE_SLOTS)) -> dict:
     from webx5.core.challenges import challenge_service
     from webx5.core.db import db
 
