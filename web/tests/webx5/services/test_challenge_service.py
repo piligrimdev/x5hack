@@ -239,20 +239,28 @@ def test_generate_batch_skips_slot_that_repeats_its_own_previous_cycle():
 
 
 def test_generate_batch_does_not_skip_when_criterion_matches_a_different_slots_history():
-    """The repeat check is per-slot, not global — a previous cycle's
-    llm_habit criterion showing up as history must not block a DIFFERENT
-    slot in this cycle from using a fresh (non-matching) criterion of its
-    own."""
+    """The repeat check is per-slot, not global — if llm_discovery's new
+    criterion happens to equal what llm_habit (a DIFFERENT slot) resolved to
+    last cycle, llm_discovery must still be persisted. Only an exact match
+    against the SAME slot's own history triggers a skip."""
     service, task_repo, log_repo, adapter = _service_with_mocks()
 
-    previous_criterion = ("category", uuid.uuid4())
-    task_repo.get_last_criterion_per_slot.return_value = {"llm_habit": previous_criterion}
-    # default resolve_criterion.side_effect (from _service_with_mocks) gives
-    # every slot a fresh uuid4() — none will match previous_criterion
+    llm_habits_previous_criterion = ("category", uuid.uuid4())
+    task_repo.get_last_criterion_per_slot.return_value = {"llm_habit": llm_habits_previous_criterion}
+
+    def resolve(session, script_result):
+        if script_result["challenge_slot"] == "llm_discovery":
+            # Deliberately collides with llm_habit's PREVIOUS-CYCLE criterion,
+            # not llm_discovery's own history (which is empty/unknown here).
+            return llm_habits_previous_criterion
+        return ("category", uuid.uuid4())
+
+    adapter.resolve_criterion.side_effect = resolve
 
     with patch("webx5.services.challenge.generate_challenge_for_user", return_value=_batch_all_four()), \
          patch("webx5.services.challenge.capture_openrouter_io") as mock_capture:
         mock_capture.return_value.__enter__.return_value = {}
-        created = service.generate_batch(MagicMock(), uuid.uuid4(), count=4)
+        service.generate_batch(MagicMock(), uuid.uuid4(), count=4)
 
-    assert len(created) == 4
+    persisted_slots = [call.args[2]["challenge_slot"] for call in adapter.persist_challenge.call_args_list]
+    assert "llm_discovery" in persisted_slots
