@@ -32,6 +32,7 @@ interface AppiViewProps {
   onOpenBasket: () => void;
   onChallenges: () => void;
   onOpenWheel: () => void;
+  onOpenLeaderboard: () => void;
 }
 
 function vibeEmoji(vibe: Vibe): string {
@@ -57,6 +58,7 @@ export function AppiView({
   onOpenBasket,
   onChallenges,
   onOpenWheel,
+  onOpenLeaderboard,
 }: AppiViewProps) {
   const insets = useSafeAreaInsets();
   const { vibes, selectedVibeId, loading: vibesLoading, saving, error, saveVibe } = useVibes(token);
@@ -112,7 +114,7 @@ export function AppiView({
         </View>
 
         <View style={styles.dashboard}>
-          <View style={styles.chartCard}>
+          <Pressable style={styles.chartCard} onPress={onOpenLeaderboard} accessibilityRole="button">
             <Text style={styles.chartTitle}>Экономия по месяцам</Text>
             {economyLoading ? (
               <ActivityIndicator color={GREEN} style={styles.chartLoader} />
@@ -159,9 +161,10 @@ export function AppiView({
                     <Text style={styles.summaryCaption}>от всех покупок</Text>
                   </View>
                 </View>
+                <Text style={styles.chartHint}>рейтинг магазина ›</Text>
               </>
             )}
-          </View>
+          </Pressable>
 
           <View style={styles.mascotCard}>
             <Image
@@ -340,6 +343,7 @@ const styles = StyleSheet.create({
   chartValue: { color: MUTED, fontSize: 9, fontWeight: '700' },
   chartBar: { width: '100%', borderRadius: 7 },
   chartLabel: { textAlign: 'center', color: MUTED, fontSize: 11, fontWeight: '600' },
+  chartHint: { color: GREEN, fontSize: 12, fontWeight: '800', marginTop: 12 },
   chartSummary: {
     flexDirection: 'row',
     gap: 8,

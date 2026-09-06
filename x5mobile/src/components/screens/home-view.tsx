@@ -109,8 +109,6 @@ export function HomeView({ token, onPoints, onOpenAppi, onHistory }: HomeViewPro
   const totalPaid = economy?.total_paid ?? 0;
   const withoutDiscount = totalPaid + totalSaved;
   const savedPct = withoutDiscount > 0 ? Math.round((totalSaved / withoutDiscount) * 100) : 0;
-  const paidPct = withoutDiscount > 0 ? (totalPaid / withoutDiscount) * 100 : 0;
-  const greenPct = withoutDiscount > 0 ? (totalSaved / withoutDiscount) * 100 : 0;
 
   function formatRub(value: number): string {
     return value.toLocaleString('ru-RU', {
@@ -230,25 +228,10 @@ export function HomeView({ token, onPoints, onOpenAppi, onHistory }: HomeViewPro
           </View>
 
           <TouchableOpacity style={styles.economyCard} onPress={onOpenAppi} activeOpacity={0.8}>
-            <View style={styles.economyHeader}>
-              <Text style={styles.economyLabel}>ЭКОНОМИЯ</Text>
-              <View style={styles.savedBadge}>
-                <Text style={styles.savedBadgeText}>−{formatRub(totalSaved)} ₽ ({savedPct}%)</Text>
-              </View>
-            </View>
-            <View style={styles.progressBarTrack}>
-              <View style={[styles.progressBarGray, { width: `${paidPct}%` as `${number}%` }]} />
-              <View style={[styles.progressBarGreen, { width: `${greenPct}%` as `${number}%` }]} />
-            </View>
-            <View style={styles.legendRow}>
-              <View style={styles.legendItem}>
-                <View style={[styles.legendDot, { backgroundColor: BrandColors.textSecondary }]} />
-                <Text style={styles.legendText}>Потрачено {formatRub(totalPaid)} ₽</Text>
-              </View>
-              <View style={styles.legendItem}>
-                <View style={[styles.legendDot, { backgroundColor: BrandColors.green }]} />
-                <Text style={styles.legendText}>Сэкономлено {formatRub(totalSaved)} ₽</Text>
-              </View>
+            <Text style={styles.economyLabel}>ЭКОНОМИЯ</Text>
+            <View style={styles.economyRow}>
+              <Text style={styles.economyAmount}>−{formatRub(totalSaved)} ₽</Text>
+              {savedPct > 0 && <Text style={styles.economyPct}>{savedPct}%</Text>}
             </View>
           </TouchableOpacity>
 
@@ -447,12 +430,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: BrandColors.cardBorder,
     padding: 16,
-    gap: 12,
-  },
-  economyHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 8,
   },
   economyLabel: {
     fontSize: 12,
@@ -460,52 +438,20 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: 0.3,
   },
-  savedBadge: {
-    backgroundColor: BrandColors.greenLight,
-    borderRadius: 100,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
+  economyRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
   },
-  savedBadgeText: {
+  economyAmount: {
+    fontSize: 22,
+    fontWeight: '800',
     color: BrandColors.green,
-    fontSize: 13,
-    fontWeight: '700',
   },
-  progressBarTrack: {
-    height: 10,
-    borderRadius: 100,
-    backgroundColor: BrandColors.elementBg,
-    overflow: 'hidden',
-    flexDirection: 'row',
-  },
-  progressBarGreen: {
-    height: 10,
-    backgroundColor: BrandColors.green,
-    borderRadius: 100,
-  },
-  progressBarGray: {
-    height: 10,
-    backgroundColor: '#D9D8D3',
-    borderRadius: 100,
-  },
-  legendRow: {
-    flexDirection: 'row',
-    gap: 16,
-    flexWrap: 'wrap',
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  legendDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  legendText: {
-    color: BrandColors.textSecondary,
-    fontSize: 12,
+  economyPct: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: BrandColors.green,
   },
 
   saleBanner: {
