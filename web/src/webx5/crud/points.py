@@ -60,6 +60,30 @@ class PointsRepository:
             session.rollback()
             return None
 
+    def insert_earn_for_spin(
+        self,
+        session: Session,
+        account_id: uuid.UUID,
+        spin_id: uuid.UUID,
+        amount: int,
+    ) -> PointsTransaction | None:
+        nested = session.begin_nested()
+        try:
+            tx = PointsTransaction(
+                points_account_id=account_id,
+                type="earn",
+                amount=amount,
+                related_spin_id=spin_id,
+                rate_at_time=None,
+            )
+            session.add(tx)
+            session.flush()
+            nested.commit()
+            return tx
+        except IntegrityError:
+            nested.rollback()
+            return None
+
     def insert_spend(
         self,
         session: Session,

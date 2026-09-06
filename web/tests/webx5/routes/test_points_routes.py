@@ -88,6 +88,7 @@ def test_transactions_returns_history(client, user_id):
     tx.amount = 50
     tx.related_task_id = uuid.uuid4()
     tx.related_receipt_id = None
+    tx.related_spin_id = None
     tx.rate_at_time = None
     tx.created_at = datetime.now(timezone.utc)
     with patch("webx5.core.points.points_service") as ps:

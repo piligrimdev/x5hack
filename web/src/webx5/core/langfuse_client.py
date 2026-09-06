@@ -74,9 +74,15 @@ def init_langfuse(*, force: bool = False) -> "Langfuse | None":
 
 @dataclass
 class LLMTrace:
-    """Active Langfuse generation, or a no-op when the SDK is unavailable."""
+    """Active Langfuse trace+generation, or a no-op when the SDK is unavailable.
+
+    Input/output are written on BOTH the trace and the child generation.
+    Langfuse's traces table reads the trace-level fields; generation I/O
+    alone does not appear there (Langfuse FAQ: empty input/output).
+    """
 
     langfuse: Any = None
+    trace: Any = None
     generation: Any = None
     start_time: float = field(default_factory=time.monotonic)
 
@@ -85,22 +91,27 @@ class LLMTrace:
         return round((time.monotonic() - self.start_time) * 1000, 2)
 
     def end_success(self, output: Any) -> None:
-        if self.generation is None:
+        if self.langfuse is None:
             return
+        extra = {"duration_ms": self.duration_ms}
         try:
-            self.generation.end(output=output, metadata={"duration_ms": self.duration_ms})
+            if self.generation is not None:
+                self.generation.end(output=output, metadata=extra)
+            if self.trace is not None:
+                self.trace.update(output=output, metadata=extra)
             self.langfuse.flush()
         except Exception as exc:
             _log.warning("langfuse_generation_end_failed", error=str(exc))
 
     def end_error(self, exc: BaseException) -> None:
-        if self.generation is None:
+        if self.langfuse is None:
             return
+        extra = {"duration_ms": self.duration_ms, "error": str(exc)}
         try:
-            self.generation.end(
-                metadata={"duration_ms": self.duration_ms, "error": str(exc)},
-                level="ERROR",
-            )
+            if self.generation is not None:
+                self.generation.end(metadata=extra, level="ERROR")
+            if self.trace is not None:
+                self.trace.update(output={"error": str(exc)}, metadata=extra)
             self.langfuse.flush()
         except Exception:
             pass
@@ -124,13 +135,22 @@ def start_llm_trace(
             name=trace_name,
             user_id=user_id_context.get(),
             metadata=extra,
+            input=input_data,
         )
+    except Exception as exc:
+        _log.warning("langfuse_trace_create_failed", error=str(exc))
+        return LLMTrace()
+
+    # Keep the trace even if the child generation fails to create (large
+    # challenge prompts have tripped this). Trace-level I/O still lands.
+    generation = None
+    try:
         generation = trace.generation(
             name=generation_name,
             model=model,
             input=input_data,
         )
-        return LLMTrace(langfuse=langfuse, generation=generation)
     except Exception as exc:
-        _log.warning("langfuse_trace_create_failed", error=str(exc))
-        return LLMTrace()
+        _log.warning("langfuse_generation_create_failed", error=str(exc))
+
+    return LLMTrace(langfuse=langfuse, trace=trace, generation=generation)

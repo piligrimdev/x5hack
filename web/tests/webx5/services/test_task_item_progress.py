@@ -167,7 +167,9 @@ class TestParallelItemProgress:
         ), patch(
             "webx5.services.task_completion.get_forbidden_categories",
             return_value=frozenset(),
-        ), patch("webx5.core.points.points_service") as mock_points:
+        ), patch("webx5.core.points.points_service") as mock_points, patch(
+            "webx5.core.wheel.coupon_service"
+        ):
             result = service.apply_receipt(MagicMock(), task, receipt)
 
         # bump_item_progress called once for each item
@@ -205,7 +207,9 @@ class TestAllItemsCompleteTask:
         ), patch(
             "webx5.services.task_completion.get_forbidden_categories",
             return_value=frozenset(),
-        ), patch("webx5.core.points.points_service") as mock_points:
+        ), patch("webx5.core.points.points_service") as mock_points, patch(
+            "webx5.core.wheel.coupon_service"
+        ):
             result = service.apply_receipt(MagicMock(), task, receipt)
 
         assert result is True

@@ -73,6 +73,44 @@ class PointsService:
         )
         return points
 
+    def award_for_spin(
+        self,
+        session: Session,
+        loyalty_card_id: uuid.UUID,
+        amount_rub: int,
+        spin_id: uuid.UUID,
+    ) -> int:
+        rate = self._repo.get_rate(session)
+        raw = float(amount_rub) * rate
+        points = int(round(raw / 10) * 10)
+        if points <= 0:
+            logger.info(
+                "points.awarded_spin.skipped_zero",
+                spin_id=str(spin_id),
+                loyalty_card_id=str(loyalty_card_id),
+            )
+            return 0
+
+        account = self._repo.get_or_create_account(session, loyalty_card_id)
+        tx = self._repo.insert_earn_for_spin(session, account.id, spin_id, points)
+        if tx is None:
+            logger.info(
+                "points.awarded_spin.duplicate",
+                spin_id=str(spin_id),
+                loyalty_card_id=str(loyalty_card_id),
+            )
+            return 0
+
+        self._repo.bump_balance(session, account, points)
+        logger.info(
+            "points.awarded_spin",
+            spin_id=str(spin_id),
+            loyalty_card_id=str(loyalty_card_id),
+            amount=points,
+            new_balance=account.balance,
+        )
+        return points
+
     def spend_for_receipt(
         self,
         session: Session,

@@ -20,6 +20,7 @@ class GiftRewardRepository:
         criterion_entity_id: uuid.UUID,
         quantity: int,
         valid_to: datetime,
+        related_spin_id: uuid.UUID | None = None,
     ) -> GiftReward:
         reward = GiftReward(
             task_id=task_id,
@@ -29,6 +30,7 @@ class GiftRewardRepository:
             quantity=quantity,
             status="active",
             valid_to=valid_to,
+            related_spin_id=related_spin_id,
         )
         session.add(reward)
         session.flush()
