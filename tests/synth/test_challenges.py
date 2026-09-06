@@ -6,10 +6,12 @@ from synth.challenges import (
     CHALLENGE_SLOTS,
     GENERIC_CHALLENGES,
     PERSONAL_TARGET_QUANTITY,
+    SLOT_TARGET_QUANTITY,
     VIBE_CATEGORIES,
     _pick_distinct_generic_offer,
     backfill_target_sku,
     build_basket_prompt,
+    build_basket_spend_challenge,
     build_category_expansion_challenge,
     build_personal_prompt,
     build_spend_threshold_challenge,
@@ -416,6 +418,56 @@ def test_build_spend_threshold_challenge_returns_none_without_train_receipts():
     assert build_spend_threshold_challenge(profile, _config) is None
 
 
+def _with_suggested_basket_items(profile: dict, items: list[dict]) -> dict:
+    return {**profile, "suggested_basket_items": items}
+
+
+def test_build_basket_spend_challenge_thresholds_from_mean_receipt_rounded_to_100():
+    profile = _profile("bakes_on_weekends", seed=4)
+    profile = _with_suggested_basket_items(profile, [
+        {"item": "Молоко 3.2%", "category": "молочные продукты и яйца", "weekly_quantity": 2},
+    ])
+    train_end = _config.temporal_split.train_end.isoformat()
+    train_receipts = [r for r in profile["receipts"] if r["purchase_date"] <= train_end]
+    mean_receipt_total = sum(r["total_rub"] for r in train_receipts) / len(train_receipts)
+    expected_threshold = max(100.0, round(mean_receipt_total * 1.3 / 100) * 100)
+
+    challenge = build_basket_spend_challenge(profile, _config)
+    assert challenge is not None
+    assert challenge["spend_threshold_rub"] == expected_threshold
+    assert challenge["spend_threshold_rub"] % 100 == 0
+    assert challenge["reward_rub"] == round(expected_threshold * 0.05, 2)
+    assert challenge["target_quantity"] == 1
+    assert challenge["target_categories"] == ["молочные продукты и яйца"]
+
+
+def test_build_basket_spend_challenge_uses_custom_markup_and_cashback_pct():
+    profile = _profile("bakes_on_weekends", seed=4)
+    profile = _with_suggested_basket_items(profile, [
+        {"item": "Молоко 3.2%", "category": "молочные продукты и яйца", "weekly_quantity": 2},
+    ])
+    default = build_basket_spend_challenge(profile, _config)
+    custom = build_basket_spend_challenge(profile, _config, markup_pct=50.0, cashback_pct=10.0)
+    assert custom["spend_threshold_rub"] >= default["spend_threshold_rub"]
+    assert custom["reward_rub"] == round(custom["spend_threshold_rub"] * 0.10, 2)
+
+
+def test_build_basket_spend_challenge_returns_none_without_suggested_items():
+    profile = _profile("bakes_on_weekends", seed=4)
+    assert build_basket_spend_challenge(profile, _config) is None
+
+
+def test_build_basket_spend_challenge_returns_none_without_train_receipts():
+    profile = _profile("bakes_on_weekends", seed=4)
+    profile = _with_suggested_basket_items(profile, [
+        {"item": "Молоко 3.2%", "category": "молочные продукты и яйца", "weekly_quantity": 2},
+    ])
+    profile = {**profile, "receipts": [
+        r for r in profile["receipts"] if r["purchase_date"] > _config.temporal_split.train_end.isoformat()
+    ]}
+    assert build_basket_spend_challenge(profile, _config) is None
+
+
 def _by_slot(results: list[dict]) -> dict[str, dict]:
     return {r["challenge_slot"]: r for r in results if "challenge_slot" in r}
 
@@ -443,7 +495,13 @@ def test_generate_challenge_for_user_always_returns_five_slots_regardless_of_pat
         assert by_slot["llm_basket"]["path"] == "generic_fallback"
 
 
-def test_generate_challenge_for_user_llm_basket_personal_path_with_mocked_llm(monkeypatch):
+def test_generate_challenge_for_user_llm_basket_uses_deterministic_mechanic_not_llm(monkeypatch):
+    """`llm_basket` no longer calls the LLM at all — it's
+    `build_basket_spend_challenge`, a pure function of the user's own
+    train-period receipts and suggested weekly-basket items (anchor item +
+    spend threshold + cashback %). The fake LLM response below is a trap:
+    if `generate_challenge_for_user` ever routed llm_basket through the LLM
+    again, its reward_rub (999) would leak into the result."""
     profile = _profile("bakes_on_weekends", seed=4)
     profile = {**profile, "suggested_basket_items": [
         {"item": "Молоко 3.2%", "category": "молочные продукты и яйца", "weekly_quantity": 2},
@@ -451,40 +509,25 @@ def test_generate_challenge_for_user_llm_basket_personal_path_with_mocked_llm(mo
 
     def fake_call(model, system, user, api_key=None, timeout=60.0, max_retries=3):
         return json.dumps({
-            "challenge_title": "Собери свою обычную корзину",
-            "description": "desc",
-            "target_categories": ["молочные продукты и яйца"],
-            "mechanic": "бонус",
-            "reward_rub": 40,
+            "challenge_title": "should never be used for llm_basket",
+            "description": "trap",
+            "target_categories": ["бакалея"],
+            "mechanic": "trap",
+            "reward_rub": 999,
         })
 
     monkeypatch.setattr("synth.challenges.call_openrouter", fake_call)
+    expected = build_basket_spend_challenge(profile, _config)
+    assert expected is not None
+
     results = generate_challenge_for_user(profile, _config, model="fake/model", api_key="fake-key")
     basket_result = _by_slot(results)["llm_basket"]
     assert basket_result["path"] == "personal"
+    assert basket_result["model"] is None
     assert basket_result["target_categories"] == ["молочные продукты и яйца"]
-
-
-def test_generate_challenge_for_user_llm_basket_falls_back_when_llm_picks_category_outside_suggested(monkeypatch):
-    profile = _profile("bakes_on_weekends", seed=4)
-    profile = {**profile, "suggested_basket_items": [
-        {"item": "Молоко 3.2%", "category": "молочные продукты и яйца", "weekly_quantity": 2},
-    ]}
-
-    def fake_call(model, system, user, api_key=None, timeout=60.0, max_retries=3):
-        return json.dumps({
-            "challenge_title": "Скидка на бакалею",
-            "description": "desc",
-            "target_categories": ["бакалея"],
-            "mechanic": "скидка",
-            "reward_rub": 30,
-        })
-
-    monkeypatch.setattr("synth.challenges.call_openrouter", fake_call)
-    results = generate_challenge_for_user(profile, _config, model="fake/model", api_key="fake-key")
-    basket_result = _by_slot(results)["llm_basket"]
-    assert basket_result["path"] == "generic_fallback"
-    assert "outside allowed set" in basket_result["error"]
+    assert basket_result["spend_threshold_rub"] == expected["spend_threshold_rub"]
+    assert basket_result["reward_rub"] == expected["reward_rub"]
+    assert basket_result["reward_rub"] != 999
 
 
 def test_generate_challenge_for_user_llm_basket_falls_back_without_calling_llm_when_no_suggestions(monkeypatch):
@@ -554,12 +597,14 @@ def test_generate_challenge_for_user_llm_habit_personal_path_with_mocked_llm(mon
     llm_result = _by_slot(results)["llm_habit"]
     assert llm_result["path"] == "personal"
     assert llm_result["target_categories"] == ["бакалея"]
-    assert llm_result["target_quantity"] == PERSONAL_TARGET_QUANTITY
+    assert llm_result["target_quantity"] == SLOT_TARGET_QUANTITY["llm_habit"]
     sku = pick_sku_in_category(_config, "бакалея", seed_key=f"{profile['user_id']}:sku:llm_habit")
     assert llm_result["target_sku_id"] == sku.sku_id
     assert llm_result["challenge_title"] == "Допеки выходные"
     assert sku.item in llm_result["description"]
-    assert llm_result["description"] == item_action_description(sku.item, PERSONAL_TARGET_QUANTITY, 40, slot="llm_habit")
+    assert llm_result["description"] == item_action_description(
+        sku.item, SLOT_TARGET_QUANTITY["llm_habit"], 40, slot="llm_habit"
+    )
 
 
 def test_generate_challenge_for_user_falls_back_on_bad_llm_output(monkeypatch):
@@ -596,6 +641,29 @@ def test_generate_challenge_for_user_vibe_slot_uses_profile_vibe_category(monkey
     vibe_result = _by_slot(results)["vibe"]
     assert vibe_result["path"] == "personal"
     assert vibe_result["target_categories"] == ["бакалея"]
+
+
+def test_generate_challenge_for_user_vibe_slot_title_is_prefixed_with_vibe_of_the_month(monkeypatch):
+    """Product decision: a successful vibe card's title always starts with
+    "Вайб месяца: " so it visibly reads as part of the month's themed
+    selection, not an ordinary personal challenge."""
+    profile = _profile("bakes_on_weekends", seed=4)
+    profile = {**profile, "vibe_category": "Экономия и запасы"}
+
+    def fake_call(model, system, user, api_key=None, timeout=60.0, max_retries=3):
+        return json.dumps({
+            "challenge_title": "Экономь на бакалее",
+            "description": "desc",
+            "target_categories": ["бакалея"],
+            "mechanic": "скидка",
+            "reward_rub": 30,
+        })
+
+    monkeypatch.setattr("synth.challenges.call_openrouter", fake_call)
+    results = generate_challenge_for_user(profile, _config, model="fake/model", api_key="fake-key")
+    vibe_result = _by_slot(results)["vibe"]
+    assert vibe_result["path"] == "personal"
+    assert vibe_result["challenge_title"] == "Вайб месяца: Экономь на бакалее"
 
 
 def test_generate_challenge_for_user_vibe_slot_falls_back_when_llm_picks_category_outside_theme(monkeypatch):

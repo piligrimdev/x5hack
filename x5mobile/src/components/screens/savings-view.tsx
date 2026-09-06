@@ -77,6 +77,10 @@ export function SavingsView({ leaderboard, savings, token, goHome, goHistory, go
     if (await checkout()) handleOrderPlaced();
   }
   const savedAmount = savings.withoutDiscount - savings.paid;
+  const savedAmountLabel = savedAmount.toLocaleString('ru-RU', {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  });
   const savedPct = Math.round((savedAmount / savings.withoutDiscount) * 100);
   const paidPct = (savings.paid / savings.withoutDiscount) * 100;
   const greenPct = (savedAmount / savings.withoutDiscount) * 100;
@@ -95,7 +99,7 @@ export function SavingsView({ leaderboard, savings, token, goHome, goHistory, go
         <TouchableOpacity style={styles.backBtn} onPress={goHome} activeOpacity={0.7}>
           <Text style={styles.backBtnText}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Экономия</Text>
+        <Text style={styles.headerTitle}>Корзина</Text>
         <View style={styles.headerRight}>
           <TouchableOpacity style={styles.iconBtn} onPress={goChallenges} activeOpacity={0.7}>
             <Text style={styles.backBtnText}>📋</Text>
@@ -117,7 +121,7 @@ export function SavingsView({ leaderboard, savings, token, goHome, goHistory, go
           <View style={styles.cardHeaderRow}>
             <Text style={styles.cardHeaderLabel}>ЭКОНОМИЯ ЗА НЕДЕЛЮ</Text>
             <View style={styles.savedBadge}>
-              <Text style={styles.savedBadgeText}>−{formatRub(savedAmount)} ₽ ({savedPct}%)</Text>
+              <Text style={styles.savedBadgeText}>−{savedAmountLabel} ₽ ({savedPct}%)</Text>
             </View>
           </View>
 
@@ -135,13 +139,13 @@ export function SavingsView({ leaderboard, savings, token, goHome, goHistory, go
             </View>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: BrandColors.green }]} />
-              <Text style={styles.legendText}>Сэкономлено {formatRub(savedAmount)} ₽</Text>
+              <Text style={styles.legendText}>Сэкономлено {savedAmountLabel} ₽</Text>
             </View>
           </View>
         </View>
 
         {/* Weekly basket */}
-        <Text style={styles.sectionTitle}>Корзина на неделю</Text>
+        <Text style={styles.sectionTitle}>Корзина</Text>
         <View style={styles.basketCard}>
           {!hydrated ? (
             <ActivityIndicator color={BrandColors.textSecondary} />

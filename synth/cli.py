@@ -83,7 +83,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Path to a reference_profiles*.json (array) or population*.jsonl(.gz) file.",
     )
     chal_parser.add_argument(
-        "--model", default="deepseek/deepseek-chat",
+        "--model", default="google/gemini-3.1-flash-lite",
         help="OpenRouter model slug — verify the exact current slug at https://openrouter.ai/models before a real run.",
     )
     chal_parser.add_argument("--api-key-env", default="OPENROUTER_API_KEY")

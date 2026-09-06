@@ -12,7 +12,6 @@ import uuid
 
 import structlog
 from sqlalchemy import select
-from sqlalchemy.orm import noload
 
 from synth.challenges import CHALLENGE_SLOTS
 from webx5.core.celery_app import celery_app
@@ -49,14 +48,18 @@ def process_receipt(receipt_id: str) -> dict:
                 store_id=str(receipt.store_id),
                 purchase_date=receipt.purchase_date.isoformat() if receipt.purchase_date else None,
             )
-            # Pessimistic user-level lock (FR-014).
-            # noload: User.vibe_type is lazy="joined"; FOR UPDATE cannot lock
-            # the nullable side of that LEFT OUTER JOIN in PostgreSQL.
+            # Pessimistic user-level lock (FR-014). Locks via `User.id`
+            # alone, not the full entity: `User.vibe_type` is lazy="joined",
+            # so `FOR UPDATE` on a `select(User)` can't lock the nullable
+            # side of that LEFT OUTER JOIN in PostgreSQL — and separately,
+            # loading the full `User` here with a `noload(User.vibe_type)`
+            # option (an earlier version of this lock) would plant a
+            # vibe_type-less `User` in this session's identity map, which
+            # would then poison ANY later same-session read of `user.vibe_type`
+            # (see `tasks/generation.py`'s identical fix for the concrete
+            # failure this caused there).
             session.execute(
-                select(User)
-                .options(noload(User.vibe_type))
-                .where(User.id == user_id)
-                .with_for_update()
+                select(User.id).where(User.id == user_id).with_for_update()
             ).scalar_one()
 
             active = task_repo.get_active_for_user(session, user_id)

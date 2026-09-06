@@ -17,7 +17,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from synth.challenges import CHALLENGE_SLOTS
-from webx5.services.challenge import ChallengeService
+from webx5.services.challenge import ChallengeService, _use_deterministic_mechanics
 
 
 def _service_with_mocks():
@@ -34,6 +34,11 @@ def _service_with_mocks():
     # deliberately overrides this to force a collision (see
     # test_generate_batch_skips_duplicate_criterion_across_slots below).
     adapter.resolve_criterion.side_effect = lambda session, r: ("category", uuid.uuid4())
+    # Default: category-level dedup collapses to the same identity as the
+    # criterion-level check above (each criterion's own entity_id acts as
+    # its "category"), so it never fires unless a test overrides this to
+    # force a same-category-different-product collision.
+    adapter.resolve_category_id.side_effect = lambda session, criterion_type, criterion_entity_id: criterion_entity_id
     synth_config = MagicMock()
 
     service = ChallengeService(
@@ -80,6 +85,37 @@ def _batch_all_five() -> list[dict]:
         _canned("generic"),
         _canned("vibe"),
     ]
+
+
+def test_deterministic_mechanics_replace_legacy_slots():
+    """`llm_basket` is no longer replaced here — `generate_challenge_for_user`
+    already returns a deterministic `build_basket_spend_challenge` result
+    for it directly. Only `generic` → `category_expansion` is replaced at
+    this web boundary."""
+    expansion = {
+        "challenge_title": "Новая категория",
+        "description": "Попробуй новое",
+        "target_categories": ["new-cat"],
+        "mechanic": "скидка на новую категорию",
+        "reward_rub": 10.0,
+        "target_quantity": 1,
+    }
+
+    with patch("webx5.services.challenge.build_category_expansion_challenge", return_value=expansion):
+        results = _use_deterministic_mechanics(
+            {"user_id": "u"}, MagicMock(), _batch_all_five()
+        )
+
+    slots = [result["challenge_slot"] for result in results]
+    assert slots == [
+        "llm_habit",
+        "llm_discovery",
+        "llm_basket",
+        "category_expansion",
+        "vibe",
+    ]
+    assert results[3]["target_quantity"] == 1
+    assert results[3]["path"] == "personal"
 
 
 def test_generate_batch_persists_all_four_slots():

@@ -22,8 +22,32 @@ OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 # for a unit count, and the generic pool's mechanics are worded as
 # spend-threshold/percentage offers rather than "buy N", so this is a
 # deliberate simplification to fit the single sku_id+quantity progress
-# model, not a value derived from the offer's own text.
+# model, not a value derived from the offer's own text. Used by the
+# `generic` slot/pool; the four LLM-personal slots use `SLOT_TARGET_QUANTITY`
+# below instead, so each reads as a genuinely different kind of ask rather
+# than four copies of the same "buy N times" mechanic.
 PERSONAL_TARGET_QUANTITY = 2
+
+# Per-slot target_quantity for the LLM-personal slots — without this they
+# all shared PERSONAL_TARGET_QUANTITY (always "buy it 2 times"), so despite
+# different wording/category every card read as the same mechanic. Product
+# decision: a flat single "try/repeat once" ask for every LLM-personal slot
+# (`llm_basket` isn't here — it's a deterministic mechanic with its own
+# hardcoded quantity, see `build_basket_spend_challenge`).
+SLOT_TARGET_QUANTITY: dict[str, int] = {
+    "llm_discovery": 1,
+    "llm_habit": 1,
+    "vibe": 1,
+}
+
+# Reward text is phrased in loyalty points, not raw rubles (product
+# decision — cashback/points language throughout, never "N ₽"). Synth has
+# no DB access to the actual configurable `points_settings.rate_points_per_rub`
+# (default 10), so this mirrors the SAME hardcoded rate the mobile app's
+# own reward-chip display already uses (`x5mobile/.../savings-view.tsx`
+# `TaskCard`'s `rewardPoints = Math.round(reward_rub) * 10`) — keep both in
+# sync manually if that rate ever changes.
+_POINTS_PER_RUB = 10
 
 # Fixed pool of non-personalized "partner brand" offers. Drawn for EVERY
 # user unconditionally via the `generic` slot (not just as a fallback for a
@@ -268,11 +292,11 @@ def _pluralize_times(n: int) -> str:
 
 
 _DESCRIPTION_TEMPLATES: dict[str, str] = {
-    "generic": "Купи «{item}» {times} и получи {reward:.0f} ₽.",
-    "llm_habit": "Продолжай в том же духе: возьми «{item}» {times} — начислим {reward:.0f} ₽.",
-    "llm_discovery": "Попробуй новое: «{item}» {times} — и мы добавим {reward:.0f} ₽ на счёт.",
-    "llm_basket": "Собери привычный набор — «{item}» {times} даст {reward:.0f} ₽ бонусом.",
-    "vibe": "В тему месяца: «{item}» {times} — и +{reward:.0f} ₽ на баллы.",
+    "generic": "Купи «{item}» {times} и получи {points} баллов кэшбэком.",
+    "llm_habit": "Продолжай в том же духе: возьми «{item}» {times} — начислим {points} баллов кэшбэком.",
+    "llm_discovery": "Попробуй новое: «{item}» хотя бы {times} — и мы начислим {points} баллов кэшбэком.",
+    "llm_basket": "Добавь «{item}» в свою обычную корзину на этой неделе — получишь {points} баллов кэшбэком.",
+    "vibe": "В тему месяца: «{item}» {times} — и +{points} баллов кэшбэком.",
 }
 
 
@@ -292,9 +316,13 @@ def item_action_description(item: str, quantity: int, reward_rub: float, slot: s
     challenge collapsed into the exact same sentence, which read as
     repetitive even when the underlying personalization differed. An
     unrecognized slot (unknown/legacy names from before the 5-slot
-    redesign) falls back to the `"generic"` phrasing."""
+    redesign) falls back to the `"generic"` phrasing.
+
+    Reward is phrased in points (`_POINTS_PER_RUB`), not rubles — see that
+    constant's docstring for why the conversion is hardcoded here."""
     template = _DESCRIPTION_TEMPLATES.get(slot, _DESCRIPTION_TEMPLATES["generic"])
-    return template.format(item=item, times=_pluralize_times(quantity), reward=reward_rub)
+    points = round(reward_rub * _POINTS_PER_RUB)
+    return template.format(item=item, times=_pluralize_times(quantity), points=points)
 
 
 def pick_generic_challenge(user_id: str, config: SynthConfig) -> dict:
@@ -502,6 +530,75 @@ def build_category_expansion_challenge(
         "novel_category": target_category,
         "novel_item": target_item,
         "target_sku_id": find_sku_id_for_item(config, target_category, target_item),
+        "target_quantity": 1,
+    }
+
+
+def build_basket_spend_challenge(
+    profile: dict,
+    config: SynthConfig,
+    markup_pct: float = 30.0,
+    cashback_pct: float = 5.0,
+) -> dict | None:
+    """Deterministic, no-LLM-call `llm_basket` mechanic (product decision —
+    replaces the old free-form "assemble your usual weekly basket" LLM
+    prompt): buy your #1 usual weekly item AND spend at least a threshold
+    in that same trip, for `cashback_pct`% of that threshold back as points.
+
+    threshold_rub = this user's own mean train-period receipt total,
+    marked up by `markup_pct`% and rounded to the nearest 100 ₽ — a
+    stretch goal calibrated to their own typical basket, same idea as
+    `build_spend_threshold_challenge`'s threshold but with this mechanic's
+    own markup/rounding.
+
+    The anchor item (`suggested_basket_items[0]`, already ranked by weekly
+    purchase frequency in `BasketRepository.suggest_items`) gives the base
+    item_quantity criterion something concrete to track — the same role
+    `build_spend_threshold_challenge`'s favorite item plays there; the
+    actual basket-total requirement is enforced separately via the
+    `spend_threshold_rub` criterion (`SCRIPT_FIELD_TO_CRITERION_KIND`).
+
+    Being a pure function of OBSERVABLE train-period stats with no LLM
+    call and no rotation, this slot needs the same cross-cycle repeat
+    guard as `generic`/`category_expansion`/`spend_threshold` — see
+    `_SLOTS_WITHOUT_NATURAL_VARIATION` in `web/.../services/challenge.py`.
+
+    Returns None if there are no suggested weekly-basket items (new user,
+    no purchase history) or no train-period receipts to compute a mean
+    receipt total from — the caller falls back to a generic offer.
+    """
+    suggested_items = profile.get("suggested_basket_items") or []
+    if not suggested_items:
+        return None
+
+    train_end = config.temporal_split.train_end.isoformat()
+    train_receipts = [r for r in profile["receipts"] if r["purchase_date"] <= train_end]
+    if not train_receipts:
+        return None
+
+    mean_receipt_total = sum(r["total_rub"] for r in train_receipts) / len(train_receipts)
+    threshold_rub = max(100.0, round(mean_receipt_total * (1 + markup_pct / 100) / 100) * 100)
+    reward_rub = round(threshold_rub * (cashback_pct / 100), 2)
+    points = round(reward_rub * _POINTS_PER_RUB)
+
+    anchor = suggested_items[0]
+    target_sku_id = find_sku_id_for_item(config, anchor["category"], anchor["item"])
+
+    return {
+        "challenge_title": "Кэшбэк за полную корзину",
+        "description": (
+            f"Собери корзину от {threshold_rub:.0f} ₽ за один поход, включая «{anchor['item']}», "
+            f"и получи {points} баллов кэшбэком ({cashback_pct:.0f}% от суммы)."
+        ),
+        "target_categories": [anchor["category"]],
+        "mechanic": "кэшбэк за сумму корзины",
+        "reward_rub": reward_rub,
+        "reasoning": (
+            f"Порог рассчитан от среднего чека пользователя ({mean_receipt_total:.0f} ₽) "
+            f"+ {markup_pct:.0f}%, округлён до сотен."
+        ),
+        "spend_threshold_rub": threshold_rub,
+        "target_sku_id": target_sku_id,
         "target_quantity": 1,
     }
 
@@ -889,14 +986,17 @@ def generate_challenge_for_user(
     (defaults to the current UTC year-month) so offline/dry-run calls
     without a DB-backed profile still get a stable answer.
 
-    `llm_basket` wraps the user's own deterministic weekly-purchase-
-    frequency list (`profile.get("suggested_basket_items")`, populated by
-    the web layer from `BasketRepository.suggest_items` — see
-    `ChallengeAdapter._suggested_basket_items`) into a challenge via
-    `build_basket_prompt`. If there are no suggested items (new user, no
-    purchase history), this slot never calls the LLM at all — it falls
-    straight to a generic offer, the same way the old deterministic
-    builders returned `None` on insufficient history.
+    `llm_basket` is deterministic, not LLM-driven despite the name (kept
+    for slot-name/DB stability) — see `build_basket_spend_challenge`. It
+    uses the user's own weekly-purchase-frequency list
+    (`profile.get("suggested_basket_items")`, populated by the web layer
+    from `BasketRepository.suggest_items` — see
+    `ChallengeAdapter._suggested_basket_items`) to pick an anchor item, and
+    the user's own mean receipt total to compute a spend threshold + cashback.
+    If there are no suggested items or no train-period receipts (new user,
+    no purchase history), this slot falls straight to a generic offer, the
+    same way the other deterministic builders return `None` on insufficient
+    history.
 
     Any LLM-backed slot whose call/validation fails falls back to a
     (slot-distinct) generic offer, `path="generic_fallback"` — same as the
@@ -928,12 +1028,19 @@ def generate_challenge_for_user(
         try:
             raw = call_openrouter(model, system, user_msg, api_key)
             challenge = parse_and_validate_challenge(raw, config, max_reward, allowed_categories=allowed_categories)
-            challenge["target_quantity"] = PERSONAL_TARGET_QUANTITY
+            if slot == "vibe":
+                # Product decision: mark vibe cards as part of the month's
+                # themed selection in the title itself, not just the body —
+                # otherwise a vibe card reads exactly like an ordinary
+                # personal challenge with no visible tie to the chosen theme.
+                challenge["challenge_title"] = f"Вайб месяца: {challenge['challenge_title']}"
+            quantity = SLOT_TARGET_QUANTITY.get(slot, PERSONAL_TARGET_QUANTITY)
+            challenge["target_quantity"] = quantity
             sku = pick_sku_in_category(config, challenge["target_categories"][0], seed_key=f"{profile['user_id']}:sku:{slot}")
             challenge["target_sku_id"] = sku.sku_id if sku else None
             if sku is not None:
                 challenge["description"] = item_action_description(
-                    sku.item, PERSONAL_TARGET_QUANTITY, challenge["reward_rub"], slot=slot
+                    sku.item, quantity, challenge["reward_rub"], slot=slot
                 )
             results.append({
                 "user_id": profile["user_id"], "path": "personal",
@@ -977,17 +1084,35 @@ def generate_challenge_for_user(
     system, user_msg = build_personal_prompt(profile, config, max_reward, focus="discovery")
     _run_llm_slot("llm_discovery", system, user_msg, allowed_categories=allowed_personal_categories)
 
-    # slot: llm_basket
-    suggested_items = profile.get("suggested_basket_items") or []
-    if not suggested_items:
+    # slot: llm_basket — deterministic (see `build_basket_spend_challenge`):
+    # spend threshold from the user's own mean receipt total, cashback
+    # reward as a % of that threshold. No LLM call for this slot any more
+    # (the old free-form "assemble your basket" prompt let the LLM pick a
+    # forbidden category from the user's own real weekly basket — e.g.
+    # "детское питание" — which then failed validation deterministically
+    # every cycle; this mechanic sidesteps that entirely).
+    #
+    # Drop forbidden-category items before picking an anchor — the anchor
+    # is item [0] of `suggested_basket_items`, so a forbidden category
+    # there would otherwise become the challenge's own target_categories.
+    basket_profile = {
+        **profile,
+        "suggested_basket_items": [
+            item for item in (profile.get("suggested_basket_items") or [])
+            if item["category"] not in config.forbidden_categories
+        ],
+    }
+    basket_challenge = build_basket_spend_challenge(basket_profile, config)
+    if basket_challenge is None:
         results.append(_generic(
             "llm_basket", "generic_fallback",
-            error="no suggested weekly-basket items — no purchase history to build from",
+            error="no suggested weekly-basket items or train-period receipts to compute a basket threshold from",
         ))
     else:
-        system, user_msg = build_basket_prompt(profile, config, max_reward, suggested_items)
-        allowed_categories = {item["category"] for item in suggested_items}
-        _run_llm_slot("llm_basket", system, user_msg, allowed_categories=allowed_categories)
+        results.append({
+            "user_id": profile["user_id"], "path": "personal",
+            "model": None, "challenge_slot": "llm_basket", **basket_challenge,
+        })
 
     # slot: vibe
     # If user has a VibeType selected, profile["vibe_context"] carries its
@@ -1026,10 +1151,48 @@ def generate_challenges(
 ) -> list[dict]:
     results: list[dict] = []
     for i, profile in enumerate(profiles):
-        results.extend(generate_challenge_for_user(profile, config, model, api_key, dry_run))
+        batch = generate_challenge_for_user(profile, config, model, api_key, dry_run)
+        results.extend(_replace_legacy_slots_with_deterministic(profile, config, batch))
         if not dry_run and delay_seconds > 0 and i < len(profiles) - 1:
             time.sleep(delay_seconds)
     return results
+
+
+def _replace_legacy_slots_with_deterministic(
+    profile: dict, config: SynthConfig, script_results: list[dict]
+) -> list[dict]:
+    """Put the implemented deterministic mechanics into generated batches.
+
+    The single-profile router still owns the legacy five-slot LLM/generic
+    contract because it is also used by older callers. Batch generation is
+    the user-facing path, so replace the generic and basket slots there with
+    the already implemented spend-threshold and category-expansion builders.
+    A builder may return ``None`` for insufficient history; in that case the
+    original fallback record is preserved.
+    """
+    replacements = (
+        ("llm_basket", "spend_threshold", build_spend_threshold_challenge),
+        ("generic", "category_expansion", build_category_expansion_challenge),
+    )
+    replacement_by_slot: dict[str, dict] = {}
+    for legacy_slot, challenge_slot, builder in replacements:
+        challenge = builder(profile, config)
+        if challenge is None:
+            continue
+        replacement_by_slot[legacy_slot] = {
+            "user_id": profile["user_id"],
+            # Keep the persisted path compatible with the web Task enum. The
+            # concrete deterministic mechanic is carried by challenge_slot.
+            "path": "personal",
+            "model": None,
+            "challenge_slot": challenge_slot,
+            **challenge,
+        }
+
+    return [
+        replacement_by_slot.get(result.get("challenge_slot"), result)
+        for result in script_results
+    ]
 
 
 def backfill_target_sku(challenges: list[dict], config: SynthConfig) -> list[dict]:

@@ -30,7 +30,7 @@ challenge_adapter = ChallengeAdapter(
 
 # --- LLM config from env ---
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "")
-CHALLENGE_LLM_MODEL = os.environ.get("CHALLENGE_LLM_MODEL", "anthropic/claude-haiku-4.5")
+CHALLENGE_LLM_MODEL = os.environ.get("CHALLENGE_LLM_MODEL", "google/gemini-3.1-flash-lite")
 
 # --- SynthConfig — loaded once, cached ---
 synth_config = get_synth_config()

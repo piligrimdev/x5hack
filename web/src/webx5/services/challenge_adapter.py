@@ -224,6 +224,24 @@ class ChallengeAdapter:
             select(Product).where(Product.sku_id == sku_id)
         ).scalar_one_or_none()
 
+    def resolve_category_id(
+        self, session: Session, criterion_type: str, criterion_entity_id: uuid.UUID
+    ) -> uuid.UUID | None:
+        """Category id behind a `(criterion_type, criterion_entity_id)` pair
+        — itself for a `"category"` criterion, or the owning category for a
+        `"product"` criterion. Used by `ChallengeService.generate_batch`'s
+        cross-slot duplicate guard to catch two slots landing on DIFFERENT
+        products of the SAME category (e.g. "сметана" vs "яйца", both
+        "молочные продукты и яйца") — `resolve_criterion`'s own (type, id)
+        identity alone can't see that, since the products themselves differ.
+        """
+        if criterion_type == "category":
+            return criterion_entity_id
+        if criterion_type == "product":
+            product = session.get(Product, criterion_entity_id)
+            return product.category_id if product else None
+        return None
+
     # ------- criterion resolution (no writes) -------
     def resolve_criterion(
         self, session: Session, script_result: dict

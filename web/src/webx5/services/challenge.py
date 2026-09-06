@@ -15,7 +15,11 @@ import structlog
 from sqlalchemy import exists, select
 from sqlalchemy.orm import Session
 
-from synth.challenges import CHALLENGE_SLOTS, generate_challenge_for_user
+from synth.challenges import (
+    CHALLENGE_SLOTS,
+    build_category_expansion_challenge,
+    generate_challenge_for_user,
+)
 from synth.config import SynthConfig
 from webx5.crud.challenge_log import ChallengeLogRepository
 from webx5.crud.task import TaskRepository
@@ -25,6 +29,62 @@ from webx5.services.challenge_adapter import ChallengeAdapter
 from webx5.services.openrouter_capturing import capture_openrouter_io
 
 logger = structlog.get_logger("challenges")
+
+# Slots whose pick has no natural source of cycle-to-cycle variation — see
+# the cross-cycle-repeat guard in `ChallengeService.generate_batch` below.
+# `llm_basket` is deterministic INSIDE synth now (`build_basket_spend_challenge`
+# — no LLM call, no rotation), so it belongs here alongside the two slots
+# `_use_deterministic_mechanics` below still overrides at this web boundary.
+_SLOTS_WITHOUT_NATURAL_VARIATION = frozenset(
+    {"generic", "category_expansion", "spend_threshold", "llm_basket"}
+)
+
+
+def _use_deterministic_mechanics(
+    profile: dict[str, Any],
+    config: SynthConfig,
+    script_results: list[dict],
+) -> list[dict]:
+    """Replace the `generic` slot with the implemented category-expansion
+    mechanic.
+
+    ``generate_challenge_for_user`` currently returns the legacy five-slot
+    batch. `build_category_expansion_challenge` is intentionally kept in
+    ``synth`` and is not part of that LLM-oriented router, so connect it
+    here at the web boundary. (`llm_basket` needs no such override any
+    more — `generate_challenge_for_user` already returns a deterministic
+    `build_basket_spend_challenge` result for it directly.)
+
+    If the builder cannot produce a challenge (for example, a very short
+    purchase history), the original `generic` slot is retained as a safe
+    fallback.
+    """
+    replacements = (
+        ("generic", "category_expansion", build_category_expansion_challenge),
+    )
+    replacement_by_slot: dict[str, dict] = {}
+
+    for legacy_slot, challenge_slot, builder in replacements:
+        challenge = builder(profile, config)
+        if challenge is None:
+            continue
+        replacement_by_slot[legacy_slot] = {
+            "user_id": profile["user_id"],
+            # Task.path is a coarse persistence path; the DB constraint only
+            # allows the historical values. The concrete mechanic belongs in
+            # challenge_slot (and in task_criterion for spend thresholds).
+            "path": "personal",
+            "model": None,
+            "challenge_slot": challenge_slot,
+            **challenge,
+        }
+
+    # Preserve the router's stable order; deterministic records occupy the
+    # positions of their legacy slots and are easy to inspect in logs/UI.
+    return [
+        replacement_by_slot.get(result.get("challenge_slot"), result)
+        for result in script_results
+    ]
 
 
 class ChallengeService:
@@ -87,6 +147,18 @@ class ChallengeService:
         existing_criteria: set[tuple[str, uuid.UUID]] = {
             (t.criterion_type, t.criterion_entity_id) for t in active_tasks if t.criterion_type and t.criterion_entity_id
         }
+        # Category-level counterpart of the guard above: catches two slots
+        # landing on DIFFERENT products of the SAME category (e.g. "сметана"
+        # vs "яйца", both "молочные продукты и яйца") — the exact-criterion
+        # check above only sees identical products and lets this through,
+        # which still reads as "two of the same kind of challenge" to a user.
+        existing_category_ids: set[uuid.UUID] = {
+            cat_id
+            for t in active_tasks
+            if t.criterion_type and t.criterion_entity_id
+            for cat_id in [self.adapter.resolve_category_id(session, t.criterion_type, t.criterion_entity_id)]
+            if cat_id is not None
+        }
         # Cross-cycle duplicate guard for the `generic` slot ONLY (see the
         # `slot == "generic"` check below, where this is consumed) — its
         # pick has no natural variation source and would otherwise repeat
@@ -120,6 +192,9 @@ class ChallengeService:
                     model=self.model,
                     api_key=self.api_key or None,
                     dry_run=False,
+                )
+                script_results = _use_deterministic_mechanics(
+                    profile, self.synth_config, script_results
                 )
             if capture.get("system") is not None:
                 captured_prompt = f"[SYSTEM]\n{capture['system']}\n\n[USER]\n{capture.get('user', '')}"
@@ -206,15 +281,19 @@ class ChallengeService:
                 )
                 continue
 
-            # Scoped to `generic` only — its pick has no natural source of
-            # variation (a pure function of user_id, only rotated across
-            # cycles via `generic_cycle_index`), so without this check it
-            # could repeat forever. LLM-driven slots (llm_habit/llm_discovery/
-            # llm_basket) and `vibe` legitimately CAN and should repeat their
-            # own previous target when the underlying habit/theme hasn't
-            # changed — blocking that made those slots permanently unfillable
-            # in practice whenever the LLM kept recommending the same thing.
-            if slot == "generic" and previous_by_slot.get(slot) == criterion:
+            # Scoped to slots with no natural source of cycle-to-cycle
+            # variation: `generic` (rotated only via `generic_cycle_index`)
+            # and the deterministic `category_expansion`/`spend_threshold`
+            # mechanics from `_use_deterministic_mechanics`, which are a
+            # PURE function of unchanging train-period stats and have no
+            # rotation at all — without this check they repeat the exact
+            # same target forever once the previous task completes.
+            # LLM-driven slots (llm_habit/llm_discovery/llm_basket) and
+            # `vibe` legitimately CAN and should repeat their own previous
+            # target when the underlying habit/theme hasn't changed —
+            # blocking that made those slots permanently unfillable in
+            # practice whenever the LLM kept recommending the same thing.
+            if slot in _SLOTS_WITHOUT_NATURAL_VARIATION and previous_by_slot.get(slot) == criterion:
                 logger.info(
                     "generate_batch.repeats_previous_cycle_skip",
                     user_id=str(user_id),
@@ -234,6 +313,16 @@ class ChallengeService:
                 )
                 continue
 
+            category_id = self.adapter.resolve_category_id(session, *criterion)
+            if category_id is not None and category_id in existing_category_ids:
+                logger.info(
+                    "generate_batch.duplicate_category_skip",
+                    user_id=str(user_id),
+                    challenge_slot=slot,
+                    category_id=str(category_id),
+                )
+                continue
+
             try:
                 task_id = self.adapter.persist_challenge(session, user_id, script_result)
             except Exception as e:  # noqa: BLE001
@@ -248,6 +337,8 @@ class ChallengeService:
             self.log_repo.attach_task(session, log_id, task_id)
             active_slots.add(slot)
             existing_criteria.add(criterion)
+            if category_id is not None:
+                existing_category_ids.add(category_id)
             created_ids.append(task_id)
             logger.info(
                 "generate_batch.task_created",
