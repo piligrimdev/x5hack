@@ -19,19 +19,13 @@ logger = structlog.get_logger("tasks.generation")
 
 
 @celery_app.task(name="webx5.tasks.generation.generate_challenges", queue="challenges")
-def generate_challenges(
-    user_id: str, count: int = len(CHALLENGE_SLOTS), target_slots: list[str] | None = None
-) -> dict:
-    """`target_slots`, when given, names the exact slot(s) that just
-    completed/expired for this user — see `ChallengeService.generate_batch`
-    for why an anonymous `count` alone lets replacement generation refill
-    the wrong slots when several complete/expire together."""
+def generate_challenges(user_id: str, count: int = len(CHALLENGE_SLOTS)) -> dict:
+    """`count` is informational only — see `ChallengeService.generate_batch`,
+    which fills every currently-missing slot regardless of `count`."""
     from webx5.core.challenges import challenge_service
     from webx5.core.db import db
 
-    logger.info(
-        "generate_challenges.enter", user_id=user_id, requested_count=count, target_slots=target_slots
-    )
+    logger.info("generate_challenges.enter", user_id=user_id, requested_count=count)
 
     uid = uuid.UUID(user_id)
     with db.get_sync_session() as session:
@@ -44,9 +38,7 @@ def generate_challenges(
                 logger.warning("generate_challenges.user_not_found", user_id=user_id)
                 return {"status": "no_op", "reason": "user_not_found"}
 
-            created = challenge_service.generate_batch(
-                session, uid, count, target_slots=set(target_slots) if target_slots else None
-            )
+            created = challenge_service.generate_batch(session, uid, count)
 
     logger.info(
         "generate_challenges.done",

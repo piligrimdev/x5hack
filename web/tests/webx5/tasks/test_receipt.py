@@ -46,13 +46,11 @@ def _run_process_receipt(active_tasks, completed_task_ids, user_id, receipt_id):
     return result, mock_generate_challenges
 
 
-def test_process_receipt_dispatches_one_combined_call_naming_completed_slots():
-    """Regression test: before target_slots, N separately-dispatched
-    count=1 generate_challenges calls each refilled the first N slots in
-    generate_challenge_for_user's fixed order, not necessarily the ones
-    that actually completed — starving whichever completed slot sorted
-    last in that order (observed: `vibe`). One combined call naming the
-    exact completed slots fixes this."""
+def test_process_receipt_dispatches_one_combined_call_for_all_completions():
+    """generate_batch now fills every currently-missing slot in one shot
+    (see ChallengeService.generate_batch's docstring), so a single combined
+    replacement call is enough regardless of how many tasks completed in
+    this receipt — no need to name or count them precisely."""
     user_id = uuid.uuid4()
     receipt_id = uuid.uuid4()
     llm_habit_task = _make_task("llm_habit")
@@ -70,27 +68,7 @@ def test_process_receipt_dispatches_one_combined_call_naming_completed_slots():
     assert result["completed_count"] == 3
     mock_generate_challenges.apply_async.assert_called_once()
     args = mock_generate_challenges.apply_async.call_args.kwargs["args"]
-    assert args[0] == str(user_id)
-    assert args[1] == 3
-    assert set(args[2]) == {"llm_habit", "llm_basket", "vibe"}
-
-
-def test_process_receipt_falls_back_to_anonymous_calls_for_legacy_slotless_tasks():
-    user_id = uuid.uuid4()
-    receipt_id = uuid.uuid4()
-    legacy_task = _make_task(None)
-
-    result, mock_generate_challenges = _run_process_receipt(
-        active_tasks=[legacy_task],
-        completed_task_ids={legacy_task.id},
-        user_id=user_id,
-        receipt_id=receipt_id,
-    )
-
-    assert result["completed_count"] == 1
-    mock_generate_challenges.apply_async.assert_called_once()
-    args = mock_generate_challenges.apply_async.call_args.kwargs["args"]
-    assert args == [str(user_id), 1]
+    assert args == [str(user_id), 3]
 
 
 def test_process_receipt_no_completions_does_not_dispatch_generation():
