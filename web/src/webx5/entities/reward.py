@@ -32,3 +32,6 @@ class GiftReward(Base):
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="active", server_default="active")
     valid_to: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    related_spin_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("wheel_spin.id", ondelete="SET NULL"), nullable=True
+    )

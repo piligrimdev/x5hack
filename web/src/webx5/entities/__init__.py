@@ -1,6 +1,7 @@
 from webx5.entities.base import Base
 from webx5.entities.category import Category
 from webx5.entities.challenge_log import ChallengeGenerationLog
+from webx5.entities.coupon import CouponAccount, CouponTransaction
 from webx5.entities.discount import Discount, DiscountLinkType, DiscountType, FormatDiscount, StoreDiscount
 from webx5.entities.loyalty import LoyaltyCard, Segment
 from webx5.entities.points import PointsAccount, PointsSettings, PointsTransaction
@@ -11,11 +12,14 @@ from webx5.entities.store import Store, StoreFormat
 from webx5.entities.task import Task, TaskCriterion, TaskItem, TaskReceiptIncrement, TaskStatus
 from webx5.entities.user import User
 from webx5.entities.vibe import VibeType
+from webx5.entities.wheel import WheelSpin
 
 __all__ = [
     "Base",
     "Category",
     "ChallengeGenerationLog",
+    "CouponAccount",
+    "CouponTransaction",
     "Discount",
     "DiscountLinkType",
     "DiscountType",
@@ -39,4 +43,5 @@ __all__ = [
     "TaskStatus",
     "User",
     "VibeType",
+    "WheelSpin",
 ]

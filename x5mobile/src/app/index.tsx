@@ -6,6 +6,7 @@ import { apiLogin, apiRegister } from '@/api/client';
 import { CustomTabBar, TabScreen } from '@/components/custom-tab-bar';
 import { AppiView } from '@/components/screens/appi-view';
 import { ChallengesView } from '@/components/screens/challenges-view';
+import { FortuneWheelView } from '@/components/screens/fortune-wheel-view';
 import { HistoryView } from '@/components/screens/history-view';
 import { HomeView } from '@/components/screens/home-view';
 import { PointsView } from '@/components/screens/points-view';
@@ -16,7 +17,7 @@ import { useBasket } from '@/hooks/useBasket';
 import { useEconomy } from '@/hooks/useEconomy';
 import { useMockData } from '@/mock-data';
 
-type Screen = 'home' | 'savings' | 'history' | 'catalog' | 'cart' | 'appi' | 'profile' | 'challenges' | 'receipt-detail' | 'points';
+type Screen = 'home' | 'savings' | 'history' | 'catalog' | 'cart' | 'appi' | 'profile' | 'challenges' | 'receipt-detail' | 'points' | 'wheel';
 
 function LoginScreen({ onLogin }: { onLogin: (token: string) => void }) {
   const insets = useSafeAreaInsets();
@@ -117,7 +118,6 @@ function AppContent({ token }: { token: string }) {
         {screen === 'home' && (
           <HomeView
             token={token}
-            onChallenges={() => navigate('challenges')}
             onPoints={() => navigate('points')}
             onOpenAppi={() => navigate('appi')}
             onHistory={() => navigate('history')}
@@ -129,6 +129,7 @@ function AppContent({ token }: { token: string }) {
             basket={basket}
             onOpenBasket={() => navigate('savings')}
             onChallenges={() => navigate('challenges')}
+            onOpenWheel={() => navigate('wheel')}
           />
         )}
         {screen === 'points' && (
@@ -158,13 +159,22 @@ function AppContent({ token }: { token: string }) {
         {screen === 'challenges' && (
           <ChallengesView token={token} goBack={goBack} />
         )}
+        {screen === 'wheel' && (
+          <FortuneWheelView token={token} goBack={goBack} />
+        )}
         {screen === 'receipt-detail' && selectedReceiptId && (
           <ReceiptDetailView token={token} receiptId={selectedReceiptId} goBack={goBack} />
         )}
       </View>
       <CustomTabBar
-        activeScreen={(screen === 'savings' ? 'cart' : screen) as TabScreen}
-        onTabPress={(tab) => navigate(tab === 'cart' ? 'savings' : tab)}
+        activeScreen={(
+          screen === 'savings' || screen === 'challenges' || screen === 'wheel'
+            ? 'appi'
+            : screen === 'catalog' || screen === 'profile' || screen === 'appi'
+              ? screen
+              : 'home'
+        ) as TabScreen}
+        onTabPress={navigate}
       />
     </View>
   );
