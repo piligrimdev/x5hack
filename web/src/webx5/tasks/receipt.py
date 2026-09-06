@@ -72,6 +72,8 @@ def process_receipt(receipt_id: str) -> dict:
 
             # US2: increment progress + reward.
             completed_count = 0
+            completed_slots: list[str] = []
+            completed_unknown_slot = 0
             for task in active:
                 did_complete = task_completion_service.apply_receipt(session, task, receipt)
                 logger.info(
@@ -86,9 +88,22 @@ def process_receipt(receipt_id: str) -> dict:
                 )
                 if did_complete:
                     completed_count += 1
+                    if task.challenge_slot:
+                        completed_slots.append(task.challenge_slot)
+                    else:
+                        completed_unknown_slot += 1
 
-            # Enqueue replacements (one per completed task).
-            for _ in range(completed_count):
+            # Enqueue replacements: one combined call naming the exact slots
+            # that completed (see ChallengeService.generate_batch's
+            # target_slots docstring — several separate anonymous "fill 1
+            # slot" calls silently refill the wrong slots when more than one
+            # completes in the same receipt). A legacy task with no
+            # challenge_slot falls back to the old anonymous one-call-each.
+            if completed_slots:
+                generate_challenges.apply_async(
+                    args=[str(user_id), len(completed_slots), completed_slots], queue="challenges"
+                )
+            for _ in range(completed_unknown_slot):
                 generate_challenges.apply_async(args=[str(user_id), 1], queue="challenges")
 
             logger.info(

@@ -30,19 +30,32 @@ def expire_tasks() -> dict:
         logger.info("expire_tasks.no_expired")
         return {"status": "no_expired", "count": 0, "users": 0}
 
-    by_user: dict[str, int] = defaultdict(int)
+    # One combined call per user naming the exact slots that expired (see
+    # ChallengeService.generate_batch's target_slots docstring — several
+    # anonymous "fill N slots" calls silently refill the wrong slots when
+    # more than one expires for the same user in the same sweep). A legacy
+    # task with no challenge_slot falls back to the old anonymous count.
+    slots_by_user: dict[str, list[str]] = defaultdict(list)
+    unknown_slot_count_by_user: dict[str, int] = defaultdict(int)
     for task in expired:
-        by_user[str(task.loyalty_card_id)] += 1
+        user_id = str(task.loyalty_card_id)
+        if task.challenge_slot:
+            slots_by_user[user_id].append(task.challenge_slot)
+        else:
+            unknown_slot_count_by_user[user_id] += 1
         logger.info(
             "expire_tasks.expired_task",
             task_id=str(task.id),
-            user_id=str(task.loyalty_card_id),
+            user_id=user_id,
             deadline=task.deadline.isoformat() if task.deadline else None,
             title=task.title,
         )
 
-    for user_id, count in by_user.items():
+    for user_id, slots in slots_by_user.items():
+        generate_challenges.apply_async(args=[user_id, len(slots), slots], queue="challenges")
+    for user_id, count in unknown_slot_count_by_user.items():
         generate_challenges.apply_async(args=[user_id, count], queue="challenges")
 
-    logger.info("expire_tasks.done", count=len(expired), users=len(by_user))
-    return {"status": "expired", "count": len(expired), "users": len(by_user)}
+    users = set(slots_by_user) | set(unknown_slot_count_by_user)
+    logger.info("expire_tasks.done", count=len(expired), users=len(users))
+    return {"status": "expired", "count": len(expired), "users": len(users)}

@@ -44,22 +44,45 @@ class ChallengeService:
         self.model = model
         self.api_key = api_key
 
-    def generate_batch(self, session: Session, user_id: uuid.UUID, count: int) -> list[uuid.UUID]:
+    def generate_batch(
+        self,
+        session: Session,
+        user_id: uuid.UUID,
+        count: int,
+        target_slots: set[str] | None = None,
+    ) -> list[uuid.UUID]:
         """Generate up to `count` new tasks for `user_id`, filling missing challenge slots.
         Respects invariant "no more than 5 active tasks" (FR-001).
 
-        Synth API: one call → list[dict] with exactly 5 records.
-        We filter the returned records by challenge_slot to skip slots the user
-        already has active, then persist up to `count` of the remaining.
+        Synth API: one call → list[dict] with exactly 5 records, always in the
+        same fixed order (`generic`, `llm_habit`, `llm_discovery`, `llm_basket`,
+        `vibe` — see `generate_challenge_for_user`).
+
+        `target_slots`, when given, names the EXACT slot(s) to fill — e.g. the
+        slots of the tasks that just completed/expired — and every other slot
+        in the batch is skipped regardless of the fixed order above. Without
+        this, a caller that only knows "N slots became free" (not which ones)
+        has to fall back to "persist the first N slots in the fixed order that
+        aren't already active" — which silently refills the WRONG slots
+        whenever the ones that actually emptied aren't the first N in that
+        order. Observed in production: a receipt completed llm_habit +
+        llm_basket + vibe in one shot, three separate count=1 calls were
+        dispatched, and — walking the same fixed order each time — all three
+        landed on generic/llm_habit/llm_basket, permanently starving `vibe`
+        (last in the fixed order) even though it was one of the three slots
+        that had just emptied. `target_slots=None` keeps the old count-based
+        behavior, used only where every slot is empty anyway (first-receipt
+        trigger) and so there's nothing for a fixed order to get wrong.
         """
         active_tasks = self.task_repo.get_active_for_user(session, user_id)
         remaining_slots = len(CHALLENGE_SLOTS) - len(active_tasks)
-        want = min(count, remaining_slots)
-        if want <= 0:
+        want = len(target_slots) if target_slots is not None else min(count, remaining_slots)
+        if want <= 0 or remaining_slots <= 0:
             logger.info(
                 "generate_batch.no_slots",
                 user_id=str(user_id),
                 requested_count=count,
+                target_slots=list(target_slots) if target_slots is not None else None,
                 active_count=len(active_tasks),
             )
             return []
@@ -91,6 +114,7 @@ class ChallengeService:
             "generate_batch.start",
             user_id=str(user_id),
             want=want,
+            target_slots=list(target_slots) if target_slots is not None else None,
             active_slots=list(active_slots),
             profile_receipts_count=len(profile.get("receipts", [])),
             profile_habitual_categories=profile.get("habitual_categories", []),
@@ -181,7 +205,16 @@ class ChallengeService:
                 )
                 continue
 
-            if len(created_ids) >= want:
+            if target_slots is not None:
+                if slot not in target_slots:
+                    logger.info(
+                        "generate_batch.not_targeted_skip",
+                        user_id=str(user_id),
+                        challenge_slot=slot,
+                        target_slots=list(target_slots),
+                    )
+                    continue
+            elif len(created_ids) >= want:
                 logger.info(
                     "generate_batch.want_reached_skip",
                     user_id=str(user_id),

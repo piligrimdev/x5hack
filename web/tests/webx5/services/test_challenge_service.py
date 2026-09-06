@@ -266,6 +266,66 @@ def test_generate_batch_skips_generic_slot_that_repeats_its_own_previous_cycle()
     assert "generic" not in persisted_slots
 
 
+def test_generate_batch_target_slots_fills_only_the_named_slots():
+    """Regression test: before `target_slots`, a caller that only knew "N
+    slots became free" (not which ones) dispatched N separate count=1 calls,
+    each of which persisted the first N slots in the FIXED
+    generate_challenge_for_user order that weren't already active — not
+    necessarily the ones that actually emptied. In production this starved
+    `vibe` (last in the fixed order) whenever llm_habit/llm_basket/vibe
+    completed together in one receipt: three count=1 calls landed on
+    generic/llm_habit/llm_basket instead. `target_slots` fixes this by
+    naming exactly which slot(s) to fill, in one call, regardless of order."""
+    service, task_repo, log_repo, adapter = _service_with_mocks()
+
+    with patch("webx5.services.challenge.generate_challenge_for_user", return_value=_batch_all_five()), \
+         patch("webx5.services.challenge.capture_openrouter_io") as mock_capture:
+        mock_capture.return_value.__enter__.return_value = {}
+        created = service.generate_batch(MagicMock(), uuid.uuid4(), count=2, target_slots={"llm_basket", "vibe"})
+
+    assert len(created) == 2
+    persisted_slots = {call.args[2]["challenge_slot"] for call in adapter.persist_challenge.call_args_list}
+    assert persisted_slots == {"llm_basket", "vibe"}
+
+
+def test_generate_batch_target_slots_ignores_earlier_fixed_order_slots():
+    """Even though `generic` and `llm_habit` sort earlier in the fixed
+    result order and are NOT already active, they must not be persisted
+    when target_slots names only `vibe` — the old count-based cap would
+    have filled them instead."""
+    service, task_repo, log_repo, adapter = _service_with_mocks()
+
+    with patch("webx5.services.challenge.generate_challenge_for_user", return_value=_batch_all_five()), \
+         patch("webx5.services.challenge.capture_openrouter_io") as mock_capture:
+        mock_capture.return_value.__enter__.return_value = {}
+        created = service.generate_batch(MagicMock(), uuid.uuid4(), count=1, target_slots={"vibe"})
+
+    assert len(created) == 1
+    persisted_slots = [call.args[2]["challenge_slot"] for call in adapter.persist_challenge.call_args_list]
+    assert persisted_slots == ["vibe"]
+
+
+def test_generate_batch_target_slots_still_respects_active_slot_and_dedup_checks():
+    """A targeted slot that's somehow already active, or whose criterion
+    duplicates an active task's, is still skipped — target_slots only
+    changes WHICH slots are eligible, not the existing safety checks."""
+    service, task_repo, log_repo, adapter = _service_with_mocks()
+
+    llm_active_task = MagicMock()
+    llm_active_task.challenge_slot = "vibe"
+    llm_active_task.criterion_type = None
+    llm_active_task.criterion_entity_id = None
+    task_repo.get_active_for_user.return_value = [llm_active_task]
+
+    with patch("webx5.services.challenge.generate_challenge_for_user", return_value=_batch_all_five()), \
+         patch("webx5.services.challenge.capture_openrouter_io") as mock_capture:
+        mock_capture.return_value.__enter__.return_value = {}
+        created = service.generate_batch(MagicMock(), uuid.uuid4(), count=1, target_slots={"vibe"})
+
+    assert created == []
+    adapter.persist_challenge.assert_not_called()
+
+
 def test_generate_batch_does_not_skip_non_generic_slots_that_repeat_their_own_previous_cycle():
     """Regression test: LLM-driven slots (llm_habit/llm_discovery/llm_basket)
     and vibe must NOT be blocked from repeating their own previous target —
