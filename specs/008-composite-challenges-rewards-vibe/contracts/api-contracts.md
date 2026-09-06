@@ -19,7 +19,8 @@ Auth кассового аппарата: `X-Terminal-Token: <TERMINAL_TOKEN>`
   {
     "id": "uuid",
     "name": "Здоровье и лёгкость",
-    "description": "Фрукты, овощи, злаки — питание без лишнего"
+    "description": "Фрукты, овощи, злаки — питание без лишнего",
+    "llm_context": "молочные продукты и яйца, овощи, фрукты"
   }
 ]
 ```
@@ -71,6 +72,21 @@ Auth: `X-Terminal-Token`
 
 **Response 204**
 **Response 404** — vibe_id не найден
+
+---
+
+### GET /users/me/vibe — получить текущий вайб пользователя
+
+Auth: `Bearer`
+
+**Response 200**
+```json
+{ "vibe_id": "uuid | null" }
+```
+
+`vibe_id = null`, если пользователь ещё не выбрал направление.
+
+**Response 404** — пользователь не найден
 
 ---
 

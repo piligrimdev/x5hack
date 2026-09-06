@@ -9,7 +9,7 @@ import structlog
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from webx5.core.llm import call_openrouter_tools_traced
+from webx5.core.llm import call_openrouter_tools_traced as call_openrouter_tools
 from webx5.crud.basket import BasketRepository
 from webx5.crud.receipt import ReceiptRepository
 from webx5.crud.store import StoreRepository

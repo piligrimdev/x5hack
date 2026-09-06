@@ -21,5 +21,6 @@ class VibeOut(BaseModel):
     id: uuid.UUID
     name: str
     description: str
+    llm_context: str
 
     model_config = {"from_attributes": True}

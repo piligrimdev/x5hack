@@ -12,6 +12,7 @@ import uuid
 
 import structlog
 from sqlalchemy import select
+from sqlalchemy.orm import noload
 
 from synth.challenges import CHALLENGE_SLOTS
 from webx5.core.celery_app import celery_app
@@ -49,7 +50,14 @@ def process_receipt(receipt_id: str) -> dict:
                 purchase_date=receipt.purchase_date.isoformat() if receipt.purchase_date else None,
             )
             # Pessimistic user-level lock (FR-014).
-            session.execute(select(User).where(User.id == user_id).with_for_update()).scalar_one()
+            # noload: User.vibe_type is lazy="joined"; FOR UPDATE cannot lock
+            # the nullable side of that LEFT OUTER JOIN in PostgreSQL.
+            session.execute(
+                select(User)
+                .options(noload(User.vibe_type))
+                .where(User.id == user_id)
+                .with_for_update()
+            ).scalar_one()
 
             active = task_repo.get_active_for_user(session, user_id)
             logger.info(

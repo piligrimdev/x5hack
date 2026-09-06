@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 import httpx
 import pytest
 
-from webx5.core.llm import ToolCall, call_openrouter_tools
+from webx5.core.llm import call_openrouter_tools, call_openrouter_tools_traced
 
 
 def _fake_response(tool_calls: list[dict] | None) -> MagicMock:
@@ -112,3 +112,24 @@ def test_call_openrouter_tools_does_not_retry_on_non_transient_4xx(monkeypatch: 
         call_openrouter_tools(model="fake/model", system="s", user="u", tools=[], api_key="k")
 
     assert call_count == 1
+
+
+def test_traced_call_forwards_tool_choice(monkeypatch: pytest.MonkeyPatch) -> None:
+    raw_call = MagicMock(return_value=[])
+    trace = MagicMock(duration_ms=1)
+    monkeypatch.setattr("webx5.core.llm.call_openrouter_tools", raw_call)
+    monkeypatch.setattr("webx5.core.llm.start_llm_trace", MagicMock(return_value=trace))
+
+    tool_choice = {"type": "function", "function": {"name": "replace_basket"}}
+    result = call_openrouter_tools_traced(
+        model="fake/model",
+        system="s",
+        user="u",
+        tools=[],
+        api_key="k",
+        tool_choice=tool_choice,
+        trace_name="basket_assistant",
+    )
+
+    assert result == []
+    assert raw_call.call_args.kwargs["tool_choice"] == tool_choice

@@ -42,7 +42,7 @@ export function HistoryView({ token, totalSaved, totalPaid, goBack, onReceiptPre
           <View style={styles.summaryLeft}>
             <Text style={styles.summaryLabel}>СЭКОНОМЛЕНО ВСЕГО</Text>
             <Text style={styles.summaryAmount}>
-              −{Math.round(totalSaved).toLocaleString('ru-RU')} ₽
+              −{totalSaved.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽
             </Text>
           </View>
           {savedPct > 0 && <Text style={styles.summaryPct}>{savedPct}%</Text>}
