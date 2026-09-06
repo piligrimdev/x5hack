@@ -252,15 +252,34 @@ def _pluralize_times(n: int) -> str:
     return f"{n} раз"
 
 
-def item_action_description(item: str, quantity: int, reward_rub: float) -> str:
+_DESCRIPTION_TEMPLATES: dict[str, str] = {
+    "generic": "Купи «{item}» {times} и получи {reward:.0f} ₽.",
+    "llm_habit": "Продолжай в том же духе: возьми «{item}» {times} — начислим {reward:.0f} ₽.",
+    "llm_discovery": "Попробуй новое: «{item}» {times} — и мы добавим {reward:.0f} ₽ на счёт.",
+    "llm_basket": "Собери привычный набор — «{item}» {times} даст {reward:.0f} ₽ бонусом.",
+    "vibe": "В тему месяца: «{item}» {times} — и +{reward:.0f} ₽ на баллы.",
+}
+
+
+def item_action_description(item: str, quantity: int, reward_rub: float, slot: str = "generic") -> str:
     """The concrete, trackable action behind a challenge — names the exact
     item and count progress is measured against (target_sku_id/
     target_quantity), so the copy never promises more than that (a whole
     category, a spend threshold) when the tracking can't actually honor it.
     Used for generic-pool and personal/llm offers, which only ever named a
     category — spend_threshold/category_expansion already name their own
-    specific item in their description and don't need this."""
-    return f"Купи «{item}» {_pluralize_times(quantity)} и получи {reward_rub:.0f} ₽."
+    specific item in their description and don't need this.
+
+    `slot` selects one of a small set of fixed phrasings (see
+    `_DESCRIPTION_TEMPLATES`) so cards from different challenge_slot values
+    read differently even though they share the same underlying "buy N of
+    item X, get reward" mechanic — without this, every generic/personal
+    challenge collapsed into the exact same sentence, which read as
+    repetitive even when the underlying personalization differed. An
+    unrecognized slot (unknown/legacy names from before the 5-slot
+    redesign) falls back to the `"generic"` phrasing."""
+    template = _DESCRIPTION_TEMPLATES.get(slot, _DESCRIPTION_TEMPLATES["generic"])
+    return template.format(item=item, times=_pluralize_times(quantity), reward=reward_rub)
 
 
 def pick_generic_challenge(user_id: str, config: SynthConfig) -> dict:
@@ -864,7 +883,7 @@ def generate_challenge_for_user(
             challenge["target_sku_id"] = sku.sku_id if sku else None
             if sku is not None:
                 challenge["description"] = item_action_description(
-                    sku.item, PERSONAL_TARGET_QUANTITY, challenge["reward_rub"]
+                    sku.item, PERSONAL_TARGET_QUANTITY, challenge["reward_rub"], slot=slot
                 )
             results.append({
                 "user_id": profile["user_id"], "path": "personal",
@@ -999,6 +1018,13 @@ def rewrite_descriptions_for_tracked_item(challenges: list[dict], config: SynthC
     same as any other generic offer — so it must still be rewritten.
     `no_challenge` records and any record whose target_sku_id didn't
     resolve to a real catalog SKU are left untouched.
+
+    Only a `path == "personal"` record's own `challenge_slot` picks its
+    phrasing template (see `item_action_description`) — a `generic`/
+    `generic_fallback` record's copy is genuinely generic-pool content
+    regardless of which slot name it's tagged under (see the
+    `challenge_slot` caveat above), so it always gets the `"generic"`
+    phrasing, matching what the live generator does for that same case.
     """
     catalog = build_catalog(config)
     result: list[dict] = []
@@ -1008,8 +1034,12 @@ def rewrite_descriptions_for_tracked_item(challenges: list[dict], config: SynthC
         already_item_specific = c.get("favorite_item") or c.get("novel_item")
         needs_rewrite = sku_id in catalog and not already_item_specific
         if needs_rewrite:
+            slot = c.get("challenge_slot") if c.get("path") == "personal" else "generic"
             c["description"] = item_action_description(
-                catalog[sku_id].item, c.get("target_quantity", PERSONAL_TARGET_QUANTITY), c.get("reward_rub", 0.0)
+                catalog[sku_id].item,
+                c.get("target_quantity", PERSONAL_TARGET_QUANTITY),
+                c.get("reward_rub", 0.0),
+                slot=slot or "generic",
             )
         result.append(c)
     return result

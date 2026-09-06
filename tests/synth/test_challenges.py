@@ -102,6 +102,31 @@ def test_item_action_description_pluralizes_raz_correctly():
     assert item_action_description("морковь", 21, 50.0).startswith("Купи «морковь» 21 раз ")
 
 
+def test_item_action_description_defaults_to_generic_phrasing():
+    assert item_action_description("морковь", 2, 50.0) == item_action_description("морковь", 2, 50.0, slot="generic")
+
+
+def test_item_action_description_varies_phrasing_by_slot():
+    """Each of the 5 challenge_slot values gets its own distinct phrasing —
+    otherwise every challenge's description collapses into the identical
+    sentence regardless of slot, which read as repetitive in production
+    even though title/mechanic varied per slot."""
+    descriptions = {
+        slot: item_action_description("морковь", 2, 50.0, slot=slot)
+        for slot in CHALLENGE_SLOTS
+    }
+    assert len(set(descriptions.values())) == len(CHALLENGE_SLOTS)
+    for slot, description in descriptions.items():
+        assert "морковь" in description
+        assert "50" in description
+
+
+def test_item_action_description_unknown_slot_falls_back_to_generic():
+    assert item_action_description("морковь", 2, 50.0, slot="spend_threshold") == item_action_description(
+        "морковь", 2, 50.0, slot="generic"
+    )
+
+
 def test_pick_sku_in_category_is_deterministic_and_within_category():
     sku = pick_sku_in_category(_config, "овощи", seed_key="user-x")
     assert sku is not None
@@ -487,7 +512,7 @@ def test_generate_challenge_for_user_llm_habit_personal_path_with_mocked_llm(mon
     assert llm_result["target_sku_id"] == sku.sku_id
     assert llm_result["challenge_title"] == "Допеки выходные"
     assert sku.item in llm_result["description"]
-    assert llm_result["description"] == item_action_description(sku.item, PERSONAL_TARGET_QUANTITY, 40)
+    assert llm_result["description"] == item_action_description(sku.item, PERSONAL_TARGET_QUANTITY, 40, slot="llm_habit")
 
 
 def test_generate_challenge_for_user_falls_back_on_bad_llm_output(monkeypatch):
@@ -754,6 +779,23 @@ def test_rewrite_descriptions_for_tracked_item_rewrites_generic_and_llm_slot():
     expected = item_action_description(item, 2, 30.0)
     assert rewritten[0]["description"] == expected
     assert rewritten[1]["description"] == item_action_description(item, 2, 40.0)
+
+
+def test_rewrite_descriptions_for_tracked_item_uses_personal_records_own_slot_phrasing():
+    """A `path == "personal"` record with a recognized challenge_slot name
+    (e.g. "vibe") gets that slot's phrasing, not the generic default —
+    matching what the live generator does for a successful LLM slot."""
+    category = _config.categories[0].name
+    item = _config.categories[0].items[0]
+    sku_id = find_sku_id_for_item(_config, category, item)
+    record = {
+        "user_id": "u10", "path": "personal", "challenge_slot": "vibe",
+        "target_categories": [category], "description": "старое описание",
+        "target_sku_id": sku_id, "target_quantity": 2, "reward_rub": 25.0,
+    }
+    rewritten = rewrite_descriptions_for_tracked_item([record], _config)
+    assert rewritten[0]["description"] == item_action_description(item, 2, 25.0, slot="vibe")
+    assert rewritten[0]["description"] != item_action_description(item, 2, 25.0, slot="generic")
 
 
 def test_rewrite_descriptions_for_tracked_item_rewrites_generic_fallback_despite_slot_name():
