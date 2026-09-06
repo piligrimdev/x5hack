@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import uuid
 from collections import Counter
-from datetime import UTC, date, datetime, timedelta
+from datetime import date
 from decimal import Decimal
 
 from sqlalchemy import func, select
@@ -118,14 +118,14 @@ class ChallengeAdapter:
         suggested_basket_items = self._suggested_basket_items(session, user_id)
         generic_cycle_index = self.task_repo.count_tasks_for_slot(session, user_id, "generic")
 
-        # Read last 90 days of receipts for this user.
-        cutoff = datetime.now(UTC) - timedelta(days=90)
+        # Read the user's FULL purchase history — survival-risk scoring
+        # (category_last_purchase below) needs the true last-purchase date
+        # per category; a 90-day window would truncate long repurchase-cycle
+        # categories and understate their risk.
         rows = (
             session.execute(
                 select(Receipt)
-                .where(
-                    Receipt.loyalty_card_id == user_id, Receipt.purchase_date >= cutoff
-                )
+                .where(Receipt.loyalty_card_id == user_id)
                 .order_by(Receipt.purchase_date.asc())
             )
             .scalars()
@@ -136,6 +136,7 @@ class ChallengeAdapter:
 
         receipts_dicts: list[dict] = []
         habit_counter: Counter = Counter()
+        category_last_purchase: dict[str, str] = {}
         for r in rows:
             lines: list[dict] = []
             total_rub = Decimal(0)
@@ -148,6 +149,10 @@ class ChallengeAdapter:
             for ri, product, category in items:
                 cat_name = category.name
                 habit_counter[cat_name] += 1
+                # `rows` is ordered ascending by purchase_date, so the last
+                # assignment for a category during this loop IS its true
+                # most-recent purchase date — no max() needed.
+                category_last_purchase[cat_name] = r.purchase_date.date().isoformat()
                 base_price = Decimal(str(ri.base_price_at_purchase))
                 paid_price = Decimal(str(ri.paid_price))
                 margin_pct = (
@@ -192,6 +197,7 @@ class ChallengeAdapter:
             "segment": "unknown",
             "family_size": 1,
             "habitual_categories": habitual,
+            "category_last_purchase": category_last_purchase,
             "receipts": receipts_dicts,
             "vibe_category": vibe_category,
             "suggested_basket_items": suggested_basket_items,
