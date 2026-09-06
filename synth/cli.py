@@ -74,9 +74,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     chal_parser = subparsers.add_parser(
         "challenges",
-        help="Generate exactly 4 challenges per profile, unconditionally (llm_habit, llm_discovery, "
-             "generic, vibe slots — each LLM-backed slot falls back to a distinct generic/partner-catalog "
-             "offer on its own criteria).",
+        help="Generate exactly 5 challenges per profile, unconditionally (llm_habit, llm_discovery, "
+             "generic slots are risk-ranked from a population survival curve, no LLM call; llm_basket is "
+             "a deterministic spend-threshold mechanic; vibe is the only slot that calls an LLM).",
     )
     chal_parser.add_argument(
         "--profiles", required=True,
@@ -89,9 +89,9 @@ def build_parser() -> argparse.ArgumentParser:
     chal_parser.add_argument("--api-key-env", default="OPENROUTER_API_KEY")
     chal_parser.add_argument(
         "--dry-run", action="store_true",
-        help="Build the deterministic generic slot as normal, but make no real LLM call for any of the "
-             "three LLM-backed slots (llm_habit/llm_discovery/vibe) — each returns a 'personal_dry_run' "
-             "placeholder record instead.",
+        help="Make no real LLM call for the 'vibe' slot (returns a 'personal_dry_run' placeholder "
+             "instead) — llm_habit/llm_discovery/generic/llm_basket never call an LLM regardless of "
+             "this flag.",
     )
     chal_parser.add_argument("--delay", type=float, default=0.0, help="Seconds to sleep between LLM calls.")
     chal_parser.add_argument("--limit", type=int, default=None, help="Only process the first N profiles.")

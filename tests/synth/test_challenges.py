@@ -24,6 +24,7 @@ from synth.challenges import (
     estimate_max_reward_rub,
     find_sku_id_for_item,
     generate_challenge_for_user,
+    generate_challenges,
     item_action_description,
     load_profiles,
     non_forbidden_category_names,
@@ -1014,3 +1015,36 @@ def test_build_survival_risk_challenge_deadline_defaults_when_no_median():
     curves = {"овощи": _curve([5], [0.9])}  # never drops to 0.5 -> median is None
     result = build_survival_risk_challenge(profile, _config, curves, rank=0, slot="generic")
     assert result["deadline_days"] == 14
+
+
+def test_generate_challenges_fits_population_curves_once_and_uses_them(monkeypatch):
+    """The CLI batch entry point must fit curves from ALL profiles passed
+    to it and actually use them — otherwise re-running it for hit-rate
+    scoring would silently exercise only the cold-start fallback path."""
+    def fail_if_called(*args, **kwargs):
+        raise AssertionError("no LLM call expected for llm_habit/llm_discovery/generic")
+
+    monkeypatch.setattr("synth.challenges.call_openrouter", fail_if_called)
+    profiles = [_profile("bakes_on_weekends", seed=s) for s in (1, 2, 3)]
+
+    # Compute category_last_purchase from receipts for each profile
+    for profile in profiles:
+        last_purchase = {}
+        for receipt in profile.get("receipts", []):
+            for line in receipt.get("lines", []):
+                category = line["category"]
+                if category not in last_purchase or receipt["purchase_date"] > last_purchase[category]:
+                    last_purchase[category] = receipt["purchase_date"]
+        profile["category_last_purchase"] = last_purchase
+
+    results = generate_challenges(profiles, _config, model="fake/model", dry_run=True)
+    by_user = {}
+    for r in results:
+        by_user.setdefault(r["user_id"], {})[r["challenge_slot"]] = r
+
+    # At least one profile has enough purchase history that llm_habit
+    # should resolve to a real risk pick rather than the cold-start
+    # fallback, now that curves are actually being fit and passed through.
+    assert any(
+        slots["llm_habit"]["path"] == "personal" for slots in by_user.values()
+    )

@@ -14,7 +14,7 @@ import requests
 
 from synth.catalog import SKU, build_catalog, skus_by_category
 from synth.config import SynthConfig
-from synth.survival import SurvivalCurve
+from synth.survival import SurvivalCurve, fit_population_curves, purchase_dates_from_profiles
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 
@@ -1262,9 +1262,14 @@ def generate_challenges(
     dry_run: bool = False,
     delay_seconds: float = 0.0,
 ) -> list[dict]:
+    category_curves = fit_population_curves(
+        purchase_dates_from_profiles(profiles), as_of=date.today()
+    )
     results: list[dict] = []
     for i, profile in enumerate(profiles):
-        batch = generate_challenge_for_user(profile, config, model, api_key, dry_run)
+        batch = generate_challenge_for_user(
+            profile, config, model, api_key, dry_run, category_curves=category_curves,
+        )
         results.extend(_replace_legacy_slots_with_deterministic(profile, config, batch))
         if not dry_run and delay_seconds > 0 and i < len(profiles) - 1:
             time.sleep(delay_seconds)
@@ -1285,7 +1290,6 @@ def _replace_legacy_slots_with_deterministic(
     """
     replacements = (
         ("llm_basket", "spend_threshold", build_spend_threshold_challenge),
-        ("generic", "category_expansion", build_category_expansion_challenge),
     )
     replacement_by_slot: dict[str, dict] = {}
     for legacy_slot, challenge_slot, builder in replacements:
