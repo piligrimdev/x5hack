@@ -15,9 +15,9 @@ import uuid
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from synth.challenges import CHALLENGE_SLOTS
-from webx5.services.challenge import ChallengeService, _use_deterministic_mechanics
+
+from webx5.services.challenge import ChallengeService
 
 
 def _service_with_mocks():
@@ -40,6 +40,8 @@ def _service_with_mocks():
     # force a same-category-different-product collision.
     adapter.resolve_category_id.side_effect = lambda session, criterion_type, criterion_entity_id: criterion_entity_id
     synth_config = MagicMock()
+    curve_store = MagicMock()
+    curve_store.curves = {}
 
     service = ChallengeService(
         task_repo=task_repo,
@@ -48,6 +50,7 @@ def _service_with_mocks():
         synth_config=synth_config,
         model="test-model",
         api_key="test-key",
+        curve_store=curve_store,
     )
     return service, task_repo, log_repo, adapter
 
@@ -85,37 +88,6 @@ def _batch_all_five() -> list[dict]:
         _canned("generic"),
         _canned("vibe"),
     ]
-
-
-def test_deterministic_mechanics_replace_legacy_slots():
-    """`llm_basket` is no longer replaced here — `generate_challenge_for_user`
-    already returns a deterministic `build_basket_spend_challenge` result
-    for it directly. Only `generic` → `category_expansion` is replaced at
-    this web boundary."""
-    expansion = {
-        "challenge_title": "Новая категория",
-        "description": "Попробуй новое",
-        "target_categories": ["new-cat"],
-        "mechanic": "скидка на новую категорию",
-        "reward_rub": 10.0,
-        "target_quantity": 1,
-    }
-
-    with patch("webx5.services.challenge.build_category_expansion_challenge", return_value=expansion):
-        results = _use_deterministic_mechanics(
-            {"user_id": "u"}, MagicMock(), _batch_all_five()
-        )
-
-    slots = [result["challenge_slot"] for result in results]
-    assert slots == [
-        "llm_habit",
-        "llm_discovery",
-        "llm_basket",
-        "category_expansion",
-        "vibe",
-    ]
-    assert results[3]["target_quantity"] == 1
-    assert results[3]["path"] == "personal"
 
 
 def test_generate_batch_persists_all_four_slots():
@@ -272,36 +244,6 @@ def test_generate_batch_existing_active_task_criterion_blocks_new_duplicate():
     assert "llm_habit" not in persisted_slots
 
 
-def test_generate_batch_skips_generic_slot_that_repeats_its_own_previous_cycle():
-    """The cross-cycle repeat check applies ONLY to `generic` — its pick is
-    a pure function of user_id with no natural variation source (before
-    the `cycle_offset` rotation fix, it was a pure function of user_id
-    with no time component at all), so without this check it would return
-    the literal same offer forever. If `generic`'s newly-resolved criterion
-    is identical to what `generic` itself resolved to last cycle, skip
-    persisting it."""
-    service, task_repo, log_repo, adapter = _service_with_mocks()
-
-    previous_criterion = ("category", uuid.uuid4())
-    task_repo.get_last_criterion_per_slot.return_value = {"generic": previous_criterion}
-
-    def resolve(session, script_result):
-        if script_result["challenge_slot"] == "generic":
-            return previous_criterion
-        return ("category", uuid.uuid4())
-
-    adapter.resolve_criterion.side_effect = resolve
-
-    with patch("webx5.services.challenge.generate_challenge_for_user", return_value=_batch_all_four()), \
-         patch("webx5.services.challenge.capture_openrouter_io") as mock_capture:
-        mock_capture.return_value.__enter__.return_value = {}
-        created = service.generate_batch(MagicMock(), uuid.uuid4(), count=4)
-
-    assert len(created) == 3
-    persisted_slots = [call.args[2]["challenge_slot"] for call in adapter.persist_challenge.call_args_list]
-    assert "generic" not in persisted_slots
-
-
 def test_generate_batch_fills_every_eligible_slot_regardless_of_count():
     """Regression test: an earlier design capped persistence at `count`
     slots, walking generate_challenge_for_user's FIXED result order
@@ -352,13 +294,14 @@ def test_generate_batch_fills_missing_slot_even_when_it_was_never_previously_act
 
 
 def test_generate_batch_does_not_skip_non_generic_slots_that_repeat_their_own_previous_cycle():
-    """Regression test: LLM-driven slots (llm_habit/llm_discovery/llm_basket)
-    and vibe must NOT be blocked from repeating their own previous target —
-    a stable purchase habit legitimately produces the same recommendation
-    cycle after cycle, and treating that as a forbidden "repeat" made those
-    slots permanently unfillable in production (the LLM kept recommending
-    the same product, the dedup kept rejecting it, forever). Only `generic`
-    is exempt from this exemption — see the sibling test above."""
+    """Regression test: llm_habit/llm_discovery/generic (all survival-risk
+    picks) and vibe must NOT be blocked from repeating their own previous
+    target — a stable purchase habit legitimately produces the same
+    recommendation cycle after cycle, and treating that as a forbidden
+    "repeat" made those slots permanently unfillable in production (the
+    pick kept recommending the same product, the dedup kept rejecting it,
+    forever). Only `llm_basket` is still subject to this guard — it's a
+    pure function of unchanging train-period stats with no rotation."""
     service, task_repo, log_repo, adapter = _service_with_mocks()
 
     llm_habits_previous_criterion = ("category", uuid.uuid4())
@@ -379,3 +322,21 @@ def test_generate_batch_does_not_skip_non_generic_slots_that_repeat_their_own_pr
     assert len(created) == 4
     persisted_slots = [call.args[2]["challenge_slot"] for call in adapter.persist_challenge.call_args_list]
     assert "llm_habit" in persisted_slots
+
+
+def test_generate_batch_passes_curve_store_curves_to_generate_challenge_for_user():
+    service, task_repo, log_repo, adapter = _service_with_mocks()
+    service.curve_store.curves = {"молоко": "sentinel-curve"}
+
+    captured = {}
+
+    def fake_generate(**kwargs):
+        captured.update(kwargs)
+        return _batch_all_five()
+
+    with patch("webx5.services.challenge.generate_challenge_for_user", side_effect=fake_generate), \
+         patch("webx5.services.challenge.capture_openrouter_io") as mock_capture:
+        mock_capture.return_value.__enter__.return_value = {}
+        service.generate_batch(MagicMock(), uuid.uuid4(), count=5)
+
+    assert captured["category_curves"] == {"молоко": "sentinel-curve"}

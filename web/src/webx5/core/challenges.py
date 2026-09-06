@@ -48,6 +48,7 @@ challenge_service = ChallengeService(
     synth_config=synth_config,
     model=CHALLENGE_LLM_MODEL,
     api_key=OPENROUTER_API_KEY,
+    curve_store=survival_curve_store,
 )
 
 task_completion_service = TaskCompletionService(task_repo=task_repo, task_item_repo=task_item_repo)

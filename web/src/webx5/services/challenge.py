@@ -9,82 +9,33 @@ Synth API (single call → list[dict] of exactly 5 records, each with
 from __future__ import annotations
 
 import uuid
-from typing import Any
 
 import structlog
 from sqlalchemy import exists, select
 from sqlalchemy.orm import Session
 
-from synth.challenges import (
-    CHALLENGE_SLOTS,
-    build_category_expansion_challenge,
-    generate_challenge_for_user,
-)
+from synth.challenges import CHALLENGE_SLOTS, generate_challenge_for_user
 from synth.config import SynthConfig
+
 from webx5.crud.challenge_log import ChallengeLogRepository
 from webx5.crud.task import TaskRepository
 from webx5.entities.receipt import Receipt
 from webx5.entities.task import Task
 from webx5.services.challenge_adapter import ChallengeAdapter
 from webx5.services.openrouter_capturing import capture_openrouter_io
+from webx5.services.survival import SurvivalCurveStore
 
 logger = structlog.get_logger("challenges")
 
 # Slots whose pick has no natural source of cycle-to-cycle variation — see
 # the cross-cycle-repeat guard in `ChallengeService.generate_batch` below.
-# `llm_basket` is deterministic INSIDE synth now (`build_basket_spend_challenge`
-# — no LLM call, no rotation), so it belongs here alongside the two slots
-# `_use_deterministic_mechanics` below still overrides at this web boundary.
-_SLOTS_WITHOUT_NATURAL_VARIATION = frozenset(
-    {"generic", "category_expansion", "spend_threshold", "llm_basket"}
-)
-
-
-def _use_deterministic_mechanics(
-    profile: dict[str, Any],
-    config: SynthConfig,
-    script_results: list[dict],
-) -> list[dict]:
-    """Replace the `generic` slot with the implemented category-expansion
-    mechanic.
-
-    ``generate_challenge_for_user`` currently returns the legacy five-slot
-    batch. `build_category_expansion_challenge` is intentionally kept in
-    ``synth`` and is not part of that LLM-oriented router, so connect it
-    here at the web boundary. (`llm_basket` needs no such override any
-    more — `generate_challenge_for_user` already returns a deterministic
-    `build_basket_spend_challenge` result for it directly.)
-
-    If the builder cannot produce a challenge (for example, a very short
-    purchase history), the original `generic` slot is retained as a safe
-    fallback.
-    """
-    replacements = (
-        ("generic", "category_expansion", build_category_expansion_challenge),
-    )
-    replacement_by_slot: dict[str, dict] = {}
-
-    for legacy_slot, challenge_slot, builder in replacements:
-        challenge = builder(profile, config)
-        if challenge is None:
-            continue
-        replacement_by_slot[legacy_slot] = {
-            "user_id": profile["user_id"],
-            # Task.path is a coarse persistence path; the DB constraint only
-            # allows the historical values. The concrete mechanic belongs in
-            # challenge_slot (and in task_criterion for spend thresholds).
-            "path": "personal",
-            "model": None,
-            "challenge_slot": challenge_slot,
-            **challenge,
-        }
-
-    # Preserve the router's stable order; deterministic records occupy the
-    # positions of their legacy slots and are easy to inspect in logs/UI.
-    return [
-        replacement_by_slot.get(result.get("challenge_slot"), result)
-        for result in script_results
-    ]
+# `llm_basket` is deterministic (`build_basket_spend_challenge`) with no
+# rotation of its own, so it's the only slot left here — llm_habit/
+# llm_discovery/generic are all survival-risk picks now, and risk changes
+# day by day as days-since-last-purchase grows, giving them the same kind
+# of natural variation the LLM-driven versions used to get from the LLM's
+# own non-determinism.
+_SLOTS_WITHOUT_NATURAL_VARIATION = frozenset({"llm_basket"})
 
 
 class ChallengeService:
@@ -96,6 +47,7 @@ class ChallengeService:
         synth_config: SynthConfig,
         model: str,
         api_key: str,
+        curve_store: SurvivalCurveStore,
     ) -> None:
         self.task_repo = task_repo
         self.log_repo = log_repo
@@ -103,6 +55,7 @@ class ChallengeService:
         self.synth_config = synth_config
         self.model = model
         self.api_key = api_key
+        self.curve_store = curve_store
 
     def generate_batch(self, session: Session, user_id: uuid.UUID, count: int) -> list[uuid.UUID]:
         """Fill every currently-missing challenge slot for `user_id` in one
@@ -192,9 +145,7 @@ class ChallengeService:
                     model=self.model,
                     api_key=self.api_key or None,
                     dry_run=False,
-                )
-                script_results = _use_deterministic_mechanics(
-                    profile, self.synth_config, script_results
+                    category_curves=self.curve_store.curves,
                 )
             if capture.get("system") is not None:
                 captured_prompt = f"[SYSTEM]\n{capture['system']}\n\n[USER]\n{capture.get('user', '')}"
@@ -282,17 +233,16 @@ class ChallengeService:
                 continue
 
             # Scoped to slots with no natural source of cycle-to-cycle
-            # variation: `generic` (rotated only via `generic_cycle_index`)
-            # and the deterministic `category_expansion`/`spend_threshold`
-            # mechanics from `_use_deterministic_mechanics`, which are a
-            # PURE function of unchanging train-period stats and have no
-            # rotation at all — without this check they repeat the exact
+            # variation: `llm_basket` (`build_basket_spend_challenge`) is a
+            # PURE function of unchanging train-period stats and has no
+            # rotation at all — without this check it repeats the exact
             # same target forever once the previous task completes.
-            # LLM-driven slots (llm_habit/llm_discovery/llm_basket) and
-            # `vibe` legitimately CAN and should repeat their own previous
-            # target when the underlying habit/theme hasn't changed —
-            # blocking that made those slots permanently unfillable in
-            # practice whenever the LLM kept recommending the same thing.
+            # llm_habit/llm_discovery/generic are all survival-risk picks
+            # now and `vibe` is its own thing — all four legitimately CAN
+            # and should repeat their own previous target when the
+            # underlying habit/theme hasn't changed — blocking that made
+            # those slots permanently unfillable in practice whenever the
+            # pick kept recommending the same thing.
             if slot in _SLOTS_WITHOUT_NATURAL_VARIATION and previous_by_slot.get(slot) == criterion:
                 logger.info(
                     "generate_batch.repeats_previous_cycle_skip",
