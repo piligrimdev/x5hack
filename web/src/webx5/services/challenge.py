@@ -26,26 +26,10 @@ from webx5.services.survival import SurvivalCurveStore
 
 logger = structlog.get_logger("challenges")
 
-# Slots whose pick has no natural source of cycle-to-cycle variation — see
-# the cross-cycle-repeat guard in `ChallengeService.generate_batch` below.
-# `llm_basket` is deterministic (`build_basket_spend_challenge`) with no
-# rotation of its own, so without this guard it repeats the exact same
-# target forever once the previous task completes.
-#
-# `generic` stays here too, even though its pick is now risk-ranked
-# (`build_survival_risk_challenge`) rather than hash-based: if a `generic`
-# challenge EXPIRES without being completed, the user's purchase history —
-# and therefore `category_last_purchase`/the risk ranking — is unchanged
-# between generation cycles, so the risk-ranked pick resolves to the exact
-# same category again. That's the identical "eternal repeat" bug this guard
-# was built to prevent, just reached via risk ranking staying constant
-# instead of a pure hash of user_id. `llm_habit`/`llm_discovery` don't need
-# this guard despite also being survival-risk picks: for them, repeating a
-# genuinely still-highest-risk habitual category cycle after cycle is
-# desired behavior, not a bug — `generic`'s role is different, and a
-# repeated identical "generic" offer forever, with zero new signal, is a
-# bug specifically for this slot.
-_SLOTS_WITHOUT_NATURAL_VARIATION = frozenset({"llm_basket", "generic"})
+# Slots whose pick has no natural source of cycle-to-cycle variation. The set
+# is retained for repeat telemetry, but repeat/dedup signals must not suppress
+# a missing slot: the product invariant is exactly five active challenges.
+_SLOTS_WITHOUT_NATURAL_VARIATION = frozenset({"generic"})
 
 
 class ChallengeService:
@@ -87,9 +71,9 @@ class ChallengeService:
         (created before that slot existed) could never get one, because a
         `count`-sized replacement for its other 4 slots always preferred
         them over the never-yet-filled 5th. Filling every eligible slot
-        unconditionally fixes both: "eligible" is already fully decided by
-        the skip checks below (already active, cross-slot duplicate,
-        cross-cycle repeat), so a count-based cap on top protects nothing.
+        unconditionally fixes both. The only hard skip is an already-active
+        slot; duplicate and repeat signals are logged for diagnostics but
+        cannot make the five-slot batch shorter.
         """
         active_tasks = self.task_repo.get_active_for_user(session, user_id)
         if len(active_tasks) >= len(CHALLENGE_SLOTS):
@@ -102,7 +86,7 @@ class ChallengeService:
             return []
 
         active_slots = {t.challenge_slot for t in active_tasks if t.challenge_slot}
-        # Cross-slot duplicate guard: two independently-LLM-routed
+        # Cross-slot duplicate telemetry: two independently-LLM-routed
         # slots (or a new slot and an already-active task) can land on the
         # same (criterion_type, criterion_entity_id) pair — e.g. `vibe`
         # genuinely overlapping a user's habitual top category — which would
@@ -110,7 +94,7 @@ class ChallengeService:
         existing_criteria: set[tuple[str, uuid.UUID]] = {
             (t.criterion_type, t.criterion_entity_id) for t in active_tasks if t.criterion_type and t.criterion_entity_id
         }
-        # Category-level counterpart of the guard above: catches two slots
+        # Category-level duplicate telemetry: catches two slots
         # landing on DIFFERENT products of the SAME category (e.g. "сметана"
         # vs "яйца", both "молочные продукты и яйца") — the exact-criterion
         # check above only sees identical products and lets this through,
@@ -122,7 +106,7 @@ class ChallengeService:
             for cat_id in [self.adapter.resolve_category_id(session, t.criterion_type, t.criterion_entity_id)]
             if cat_id is not None
         }
-        # Cross-cycle duplicate guard for the `generic` slot ONLY (see the
+        # Cross-cycle duplicate telemetry for the `generic` slot ONLY (see the
         # `slot == "generic"` check below, where this is consumed) — its
         # pick has no natural variation source and would otherwise repeat
         # forever. LLM-driven slots and `vibe` are deliberately NOT subject
@@ -148,6 +132,11 @@ class ChallengeService:
         captured_prompt: str | None = None
         captured_response: str | None = None
         try:
+            # Refit the population model after the latest receipt has been
+            # committed. The user's profile is already read fresh below;
+            # refreshing the population curves keeps both sides of the
+            # survival score on the same data snapshot.
+            category_curves = self.curve_store.refresh()
             with capture_openrouter_io() as capture:
                 script_results = generate_challenge_for_user(
                     profile=profile,
@@ -155,7 +144,7 @@ class ChallengeService:
                     model=self.model,
                     api_key=self.api_key or None,
                     dry_run=False,
-                    category_curves=self.curve_store.curves,
+                    category_curves=category_curves,
                 )
             if capture.get("system") is not None:
                 captured_prompt = f"[SYSTEM]\n{capture['system']}\n\n[USER]\n{capture.get('user', '')}"
@@ -242,46 +231,38 @@ class ChallengeService:
                 )
                 continue
 
-            # Scoped to slots with no natural source of cycle-to-cycle
-            # variation: `llm_basket` (`build_basket_spend_challenge`) is a
-            # PURE function of unchanging train-period stats and has no
-            # rotation at all — without this check it repeats the exact
-            # same target forever once the previous task completes.
-            # `llm_habit`/`llm_discovery` and `vibe` legitimately CAN and
-            # should repeat their own previous target when the underlying
-            # habit/theme hasn't changed — a stable habit or theme deserves
-            # stable recommendations. `generic` and `llm_basket` remain
-            # guarded (see `_SLOTS_WITHOUT_NATURAL_VARIATION` above for why
-            # each needs this check).
+            # Repeat detection is diagnostic only. A missing slot must still
+            # be persisted so the user keeps five active challenges.
             if slot in _SLOTS_WITHOUT_NATURAL_VARIATION and previous_by_slot.get(slot) == criterion:
                 logger.info(
-                    "generate_batch.repeats_previous_cycle_skip",
+                    "generate_batch.repeats_previous_cycle_allow",
                     user_id=str(user_id),
                     challenge_slot=slot,
                     criterion_type=criterion[0],
                     criterion_entity_id=str(criterion[1]),
                 )
-                continue
 
+            # Duplicate checks are diagnostic only. The basket has an
+            # independent spend-threshold criterion and may share its anchor
+            # product/category with a survival challenge; no check may remove
+            # a missing slot from the five-slot batch.
             if criterion in existing_criteria:
                 logger.info(
-                    "generate_batch.duplicate_criterion_skip",
+                    "generate_batch.duplicate_criterion_allow",
                     user_id=str(user_id),
                     challenge_slot=slot,
                     criterion_type=criterion[0],
                     criterion_entity_id=str(criterion[1]),
                 )
-                continue
 
             category_id = self.adapter.resolve_category_id(session, *criterion)
             if category_id is not None and category_id in existing_category_ids:
                 logger.info(
-                    "generate_batch.duplicate_category_skip",
+                    "generate_batch.duplicate_category_allow",
                     user_id=str(user_id),
                     challenge_slot=slot,
                     category_id=str(category_id),
                 )
-                continue
 
             try:
                 task_id = self.adapter.persist_challenge(session, user_id, script_result)

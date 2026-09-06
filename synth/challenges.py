@@ -249,15 +249,19 @@ def pick_vibe_category(user_id: str, month_key: str) -> str:
     return names[_hash_index(f"{user_id}:vibe:{month_key}", len(names))]
 
 
-def pick_sku_in_category(config: SynthConfig, category: str, seed_key: str) -> SKU | None:
+def pick_sku_in_category(
+    config: SynthConfig, category: str, seed_key: str, cycle_index: int = 0
+) -> SKU | None:
     """Deterministically pick one SKU from `category` — same seed_key always
-    picks the same SKU. Used for paths that only name a category (generic
-    pool, personal/LLM), which never chose a specific item."""
+    picks the same first SKU. `cycle_index` advances through the category's
+    catalog so a replacement challenge does not repeat the previous product.
+    Used for paths that only name a category (generic pool, personal/LLM),
+    which never chose a specific item."""
     by_category = skus_by_category(build_catalog(config))
     skus = by_category.get(category)
     if not skus:
         return None
-    return skus[_hash_index(seed_key, len(skus))]
+    return skus[(_hash_index(seed_key, len(skus)) + cycle_index) % len(skus)]
 
 
 def non_forbidden_category_names(config: SynthConfig) -> list[str]:
@@ -554,6 +558,7 @@ def build_survival_risk_challenge(
     slot: str,
     as_of: date | None = None,
     discount_pct: float = 10.0,
+    cycle_index: int = 0,
 ) -> dict | None:
     """Deterministic, no-LLM-call challenge: rank every category the user
     has ever bought (`profile["category_last_purchase"]`) by churn risk —
@@ -605,7 +610,12 @@ def build_survival_risk_challenge(
     deadline_days = min(30, median_days) if median_days is not None else 14
 
     quantity = SLOT_TARGET_QUANTITY.get(slot, PERSONAL_TARGET_QUANTITY)
-    sku = pick_sku_in_category(config, category, seed_key=f"{profile['user_id']}:sku:{slot}")
+    sku = pick_sku_in_category(
+        config,
+        category,
+        seed_key=f"{profile['user_id']}:sku:{slot}",
+        cycle_index=cycle_index,
+    )
 
     title_template = _SURVIVAL_TITLE_TEMPLATES.get(slot, _SURVIVAL_TITLE_TEMPLATES["generic"])
     title = title_template.format(category=category)
@@ -639,6 +649,7 @@ def build_basket_spend_challenge(
     config: SynthConfig,
     markup_pct: float = 30.0,
     cashback_pct: float = 5.0,
+    cycle_index: int = 0,
 ) -> dict | None:
     """Deterministic, no-LLM-call `llm_basket` mechanic (product decision —
     replaces the old free-form "assemble your usual weekly basket" LLM
@@ -651,17 +662,16 @@ def build_basket_spend_challenge(
     `build_spend_threshold_challenge`'s threshold but with this mechanic's
     own markup/rounding.
 
-    The anchor item (`suggested_basket_items[0]`, already ranked by weekly
-    purchase frequency in `BasketRepository.suggest_items`) gives the base
+    The anchor item (selected from `suggested_basket_items`, already ranked by
+    weekly purchase frequency in `BasketRepository.suggest_items`) gives the base
     item_quantity criterion something concrete to track — the same role
     `build_spend_threshold_challenge`'s favorite item plays there; the
     actual basket-total requirement is enforced separately via the
     `spend_threshold_rub` criterion (`SCRIPT_FIELD_TO_CRITERION_KIND`).
 
-    Being a pure function of OBSERVABLE train-period stats with no LLM
-    call and no rotation, this slot needs the same cross-cycle repeat
-    guard as `generic`/`category_expansion`/`spend_threshold` — see
-    `_SLOTS_WITHOUT_NATURAL_VARIATION` in `web/.../services/challenge.py`.
+    The selection is deterministic for a given cycle, but its anchor advances
+    through the user's suggested items on each replacement cycle, so a
+    completed basket challenge does not produce the identical item forever.
 
     Returns None if there are no suggested weekly-basket items (new user,
     no purchase history) or no train-period receipts to compute a mean
@@ -681,7 +691,7 @@ def build_basket_spend_challenge(
     reward_rub = round(threshold_rub * (cashback_pct / 100), 2)
     points = round(reward_rub * _POINTS_PER_RUB)
 
-    anchor = suggested_items[0]
+    anchor = suggested_items[cycle_index % len(suggested_items)]
     target_sku_id = find_sku_id_for_item(config, anchor["category"], anchor["item"])
 
     return {
@@ -1102,8 +1112,16 @@ def generate_challenge_for_user(
     """
     used_generic_indices: list[int] = []
 
-    def _generic(slot: str, path: str, error: str | None = None, model_attempted: str | None = None) -> dict:
-        offer = _pick_distinct_generic_offer(profile["user_id"], config, used_generic_indices)
+    def _generic(
+        slot: str,
+        path: str,
+        error: str | None = None,
+        model_attempted: str | None = None,
+    ) -> dict:
+        cycle_index = int((profile.get("challenge_cycle_indices") or {}).get(slot, 0))
+        offer = _pick_distinct_generic_offer(
+            profile["user_id"], config, used_generic_indices, cycle_offset=cycle_index
+        )
         record = {
             "user_id": profile["user_id"], "path": path,
             "model": model_attempted, "challenge_slot": slot, **offer,
@@ -1134,7 +1152,13 @@ def generate_challenge_for_user(
                 challenge["challenge_title"] = f"Вайб месяца: {challenge['challenge_title']}"
             quantity = SLOT_TARGET_QUANTITY.get(slot, PERSONAL_TARGET_QUANTITY)
             challenge["target_quantity"] = quantity
-            sku = pick_sku_in_category(config, challenge["target_categories"][0], seed_key=f"{profile['user_id']}:sku:{slot}")
+            cycle_index = int((profile.get("challenge_cycle_indices") or {}).get(slot, 0))
+            sku = pick_sku_in_category(
+                config,
+                challenge["target_categories"][0],
+                seed_key=f"{profile['user_id']}:sku:{slot}",
+                cycle_index=cycle_index,
+            )
             challenge["target_sku_id"] = sku.sku_id if sku else None
             if sku is not None:
                 challenge["description"] = item_action_description(
@@ -1156,7 +1180,12 @@ def generate_challenge_for_user(
     # its fallback pool draw never depends on whether an earlier slot's own
     # fallback already consumed a used_generic_indices slot this cycle.
     generic_risk_challenge = build_survival_risk_challenge(
-        profile, config, category_curves or {}, rank=2, slot="generic",
+        profile,
+        config,
+        category_curves or {},
+        rank=2,
+        slot="generic",
+        cycle_index=int((profile.get("challenge_cycle_indices") or {}).get("generic", 0)),
     )
     if generic_risk_challenge is not None:
         results.append({
@@ -1180,7 +1209,12 @@ def generate_challenge_for_user(
     # there's no purchase history (cold start) or that rank isn't
     # available (fewer than 2 distinct categories with a fitted curve).
     habit_challenge = build_survival_risk_challenge(
-        profile, config, category_curves or {}, rank=0, slot="llm_habit",
+        profile,
+        config,
+        category_curves or {},
+        rank=0,
+        slot="llm_habit",
+        cycle_index=int((profile.get("challenge_cycle_indices") or {}).get("llm_habit", 0)),
     )
     if habit_challenge is not None:
         results.append({
@@ -1191,7 +1225,12 @@ def generate_challenge_for_user(
         results.append(_generic("llm_habit", "generic_fallback"))
 
     discovery_challenge = build_survival_risk_challenge(
-        profile, config, category_curves or {}, rank=1, slot="llm_discovery",
+        profile,
+        config,
+        category_curves or {},
+        rank=1,
+        slot="llm_discovery",
+        cycle_index=int((profile.get("challenge_cycle_indices") or {}).get("llm_discovery", 0)),
     )
     if discovery_challenge is not None:
         results.append({
@@ -1209,9 +1248,10 @@ def generate_challenge_for_user(
     # "детское питание" — which then failed validation deterministically
     # every cycle; this mechanic sidesteps that entirely).
     #
-    # Drop forbidden-category items before picking an anchor — the anchor
-    # is item [0] of `suggested_basket_items`, so a forbidden category
-    # there would otherwise become the challenge's own target_categories.
+    # Drop forbidden-category items before picking an anchor — the selected
+    # anchor's category becomes the challenge's target_categories.
+    slot_cycle_indices = profile.get("challenge_cycle_indices") or {}
+    basket_cycle_index = int(slot_cycle_indices.get("llm_basket", 0))
     basket_profile = {
         **profile,
         "suggested_basket_items": [
@@ -1219,7 +1259,9 @@ def generate_challenge_for_user(
             if item["category"] not in config.forbidden_categories
         ],
     }
-    basket_challenge = build_basket_spend_challenge(basket_profile, config)
+    basket_challenge = build_basket_spend_challenge(
+        basket_profile, config, cycle_index=basket_cycle_index
+    )
     if basket_challenge is None:
         results.append(_generic(
             "llm_basket", "generic_fallback",

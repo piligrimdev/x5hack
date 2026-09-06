@@ -1,11 +1,11 @@
 """Unit tests for ChallengeService.generate_batch — orchestration only.
 
-The new synth API returns a list of up to 4 records with `challenge_slot`
+The new synth API returns a list of exactly 5 records with `challenge_slot`
 in one call. Tests mock that call and assert:
   * every returned record is audit-logged (FR-018)
   * `no_challenge` path skips persistence (FR-022)
   * script exception is caught & logged
-  * invariant "no more than 4 active tasks" is respected (FR-001)
+  * invariant "no more than 5 active tasks" is respected (FR-001)
   * slots already active are skipped
 """
 
@@ -41,7 +41,7 @@ def _service_with_mocks():
     adapter.resolve_category_id.side_effect = lambda session, criterion_type, criterion_entity_id: criterion_entity_id
     synth_config = MagicMock()
     curve_store = MagicMock()
-    curve_store.curves = {}
+    curve_store.refresh.return_value = {}
 
     service = ChallengeService(
         task_repo=task_repo,
@@ -116,6 +116,67 @@ def test_generate_batch_persists_all_five_slots():
     assert "llm_basket" in persisted_slots
 
 
+def test_generate_batch_keeps_basket_when_anchor_category_matches_survival_slot():
+    """The basket mechanic is independent from a category challenge: its
+    spend-threshold criterion must not be removed just because its anchor
+    product belongs to a category already used by another slot."""
+    service, task_repo, log_repo, adapter = _service_with_mocks()
+    shared_category = uuid.uuid4()
+    habit_criterion = ("product", uuid.uuid4())
+    basket_criterion = ("product", uuid.uuid4())
+
+    def resolve(session, script_result):
+        slot = script_result["challenge_slot"]
+        if slot == "llm_habit":
+            return habit_criterion
+        if slot == "llm_basket":
+            return basket_criterion
+        return ("product", uuid.uuid4())
+
+    def resolve_category(session, criterion_type, criterion_entity_id):
+        if criterion_entity_id in {habit_criterion[1], basket_criterion[1]}:
+            return shared_category
+        return uuid.uuid4()
+
+    adapter.resolve_criterion.side_effect = resolve
+    adapter.resolve_category_id.side_effect = resolve_category
+
+    with patch("webx5.services.challenge.generate_challenge_for_user", return_value=_batch_all_five()), \
+         patch("webx5.services.challenge.capture_openrouter_io") as mock_capture:
+        mock_capture.return_value.__enter__.return_value = {}
+        service.generate_batch(MagicMock(), uuid.uuid4(), count=5)
+
+    persisted_slots = [
+        call.args[2]["challenge_slot"] for call in adapter.persist_challenge.call_args_list
+    ]
+    assert "llm_basket" in persisted_slots
+
+
+def test_generate_batch_keeps_recurring_basket_when_target_repeats():
+    """A stable weekly basket profile must not make the basket slot vanish
+    after its previous task completes."""
+    service, task_repo, log_repo, adapter = _service_with_mocks()
+    previous_basket = ("product", uuid.uuid4())
+    task_repo.get_last_criterion_per_slot.return_value = {"llm_basket": previous_basket}
+
+    def resolve(session, script_result):
+        if script_result["challenge_slot"] == "llm_basket":
+            return previous_basket
+        return ("product", uuid.uuid4())
+
+    adapter.resolve_criterion.side_effect = resolve
+
+    with patch("webx5.services.challenge.generate_challenge_for_user", return_value=_batch_all_five()), \
+         patch("webx5.services.challenge.capture_openrouter_io") as mock_capture:
+        mock_capture.return_value.__enter__.return_value = {}
+        service.generate_batch(MagicMock(), uuid.uuid4(), count=5)
+
+    persisted_slots = [
+        call.args[2]["challenge_slot"] for call in adapter.persist_challenge.call_args_list
+    ]
+    assert "llm_basket" in persisted_slots
+
+
 def test_generate_batch_no_challenge_returns_empty_but_logs():
     service, task_repo, log_repo, adapter = _service_with_mocks()
 
@@ -180,11 +241,9 @@ def test_generate_batch_skips_slot_already_active():
     assert set(persisted_slots) == {"llm_discovery", "generic", "vibe"}
 
 
-def test_generate_batch_skips_duplicate_criterion_across_slots():
-    """Two independently-routed slots (here: llm_habit and vibe) resolving
-    to the IDENTICAL (criterion_type, criterion_entity_id) pair must not
-    both be persisted as separate Task rows — only the first one wins, and
-    the second is logged as a skip, not silently dropped."""
+def test_generate_batch_keeps_all_slots_when_criteria_collide():
+    """A criterion collision is logged for diagnostics but must not reduce
+    the user's active challenge count below five."""
     service, task_repo, log_repo, adapter = _service_with_mocks()
 
     same_criterion = ("category", uuid.uuid4())
@@ -201,21 +260,20 @@ def test_generate_batch_skips_duplicate_criterion_across_slots():
         mock_capture.return_value.__enter__.return_value = {}
         created = service.generate_batch(MagicMock(), uuid.uuid4(), count=4)
 
-    # 4 records total; llm_habit and vibe collide on the same criterion pair
-    # so only one of them is persisted — 3 tasks created, not 4.
-    assert len(created) == 3
+    # 4 records total; llm_habit and vibe collide, but both are persisted.
+    assert len(created) == 4
     assert log_repo.record.call_count == 4
     persisted_slots = [
         call.args[2]["challenge_slot"] for call in adapter.persist_challenge.call_args_list
     ]
-    assert persisted_slots.count("llm_habit") + persisted_slots.count("vibe") == 1
+    assert persisted_slots.count("llm_habit") + persisted_slots.count("vibe") == 2
     assert "llm_discovery" in persisted_slots
     assert "generic" in persisted_slots
 
 
-def test_generate_batch_existing_active_task_criterion_blocks_new_duplicate():
-    """A slot that would resolve to the same criterion as an ALREADY-ACTIVE
-    task (not just another slot in this batch) must also be skipped."""
+def test_generate_batch_keeps_slot_when_active_task_criterion_collides():
+    """An active criterion collision must not remove a missing challenge
+    slot; the slot-level invariant is more important than category variety."""
     service, task_repo, log_repo, adapter = _service_with_mocks()
 
     active_criterion = ("category", uuid.uuid4())
@@ -237,21 +295,16 @@ def test_generate_batch_existing_active_task_criterion_blocks_new_duplicate():
         mock_capture.return_value.__enter__.return_value = {}
         created = service.generate_batch(MagicMock(), uuid.uuid4(), count=4)
 
-    assert len(created) == 3
+    assert len(created) == 4
     persisted_slots = [
         call.args[2]["challenge_slot"] for call in adapter.persist_challenge.call_args_list
     ]
-    assert "llm_habit" not in persisted_slots
+    assert "llm_habit" in persisted_slots
 
 
-def test_generate_batch_skips_generic_slot_that_repeats_its_own_previous_cycle():
-    """The cross-cycle repeat check applies ONLY to `generic` — its pick is
-    a pure function of user_id with no natural variation source (before
-    the `cycle_offset` rotation fix, it was a pure function of user_id
-    with no time component at all), so without this check it would return
-    the literal same offer forever. If `generic`'s newly-resolved criterion
-    is identical to what `generic` itself resolved to last cycle, skip
-    persisting it."""
+def test_generate_batch_keeps_generic_when_it_repeats_its_previous_cycle():
+    """A repeated generic candidate is logged but still persisted so the
+    user keeps five active tasks instead of seeing an empty slot."""
     service, task_repo, log_repo, adapter = _service_with_mocks()
 
     previous_criterion = ("category", uuid.uuid4())
@@ -269,9 +322,9 @@ def test_generate_batch_skips_generic_slot_that_repeats_its_own_previous_cycle()
         mock_capture.return_value.__enter__.return_value = {}
         created = service.generate_batch(MagicMock(), uuid.uuid4(), count=4)
 
-    assert len(created) == 3
+    assert len(created) == 4
     persisted_slots = [call.args[2]["challenge_slot"] for call in adapter.persist_challenge.call_args_list]
-    assert "generic" not in persisted_slots
+    assert "generic" in persisted_slots
 
 
 def test_generate_batch_fills_every_eligible_slot_regardless_of_count():
@@ -356,9 +409,9 @@ def test_generate_batch_does_not_skip_non_generic_slots_that_repeat_their_own_pr
     assert "llm_habit" in persisted_slots
 
 
-def test_generate_batch_passes_curve_store_curves_to_generate_challenge_for_user():
+def test_generate_batch_refreshes_and_passes_curve_store_curves_to_generate_challenge_for_user():
     service, task_repo, log_repo, adapter = _service_with_mocks()
-    service.curve_store.curves = {"молоко": "sentinel-curve"}
+    service.curve_store.refresh.return_value = {"молоко": "sentinel-curve"}
 
     captured = {}
 
@@ -371,4 +424,5 @@ def test_generate_batch_passes_curve_store_curves_to_generate_challenge_for_user
         mock_capture.return_value.__enter__.return_value = {}
         service.generate_batch(MagicMock(), uuid.uuid4(), count=5)
 
+    service.curve_store.refresh.assert_called_once_with()
     assert captured["category_curves"] == {"молоко": "sentinel-curve"}

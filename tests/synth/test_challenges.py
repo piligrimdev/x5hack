@@ -147,6 +147,14 @@ def test_pick_sku_in_category_varies_by_seed():
     assert len(skus) > 1
 
 
+def test_pick_sku_in_category_advances_on_next_cycle():
+    first = pick_sku_in_category(_config, "овощи", seed_key="user-x", cycle_index=0)
+    second = pick_sku_in_category(_config, "овощи", seed_key="user-x", cycle_index=1)
+    assert first is not None
+    assert second is not None
+    assert first.sku_id != second.sku_id
+
+
 def test_pick_sku_in_category_unknown_category_returns_none():
     assert pick_sku_in_category(_config, "not-a-real-category", seed_key="user-x") is None
 
@@ -455,6 +463,21 @@ def test_build_basket_spend_challenge_uses_custom_markup_and_cashback_pct():
     custom = build_basket_spend_challenge(profile, _config, markup_pct=50.0, cashback_pct=10.0)
     assert custom["spend_threshold_rub"] >= default["spend_threshold_rub"]
     assert custom["reward_rub"] == round(custom["spend_threshold_rub"] * 0.10, 2)
+
+
+def test_build_basket_spend_challenge_rotates_anchor_on_next_cycle():
+    profile = _profile("bakes_on_weekends", seed=4)
+    profile = _with_suggested_basket_items(profile, [
+        {"item": "молоко", "category": "молочные продукты и яйца", "weekly_quantity": 2},
+        {"item": "морковь", "category": "овощи", "weekly_quantity": 1},
+    ])
+
+    first = build_basket_spend_challenge(profile, _config, cycle_index=0)
+    second = build_basket_spend_challenge(profile, _config, cycle_index=1)
+
+    assert first["target_sku_id"] != second["target_sku_id"]
+    assert "молоко" in first["description"]
+    assert "морковь" in second["description"]
 
 
 def test_build_basket_spend_challenge_returns_none_without_suggested_items():
@@ -951,6 +974,22 @@ def test_build_survival_risk_challenge_picks_the_nth_riskiest_category():
         profile, _config, curves, rank=1, slot="llm_discovery", as_of=date(2026, 8, 31),
     )
     assert second["target_categories"] == ["овощи"]
+
+
+def test_build_survival_risk_challenge_rotates_product_on_next_cycle():
+    profile = {
+        "user_id": "u1",
+        "receipts": [],
+        "category_last_purchase": {"овощи": "2026-08-01"},
+    }
+    curves = {"овощи": _curve([5, 30], [0.9, 0.1])}
+    first = build_survival_risk_challenge(
+        profile, _config, curves, rank=0, slot="llm_habit", as_of=date(2026, 8, 31), cycle_index=0,
+    )
+    second = build_survival_risk_challenge(
+        profile, _config, curves, rank=0, slot="llm_habit", as_of=date(2026, 8, 31), cycle_index=1,
+    )
+    assert first["target_sku_id"] != second["target_sku_id"]
 
 
 def test_build_survival_risk_challenge_returns_none_without_purchase_history():

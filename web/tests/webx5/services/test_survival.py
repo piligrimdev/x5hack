@@ -29,3 +29,25 @@ def test_curves_are_fetched_lazily_and_cached():
 
     store.curves  # noqa: B018 — second access, exercised for the cache-hit side effect
     repo.fetch_purchase_dates.assert_called_once()  # still just once — cached
+
+
+def test_refresh_refits_curves_from_latest_receipts():
+    repo = MagicMock()
+    repo.fetch_purchase_dates.side_effect = [
+        {"u1": {"молоко": [date(2026, 1, 1)]}},
+        {"u1": {"молоко": [date(2026, 1, 1), date(2026, 9, 6)]}},
+    ]
+
+    @contextmanager
+    def fake_session():
+        yield MagicMock()
+
+    db = MagicMock()
+    db.get_sync_session.side_effect = fake_session
+    store = SurvivalCurveStore(db=db, repo=repo)
+
+    first = store.curves
+    second = store.refresh()
+
+    assert repo.fetch_purchase_dates.call_count == 2
+    assert first["молоко"] != second["молоко"]

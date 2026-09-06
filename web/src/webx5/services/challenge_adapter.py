@@ -20,7 +20,7 @@ from decimal import Decimal
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
-from synth.challenges import pick_vibe_category
+from synth.challenges import CHALLENGE_SLOTS, pick_vibe_category
 from synth.config import SynthConfig
 from webx5.crud.basket import BasketRepository
 from webx5.crud.task import TaskItemRepository, TaskRepository
@@ -106,9 +106,9 @@ class ChallengeAdapter:
         user's row via `_resolve_vibe_category` — this method is not
         read-only despite its name.
 
-        `generic_cycle_index` (count of past `generic`-slot tasks) feeds
-        `synth.challenges`'s rotation of the deterministic generic offer
-        across cycles — see `_pick_distinct_generic_offer`'s docstring.
+        `challenge_cycle_indices` (counts of past tasks per slot) feed
+        deterministic product/basket rotation, so a replacement challenge
+        does not select the exact same SKU as the completed one.
         """
         user: User | None = session.get(User, user_id)
         if user is None:
@@ -116,7 +116,11 @@ class ChallengeAdapter:
 
         vibe_category = self._resolve_vibe_category(session, user)
         suggested_basket_items = self._suggested_basket_items(session, user_id)
-        generic_cycle_index = self.task_repo.count_tasks_for_slot(session, user_id, "generic")
+        challenge_cycle_indices = {
+            slot: self.task_repo.count_tasks_for_slot(session, user_id, slot)
+            for slot in CHALLENGE_SLOTS
+        }
+        generic_cycle_index = challenge_cycle_indices["generic"]
 
         # Read the user's FULL purchase history — survival-risk scoring
         # (category_last_purchase below) needs the true last-purchase date
@@ -202,6 +206,7 @@ class ChallengeAdapter:
             "vibe_category": vibe_category,
             "suggested_basket_items": suggested_basket_items,
             "generic_cycle_index": generic_cycle_index,
+            "challenge_cycle_indices": challenge_cycle_indices,
         }
         if user.vibe_type is not None:
             profile["vibe_context"] = user.vibe_type.llm_context

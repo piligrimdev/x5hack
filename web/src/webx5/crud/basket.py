@@ -50,6 +50,7 @@ class BasketRepository:
             .where(Receipt.loyalty_card_id == user_id)
             .options(noload(Product.category))
             .group_by(Product.id)
+            .order_by(func.count(ReceiptItem.id).desc(), Product.id.asc())
         ).all()
 
         result: list[tuple[Product, int]] = []
