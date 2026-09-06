@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { CustomTabBar, TabScreen } from '@/components/custom-tab-bar';
@@ -136,7 +136,13 @@ export default function IndexScreen() {
   const [token, setToken] = useState<string | null>(null);
 
   return (
-    <SafeAreaProvider>
+    <SafeAreaProvider
+      style={styles.safeArea}
+      initialWindowMetrics={
+        Platform.OS === 'web'
+          ? { frame: { x: 0, y: 0, width: 390, height: 844 }, insets: { top: 0, left: 0, right: 0, bottom: 0 } }
+          : undefined
+      }>
       {token
         ? <AppContent key={token} token={token} />
         : <LoginView onLogin={setToken} />
@@ -146,8 +152,14 @@ export default function IndexScreen() {
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    height: '100%',
+  },
   root: {
     flex: 1,
+    height: '100%',
+    overflow: 'hidden',
     backgroundColor: BrandColors.appBg,
   },
   content: {

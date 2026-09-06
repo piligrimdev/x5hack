@@ -511,6 +511,7 @@ const styles = StyleSheet.create({
   },
   appiBasketInput: {
     flex: 1,
+    minWidth: 0,
     minHeight: 48,
     borderRadius: 24,
     borderWidth: 1,

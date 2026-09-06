@@ -56,6 +56,21 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  mobile:
+    build:
+      context: ./x5mobile
+      dockerfile: Dockerfile
+      args:
+        EXPO_PUBLIC_API_URL: ${MOBILE_API_URL:-}
+        EXPO_PUBLIC_WEB_LAYOUT: ${MOBILE_LAYOUT:-phone}
+    environment:
+      MOBILE_LAYOUT: ${MOBILE_LAYOUT:-phone}
+    ports:
+      - "${MOBILE_PORT:-8080}:80"
+    depends_on:
+      - web
+    restart: unless-stopped
+
   worker:
     build:
       context: .

@@ -329,6 +329,7 @@ const styles = StyleSheet.create({
   basketInputRow: { flexDirection: 'row', gap: 8 },
   basketInput: {
     flex: 1,
+    minWidth: 0,
     minHeight: 48,
     backgroundColor: '#FFFFFF',
     borderRadius: 26,

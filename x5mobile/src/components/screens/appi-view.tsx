@@ -3,7 +3,6 @@ import {
   ActivityIndicator,
   Image,
   Keyboard,
-  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -14,6 +13,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { PhoneModal } from '@/components/phone-modal';
 import { PersonalChallenges } from '@/components/screens/personal-sections';
 import type { BasketState } from '@/hooks/useBasket';
 import { useChallenges } from '@/hooks/useChallenges';
@@ -282,7 +282,7 @@ export function AppiView({
         </View>
       </ScrollView>
 
-      <Modal
+      <PhoneModal
         visible={vibeModalOpen}
         transparent
         animationType="fade"
@@ -320,7 +320,7 @@ export function AppiView({
             {saving ? <ActivityIndicator color={GREEN} style={{ marginTop: 10 }} /> : null}
           </Pressable>
         </Pressable>
-      </Modal>
+      </PhoneModal>
     </View>
   );
 }
@@ -433,6 +433,7 @@ const styles = StyleSheet.create({
   basketRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   basketInput: {
     flex: 1,
+    minWidth: 0,
     minHeight: 52,
     borderRadius: 26,
     borderWidth: 1,
@@ -469,7 +470,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: { color: DARK_GREEN, fontSize: 20, fontWeight: '900' },
   modalSubtitle: { color: MUTED, fontSize: 13, marginTop: 4, marginBottom: 12 },
-  modalList: { maxHeight: 460 },
+  modalList: { maxHeight: 360 },
   vibeOption: {
     borderWidth: 1,
     borderColor: BORDER,

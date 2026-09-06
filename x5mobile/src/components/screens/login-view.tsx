@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
-  Modal,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -14,6 +14,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ApiError, apiLogin, apiRegister } from '@/api/client';
+import { PhoneModal } from '@/components/phone-modal';
 import { INVITEE_STEPS } from '@/constants/referral';
 
 const GREEN = '#138F3E';
@@ -349,7 +350,7 @@ export function LoginView({ onLogin }: LoginViewProps) {
       </View>
       </KeyboardAvoidingView>
 
-      <Modal
+      <PhoneModal
         visible={referralOpen}
         transparent
         animationType="fade"
@@ -360,41 +361,47 @@ export function LoginView({ onLogin }: LoginViewProps) {
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             keyboardVerticalOffset={0}>
             <View style={[styles.modalCard, { paddingBottom: Math.max(insets.bottom, 12) + 10 }]}>
-              <Text style={styles.modalTitle}>Реферальный код</Text>
-              <Text style={styles.modalSubtitle}>
-                6 символов: латинские буквы или цифры. Регистр важен.
-              </Text>
-              <View style={styles.howTo}>
-                <Text style={styles.howToTitle}>Как получить бонусы</Text>
-                {INVITEE_STEPS.map((step) => (
-                  <Text key={step} style={styles.howToText}>• {step}</Text>
-                ))}
-              </View>
-              <ReferralCodeInput
-                value={draftCode}
-                onChange={setDraftCode}
-                autoFocus
-              />
-              <TouchableOpacity
-                style={[styles.loginBtn, draftCode.length !== CODE_LENGTH && styles.btnDisabled]}
-                onPress={saveReferral}
-                activeOpacity={0.8}
-                disabled={draftCode.length !== CODE_LENGTH}>
-                <Text style={styles.loginBtnText}>Сохранить код</Text>
-              </TouchableOpacity>
-              {referralCode ? (
-                <TouchableOpacity style={styles.clearBtn} onPress={clearReferral} activeOpacity={0.7}>
-                  <Text style={styles.clearBtnText}>Удалить код</Text>
+              <ScrollView
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+                bounces={false}
+                contentContainerStyle={styles.modalCardInner}>
+                <Text style={styles.modalTitle}>Реферальный код</Text>
+                <Text style={styles.modalSubtitle}>
+                  6 символов: латинские буквы или цифры. Регистр важен.
+                </Text>
+                <View style={styles.howTo}>
+                  <Text style={styles.howToTitle}>Как получить бонусы</Text>
+                  {INVITEE_STEPS.map((step) => (
+                    <Text key={step} style={styles.howToText}>• {step}</Text>
+                  ))}
+                </View>
+                <ReferralCodeInput
+                  value={draftCode}
+                  onChange={setDraftCode}
+                  autoFocus
+                />
+                <TouchableOpacity
+                  style={[styles.loginBtn, draftCode.length !== CODE_LENGTH && styles.btnDisabled]}
+                  onPress={saveReferral}
+                  activeOpacity={0.8}
+                  disabled={draftCode.length !== CODE_LENGTH}>
+                  <Text style={styles.loginBtnText}>Сохранить код</Text>
                 </TouchableOpacity>
-              ) : (
-                <TouchableOpacity style={styles.clearBtn} onPress={() => setReferralOpen(false)} activeOpacity={0.7}>
-                  <Text style={styles.clearBtnText}>Отмена</Text>
-                </TouchableOpacity>
-              )}
+                {referralCode ? (
+                  <TouchableOpacity style={styles.clearBtn} onPress={clearReferral} activeOpacity={0.7}>
+                    <Text style={styles.clearBtnText}>Удалить код</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity style={styles.clearBtn} onPress={() => setReferralOpen(false)} activeOpacity={0.7}>
+                    <Text style={styles.clearBtnText}>Отмена</Text>
+                  </TouchableOpacity>
+                )}
+              </ScrollView>
             </View>
           </KeyboardAvoidingView>
         </View>
-      </Modal>
+      </PhoneModal>
     </View>
   );
 }
@@ -406,7 +413,7 @@ const styles = StyleSheet.create({
   title: { color: DARK_GREEN, fontSize: 28, fontWeight: '900' },
   subtitle: { color: MUTED, fontSize: 15, lineHeight: 21, marginBottom: 10 },
   fieldLabel: { color: TEXT, fontSize: 13, fontWeight: '700' },
-  phoneRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  phoneRow: { flexDirection: 'row', alignItems: 'center', gap: 8, minWidth: 0 },
   prefix: {
     minWidth: 54,
     height: 56,
@@ -418,9 +425,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   prefixText: { color: TEXT, fontSize: 18, fontWeight: '800' },
-  phoneGroups: { flex: 1 },
-  segments: { flexDirection: 'row', gap: 6 },
+  phoneGroups: { flex: 1, minWidth: 0 },
+  segments: { flexDirection: 'row', gap: 6, minWidth: 0 },
   segment: {
+    minWidth: 0,
     height: 56,
     borderRadius: 14,
     borderWidth: 1,
@@ -489,8 +497,9 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 22,
     paddingHorizontal: 18,
     paddingTop: 18,
-    gap: 12,
+    maxHeight: '88%',
   },
+  modalCardInner: { gap: 12, paddingBottom: 4 },
   modalTitle: { color: DARK_GREEN, fontSize: 20, fontWeight: '900' },
   modalSubtitle: { color: MUTED, fontSize: 13, lineHeight: 18 },
   howTo: {

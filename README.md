@@ -50,14 +50,15 @@ tests/webx5/
 # 1. Скопировать .env (значения по умолчанию работают без правок)
 cp .env.example .env
 
-# 2. Собрать и запустить весь стек (db + redis + web + worker + beat)
+# 2. Собрать и запустить весь стек (db + redis + web + mobile + worker + beat)
 docker compose up --build
 
 # Для работы AI-ассистента корзины (POST /basket/assistant) нужен реальный
 # OPENROUTER_API_KEY в .env — с плейсхолдером по умолчанию этот один
 # эндпоинт не работает, остальное приложение — без изменений.
 
-# Сервис доступен на http://localhost:8000
+# API:            http://localhost:8000
+# Мобильный UI:   http://localhost:8080  (Expo Web в рамке телефона)
 # Проверка: curl http://localhost:8000/health → {"status":"ok"}
 # Документация: http://localhost:8000/docs (Scalar UI)
 # GET /challenges/current → 4 персональных задания пользователя (Bearer JWT)
@@ -84,6 +85,36 @@ docker compose build          # Пересобрать образ без зап�
 ```
 
 > Миграции БД применяются автоматически при каждом старте контейнера.
+
+### Веб-демо мобильного приложения
+
+`x5mobile` собирается как статический Expo Web и отдаётся nginx на **http://localhost:8080**.
+Телефон на демо не нужен: интерфейс открывается в браузере.
+
+Режим в `.env` / compose: `MOBILE_LAYOUT=phone` (рамка телефона) или `MOBILE_LAYOUT=fullscreen`
+(на весь браузер). Смена режима — перезапуск контейнера, без пересборки:
+
+```bash
+# рамка телефона (по умолчанию)
+MOBILE_LAYOUT=phone docker compose up -d mobile
+
+# весь экран
+MOBILE_LAYOUT=fullscreen docker compose up -d mobile
+```
+
+Запросы к API идут на тот же origin: nginx проксирует `/login`, `/receipts`, `/basket` и остальные
+бэкенд-пути на сервис `web`. Менять `EXPO_PUBLIC_API_URL` и пересобирать клиент не нужно.
+
+```bash
+# только клиент, если бэкенд уже поднят
+docker compose up --build mobile
+
+# другой порт
+MOBILE_PORT=19006 docker compose up --build mobile
+```
+
+Локально без Docker: `cd x5mobile && npm install && npm run web`
+(тогда в `x5mobile/.env` оставь `EXPO_PUBLIC_API_URL=http://localhost:8000`).
 
 ### Заполнение данными (seed-скрипты)
 
