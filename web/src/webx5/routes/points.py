@@ -51,6 +51,7 @@ def list_transactions(
                 related_task_id=tx.related_task_id,
                 related_receipt_id=tx.related_receipt_id,
                 related_spin_id=tx.related_spin_id,
+                related_referral_link_id=tx.related_referral_link_id,
                 rate_at_time=tx.rate_at_time,
                 created_at=tx.created_at,
             )

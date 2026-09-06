@@ -115,6 +115,7 @@ class TestSuggest:
         assert items[0].price == Decimal("89.90")
         repo.get_shopping_context.assert_called_once_with(session, user)
         assert '"weekly_quantity":4' in call.call_args.kwargs["system"]
+        assert call.call_args.kwargs["trace_name"] == "basket_suggested"
         repo.suggest_items.assert_not_called()
 
     def test_new_user_is_also_served_by_llm(self, service, repo, session, monkeypatch):
@@ -123,9 +124,27 @@ class TestSuggest:
             ToolCall("replace_basket", {"items": [{"sku_id": "milk", "quantity": 2}]})])
         assert service.suggest(session, uuid.uuid4())[0].quantity == 2
 
+    def test_whole_float_quantity_is_coerced(self, service, repo, session, monkeypatch):
+        repo.get_full_catalog.return_value = [_make_product("milk", "Молоко")]
+        monkeypatch.setattr("webx5.services.basket_assistant.call_openrouter_tools", lambda **kw: [
+            ToolCall("replace_basket", {"items": [{"sku_id": "milk", "quantity": 2.0}]})])
+        assert service.suggest(session, uuid.uuid4())[0].quantity == 2
+
+    def test_unknown_skus_are_dropped_valid_kept(self, service, repo, session, monkeypatch):
+        milk = _make_product("milk", "Молоко")
+        repo.get_full_catalog.return_value = [milk]
+        monkeypatch.setattr("webx5.services.basket_assistant.call_openrouter_tools", lambda **kw: [
+            ToolCall("replace_basket", {"items": [
+                {"sku_id": "ghost", "quantity": 1},
+                {"sku_id": "milk", "quantity": 3},
+                {"sku_id": "milk", "quantity": 9},
+            ]})])
+        items = service.suggest(session, uuid.uuid4())
+        assert len(items) == 1
+        assert items[0].quantity == 3
+
     @pytest.mark.parametrize("items", [[], [{"sku_id": "unknown", "quantity": 1}],
-        [{"sku_id": "milk", "quantity": True}], [{"sku_id": "milk", "quantity": 51}],
-        [{"sku_id": "milk", "quantity": 1}, {"sku_id": "milk", "quantity": 2}]])
+        [{"sku_id": "milk", "quantity": True}], [{"sku_id": "milk", "quantity": 51}]])
     def test_invalid_output_fails_without_statistical_fallback(self, service, repo, session, monkeypatch, items):
         repo.get_full_catalog.return_value = [_make_product("milk", "Молоко")]
         monkeypatch.setattr("webx5.services.basket_assistant.call_openrouter_tools", lambda **kw: [ToolCall("replace_basket", {"items": items})])
@@ -137,9 +156,13 @@ class TestSuggest:
     def test_network_failure_is_retryable(self, service, repo, session, monkeypatch):
         repo.get_full_catalog.return_value = [_make_product("milk", "Молоко")]
         monkeypatch.setattr("webx5.services.basket_assistant.call_openrouter_tools", MagicMock(side_effect=RuntimeError("offline")))
+        logged = MagicMock()
+        monkeypatch.setattr("webx5.services.basket_assistant.logger.warning", logged)
         with pytest.raises(HTTPException) as exc:
             service.suggest(session, uuid.uuid4())
         assert exc.value.status_code == 503
+        assert logged.call_args.kwargs["error"] == "RuntimeError"
+        assert logged.call_args.kwargs["error_message"] == "offline"
 
 
 class TestApplyInstruction:

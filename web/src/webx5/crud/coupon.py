@@ -60,6 +60,7 @@ class CouponRepository:
         amount: int,
         related_task_id: uuid.UUID | None = None,
         related_spin_id: uuid.UUID | None = None,
+        related_referral_link_id: uuid.UUID | None = None,
         week_start: date | None = None,
     ) -> CouponTransaction:
         tx = CouponTransaction(
@@ -68,6 +69,7 @@ class CouponRepository:
             amount=amount,
             related_task_id=related_task_id,
             related_spin_id=related_spin_id,
+            related_referral_link_id=related_referral_link_id,
             week_start=week_start,
         )
         session.add(tx)

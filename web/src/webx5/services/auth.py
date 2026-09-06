@@ -25,6 +25,17 @@ class AuthService:
         existing = self.user_repo.get_by_phone(session, form.phone)
         if existing:
             raise HTTPException(status_code=409, detail="Phone already registered")
+        if form.referral_code:
+            user = self.user_repo.add(session, form.phone)
+            session.add(LoyaltyCard(id=user.id, phone=form.phone))
+            session.flush()
+            from webx5.core.referral import referral_service
+
+            referral_service.activate(
+                session, user.id, form.referral_code, is_new_user=True
+            )
+            session.commit()
+            return self._issue_pair(user.id)
         user = self.user_repo.create(session, form.phone)
         card = LoyaltyCard(id=user.id, phone=form.phone)
         session.add(card)
@@ -35,6 +46,13 @@ class AuthService:
         user = self.user_repo.get_by_phone(session, form.phone)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
+        if form.referral_code:
+            from webx5.core.referral import referral_service
+
+            referral_service.activate(
+                session, user.id, form.referral_code, is_new_user=False
+            )
+            session.commit()
         return self._issue_pair(user.id)
 
     def refresh(self, req: RefreshRequest, session: Session) -> TokenPairResponse:

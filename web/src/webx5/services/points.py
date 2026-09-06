@@ -111,6 +111,48 @@ class PointsService:
         )
         return points
 
+    def award_for_referral(
+        self,
+        session: Session,
+        loyalty_card_id: uuid.UUID,
+        amount_rub: int,
+        referral_link_id: uuid.UUID,
+    ) -> int:
+        if amount_rub <= 0:
+            return 0
+        rate = self._repo.get_rate(session)
+        raw = float(amount_rub) * rate
+        points = int(round(raw / 10) * 10)
+        if points <= 0:
+            logger.info(
+                "points.awarded_referral.skipped_zero",
+                referral_link_id=str(referral_link_id),
+                loyalty_card_id=str(loyalty_card_id),
+            )
+            return 0
+
+        account = self._repo.get_or_create_account(session, loyalty_card_id)
+        tx = self._repo.insert_earn_for_referral(
+            session, account.id, referral_link_id, points
+        )
+        if tx is None:
+            logger.info(
+                "points.awarded_referral.duplicate",
+                referral_link_id=str(referral_link_id),
+                loyalty_card_id=str(loyalty_card_id),
+            )
+            return 0
+
+        self._repo.bump_balance(session, account, points)
+        logger.info(
+            "points.awarded_referral",
+            referral_link_id=str(referral_link_id),
+            loyalty_card_id=str(loyalty_card_id),
+            amount=points,
+            new_balance=account.balance,
+        )
+        return points
+
     def spend_for_receipt(
         self,
         session: Session,

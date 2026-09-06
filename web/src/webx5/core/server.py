@@ -22,6 +22,8 @@ from webx5.routes.receipts import receipts_router
 from webx5.routes.rewards import rewards_router
 from webx5.routes.stores import stores_router
 from webx5.routes.vibes import vibes_router
+from webx5.routes.leaderboard import leaderboard_router
+from webx5.routes.referral import referral_router
 from webx5.routes.wheel import wheel_router
 
 
@@ -63,6 +65,8 @@ app.include_router(rewards_router)
 app.include_router(vibes_router)
 app.include_router(wheel_router)
 app.include_router(coupons_router)
+app.include_router(leaderboard_router)
+app.include_router(referral_router)
 
 add_pagination(app)
 

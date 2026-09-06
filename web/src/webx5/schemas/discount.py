@@ -16,6 +16,22 @@ class DiscountTypeResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class UserDiscountOut(BaseModel):
+    id: uuid.UUID
+    title: str
+    description: str
+    value: JsonDecimal
+    discount_type: str
+    link_type: str
+    is_personal: bool
+    valid_from: datetime | None
+    valid_to: datetime | None
+
+
+class UserDiscountListOut(BaseModel):
+    items: list[UserDiscountOut]
+
+
 class DiscountResponse(BaseModel):
     id: uuid.UUID
     value: JsonDecimal

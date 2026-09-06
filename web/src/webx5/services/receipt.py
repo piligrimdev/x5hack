@@ -175,6 +175,13 @@ class ReceiptService:
                 receipt.points_rate_at_purchase = rate
                 session.flush()
 
+        if is_new and data.loyalty_card_id is not None:
+            from webx5.core.referral import referral_service
+
+            referral_service.award_on_receipt(
+                session, data.loyalty_card_id, receipt.id
+            )
+
         session.commit()
         session.refresh(receipt)
 

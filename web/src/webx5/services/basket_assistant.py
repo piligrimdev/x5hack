@@ -174,14 +174,24 @@ class BasketService:
                 tools=[REPLACE_BASKET_TOOL],
                 tool_choice={"type": "function", "function": {"name": "replace_basket"}},
                 timeout=30, max_retries=2,
+                trace_name="basket_suggested",
             )
             if len(calls) != 1 or calls[0].name != "replace_basket":
                 raise ValueError("Expected one complete basket")
-            selected = self._parse_basket(calls[0].arguments, {p.sku_id: p for p in catalog.values()})
+            selected = self._parse_basket(
+                calls[0].arguments,
+                {p.sku_id: p for p in catalog.values()},
+                skip_invalid=True,
+            )
             if not selected:
                 raise ValueError("Empty weekly basket")
         except Exception as e:
-            logger.warning("basket.generation_failed", error=type(e).__name__, model=self.model)
+            logger.warning(
+                "basket.generation_failed",
+                error=type(e).__name__,
+                error_message=str(e),
+                model=self.model,
+            )
             raise HTTPException(status_code=503, detail="Аппи не удалось собрать корзину. Попробуйте ещё раз.") from e
         return [self._to_basket_item(catalog[pid], qty) for pid, qty in selected.items()]
 
@@ -533,19 +543,39 @@ class BasketService:
         return result, " ".join(messages) or None
 
     @staticmethod
-    def _parse_basket(arguments: dict, catalog_by_sku: dict[str, Product]) -> dict[uuid.UUID, int]:
+    def _coerce_quantity(qty: object) -> int | None:
+        if type(qty) is int:
+            return qty
+        if type(qty) is float and qty.is_integer():
+            return int(qty)
+        return None
+
+    @staticmethod
+    def _parse_basket(
+        arguments: dict,
+        catalog_by_sku: dict[str, Product],
+        *,
+        skip_invalid: bool = False,
+    ) -> dict[uuid.UUID, int]:
         items = arguments.get("items")
         if not isinstance(items, list) or len(items) > 40:
             raise ValueError("Invalid basket size")
         result = {}
         for item in items:
             if not isinstance(item, dict):
+                if skip_invalid:
+                    continue
                 raise ValueError("Invalid item")
-            sku, qty = item.get("sku_id"), item.get("quantity")
-            if not isinstance(sku, str) or sku not in catalog_by_sku or type(qty) is not int or not 1 <= qty <= 50:
+            sku = item.get("sku_id")
+            qty = BasketService._coerce_quantity(item.get("quantity"))
+            if not isinstance(sku, str) or sku not in catalog_by_sku or qty is None or not 1 <= qty <= 50:
+                if skip_invalid:
+                    continue
                 raise ValueError("Invalid SKU or quantity")
             pid = catalog_by_sku[sku].id
             if pid in result:
+                if skip_invalid:
+                    continue
                 raise ValueError("Duplicate SKU")
             result[pid] = qty
         return result

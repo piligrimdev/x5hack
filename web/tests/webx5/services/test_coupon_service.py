@@ -136,3 +136,19 @@ def test_award_for_task_once() -> None:
     assert service.award_for_task(session, task) == 1
     assert service.award_for_task(session, task) == 0
     repo.bump_balance.assert_called_once_with(session, account, 1)
+
+
+def test_award_for_referral_skips_zero_and_awards() -> None:
+    user_id = uuid.uuid4()
+    link_id = uuid.uuid4()
+    account = _account(user_id, 0)
+    repo = MagicMock()
+    repo.lock_account_for_update.return_value = account
+    session = MagicMock()
+    service = _service(repo)
+
+    assert service.award_for_referral(session, user_id, 0, link_id) == 0
+    repo.insert_transaction.assert_not_called()
+
+    assert service.award_for_referral(session, user_id, 2, link_id) == 2
+    repo.bump_balance.assert_called_once_with(session, account, 2)

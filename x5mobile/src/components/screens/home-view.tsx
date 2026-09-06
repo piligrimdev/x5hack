@@ -40,6 +40,8 @@ interface HomeViewProps {
   onPoints?: () => void;
   onOpenAppi: () => void;
   onHistory: () => void;
+  onInvite?: () => void;
+  onDiscounts?: () => void;
 }
 
 interface ReplaceableIconProps {
@@ -100,7 +102,7 @@ function QuickAction({
   );
 }
 
-export function HomeView({ token, onPoints, onOpenAppi, onHistory }: HomeViewProps) {
+export function HomeView({ token, onPoints, onOpenAppi, onHistory, onInvite, onDiscounts }: HomeViewProps) {
   const insets = useSafeAreaInsets();
   const { balance, loading: pointsLoading } = usePointsBalance(token);
   const { economy } = useEconomy(token);
@@ -109,8 +111,6 @@ export function HomeView({ token, onPoints, onOpenAppi, onHistory }: HomeViewPro
   const totalPaid = economy?.total_paid ?? 0;
   const withoutDiscount = totalPaid + totalSaved;
   const savedPct = withoutDiscount > 0 ? Math.round((totalSaved / withoutDiscount) * 100) : 0;
-  const paidPct = withoutDiscount > 0 ? (totalPaid / withoutDiscount) * 100 : 0;
-  const greenPct = withoutDiscount > 0 ? (totalSaved / withoutDiscount) * 100 : 0;
 
   function formatRub(value: number): string {
     return value.toLocaleString('ru-RU', {
@@ -194,14 +194,19 @@ export function HomeView({ token, onPoints, onOpenAppi, onHistory }: HomeViewPro
               </View>
 
               <View style={styles.clubFooter}>
-                <View style={styles.cashbackCircle}><Text style={styles.cashbackArrow}>↶</Text></View>
-                <View style={styles.cashbackCopy}>
-                  <Text style={styles.cashbackLabel}>Кешбэк</Text>
-                  <Text style={styles.cashbackValue}>0.5%</Text>
-                </View>
-                <TouchableOpacity style={styles.chooseButton} onPress={onPoints} activeOpacity={0.8}>
-                  <Text style={styles.chooseButtonText}>Выбрать 3</Text>
-                  <Text style={styles.chooseButtonIcon}>♣</Text>
+                <TouchableOpacity
+                  style={styles.cashbackBlock}
+                  onPress={onDiscounts}
+                  activeOpacity={0.8}>
+                  <View style={styles.cashbackCircle}><Text style={styles.cashbackArrow}>↶</Text></View>
+                  <View style={styles.cashbackCopy}>
+                    <Text style={styles.cashbackLabel}>Кешбэк и скидки</Text>
+                    <Text style={styles.cashbackValue}>0.5%</Text>
+                  </View>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.chooseButton} onPress={onDiscounts} activeOpacity={0.8}>
+                  <Text style={styles.chooseButtonText}>Скидки</Text>
+                  <Text style={styles.chooseButtonIcon}>%</Text>
                 </TouchableOpacity>
               </View>
             </TouchableOpacity>
@@ -225,34 +230,19 @@ export function HomeView({ token, onPoints, onOpenAppi, onHistory }: HomeViewPro
         <View style={styles.contentSheet}>
           <View style={styles.actionsRow}>
             <QuickAction emoji="🍅" label={'История\nпокупок'} color="#FFF1D8" onPress={onHistory} />
-            <QuickAction emoji="⭐" label={'Оценка\nтоваров'} color="#FFF3C9" />
+            <QuickAction emoji="👋" label={'Пригласить\nдруга'} color="#FFF3C9" onPress={onInvite} />
             <QuickAction emoji="%" label={'Моя\nвыгода'} color="#FFE9E4" onPress={onPoints} />
           </View>
 
           <TouchableOpacity style={styles.economyCard} onPress={onOpenAppi} activeOpacity={0.8}>
-            <View style={styles.economyHeader}>
-              <Text style={styles.economyLabel}>ЭКОНОМИЯ</Text>
-              <View style={styles.savedBadge}>
-                <Text style={styles.savedBadgeText}>−{formatRub(totalSaved)} ₽ ({savedPct}%)</Text>
-              </View>
-            </View>
-            <View style={styles.progressBarTrack}>
-              <View style={[styles.progressBarGray, { width: `${paidPct}%` as `${number}%` }]} />
-              <View style={[styles.progressBarGreen, { width: `${greenPct}%` as `${number}%` }]} />
-            </View>
-            <View style={styles.legendRow}>
-              <View style={styles.legendItem}>
-                <View style={[styles.legendDot, { backgroundColor: BrandColors.textSecondary }]} />
-                <Text style={styles.legendText}>Потрачено {formatRub(totalPaid)} ₽</Text>
-              </View>
-              <View style={styles.legendItem}>
-                <View style={[styles.legendDot, { backgroundColor: BrandColors.green }]} />
-                <Text style={styles.legendText}>Сэкономлено {formatRub(totalSaved)} ₽</Text>
-              </View>
+            <Text style={styles.economyLabel}>ЭКОНОМИЯ</Text>
+            <View style={styles.economyRow}>
+              <Text style={styles.economyAmount}>−{formatRub(totalSaved)} ₽</Text>
+              {savedPct > 0 && <Text style={styles.economyPct}>{savedPct}%</Text>}
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.saleBanner} activeOpacity={0.9}>
+          <TouchableOpacity style={styles.saleBanner} activeOpacity={0.9} onPress={onDiscounts}>
             <View style={styles.saleCopy}>
               <View style={styles.saleBadge}><Text style={styles.saleBadgeText}>До −40%</Text></View>
               <Text style={styles.saleTitle}>Скидки{'\n'}недели</Text>
@@ -377,12 +367,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  cashbackBlock: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    minWidth: 0,
+  },
   cashbackCircle: {
     width: 34, height: 34, borderRadius: 17, backgroundColor: '#9BDD42',
     alignItems: 'center', justifyContent: 'center',
   },
   cashbackArrow: { color: '#388625', fontSize: 23, lineHeight: 24, fontWeight: '900' },
-  cashbackCopy: { marginLeft: 7 },
+  cashbackCopy: { marginLeft: 7, flexShrink: 1 },
   cashbackLabel: { color: '#FFFFFF', fontSize: 10, fontWeight: '700' },
   cashbackValue: { color: '#FFFFFF', fontSize: 16, lineHeight: 17, fontWeight: '900' },
   chooseButton: {
@@ -447,12 +443,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: BrandColors.cardBorder,
     padding: 16,
-    gap: 12,
-  },
-  economyHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 8,
   },
   economyLabel: {
     fontSize: 12,
@@ -460,52 +451,20 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: 0.3,
   },
-  savedBadge: {
-    backgroundColor: BrandColors.greenLight,
-    borderRadius: 100,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
+  economyRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
   },
-  savedBadgeText: {
+  economyAmount: {
+    fontSize: 22,
+    fontWeight: '800',
     color: BrandColors.green,
-    fontSize: 13,
-    fontWeight: '700',
   },
-  progressBarTrack: {
-    height: 10,
-    borderRadius: 100,
-    backgroundColor: BrandColors.elementBg,
-    overflow: 'hidden',
-    flexDirection: 'row',
-  },
-  progressBarGreen: {
-    height: 10,
-    backgroundColor: BrandColors.green,
-    borderRadius: 100,
-  },
-  progressBarGray: {
-    height: 10,
-    backgroundColor: '#D9D8D3',
-    borderRadius: 100,
-  },
-  legendRow: {
-    flexDirection: 'row',
-    gap: 16,
-    flexWrap: 'wrap',
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  legendDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  legendText: {
-    color: BrandColors.textSecondary,
-    fontSize: 12,
+  economyPct: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: BrandColors.green,
   },
 
   saleBanner: {

@@ -7,6 +7,7 @@ from webx5.entities.loyalty import LoyaltyCard, Segment
 from webx5.entities.points import PointsAccount, PointsSettings, PointsTransaction
 from webx5.entities.product import Product
 from webx5.entities.receipt import Receipt, ReceiptItem
+from webx5.entities.referral import ReferralCode, ReferralLink
 from webx5.entities.reward import GiftReward
 from webx5.entities.store import Store, StoreFormat
 from webx5.entities.task import Task, TaskCriterion, TaskItem, TaskReceiptIncrement, TaskStatus
@@ -32,6 +33,8 @@ __all__ = [
     "Product",
     "Receipt",
     "ReceiptItem",
+    "ReferralCode",
+    "ReferralLink",
     "Segment",
     "Store",
     "StoreDiscount",

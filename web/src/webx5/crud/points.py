@@ -84,6 +84,30 @@ class PointsRepository:
             nested.rollback()
             return None
 
+    def insert_earn_for_referral(
+        self,
+        session: Session,
+        account_id: uuid.UUID,
+        referral_link_id: uuid.UUID,
+        amount: int,
+    ) -> PointsTransaction | None:
+        nested = session.begin_nested()
+        try:
+            tx = PointsTransaction(
+                points_account_id=account_id,
+                type="earn",
+                amount=amount,
+                related_referral_link_id=referral_link_id,
+                rate_at_time=None,
+            )
+            session.add(tx)
+            session.flush()
+            nested.commit()
+            return tx
+        except IntegrityError:
+            nested.rollback()
+            return None
+
     def insert_spend(
         self,
         session: Session,

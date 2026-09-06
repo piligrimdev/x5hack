@@ -2,7 +2,7 @@ import { SymbolView } from 'expo-symbols';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-export type TabScreen = 'home' | 'catalog' | 'appi' | 'profile';
+export type TabScreen = 'home' | 'catalog' | 'cart' | 'appi' | 'profile';
 
 interface CustomTabBarProps {
   activeScreen: TabScreen;
@@ -28,6 +28,17 @@ function CatalogIcon({ color }: { color: string }) {
   return (
     <SymbolView
       name={{ ios: 'minus.circle.fill', android: 'do_not_disturb_on', web: 'do_not_disturb_on' }}
+      tintColor={color}
+      size={24}
+      weight="semibold"
+    />
+  );
+}
+
+function CartIcon({ color }: { color: string }) {
+  return (
+    <SymbolView
+      name={{ ios: 'cart.fill', android: 'shopping_cart', web: 'shopping_cart' }}
       tintColor={color}
       size={24}
       weight="semibold"
@@ -85,6 +96,7 @@ export function CustomTabBar({ activeScreen, onTabPress }: CustomTabBarProps) {
   }[] = [
     { key: 'home', label: 'Главная', Icon: HomeIcon },
     { key: 'catalog', label: 'Каталог', Icon: CatalogIcon },
+    { key: 'cart', label: 'Корзина', Icon: CartIcon },
     { key: 'appi', label: 'Аппи', Icon: AppiIcon },
     { key: 'profile', label: 'Профиль', Icon: ProfileIcon },
   ];

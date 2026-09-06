@@ -9,10 +9,11 @@ from pydantic import BaseModel
 
 class CouponTxOut(BaseModel):
     id: uuid.UUID
-    type: Literal["weekly_grant", "task_complete", "spin"]
+    type: Literal["weekly_grant", "task_complete", "spin", "referral"]
     amount: int
     related_task_id: uuid.UUID | None = None
     related_spin_id: uuid.UUID | None = None
+    related_referral_link_id: uuid.UUID | None = None
     week_start: date | None = None
     created_at: datetime
 
