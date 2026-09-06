@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from collections import Counter
 from dataclasses import dataclass
 
 
@@ -56,7 +55,6 @@ def fit_km_curve(durations: list[int], censored: list[bool]) -> SurvivalCurve:
         return SurvivalCurve(times=(), survival=())
 
     event_times = sorted({d for d, c in pairs if not c})
-    n_total = len(pairs)
 
     times: list[int] = []
     survival: list[float] = []
