@@ -5,7 +5,6 @@ import {
   Modal,
   Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -172,6 +171,50 @@ function SegmentedDigits({
   );
 }
 
+function ReferralCodeInput({
+  value,
+  onChange,
+  autoFocus,
+}: {
+  value: string;
+  onChange: (code: string) => void;
+  autoFocus?: boolean;
+}) {
+  const chars = Array.from({ length: CODE_LENGTH }, (_, index) => value[index] ?? '');
+  const activeIndex = Math.min(value.length, CODE_LENGTH - 1);
+
+  return (
+    <View style={styles.codeInputWrap}>
+      <View style={styles.segments} pointerEvents="none">
+        {chars.map((char, index) => (
+          <View
+            key={index}
+            style={[
+              styles.segment,
+              styles.codeBox,
+              index === activeIndex && styles.codeBoxActive,
+            ]}>
+            <Text style={styles.codeBoxText}>{char}</Text>
+          </View>
+        ))}
+      </View>
+      <TextInput
+        style={styles.codeHiddenInput}
+        value={value}
+        onChangeText={(text) => onChange(sanitizeChars(text, 'latin').slice(0, CODE_LENGTH))}
+        autoCapitalize="none"
+        autoCorrect={false}
+        autoFocus={autoFocus}
+        caretHidden
+        maxLength={CODE_LENGTH}
+        keyboardType={Platform.OS === 'ios' ? 'ascii-capable' : 'visible-password'}
+        textContentType="oneTimeCode"
+        autoComplete="off"
+      />
+    </View>
+  );
+}
+
 interface LoginViewProps {
   onLogin: (token: string) => void;
 }
@@ -247,9 +290,10 @@ export function LoginView({ onLogin }: LoginViewProps) {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={styles.root}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <View style={styles.root}>
+      <KeyboardAvoidingView
+        style={styles.root}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={[styles.content, { paddingTop: insets.top + 36, paddingBottom: insets.bottom + 24 }]}>
         <Text style={styles.eyebrow}>Вход</Text>
         <Text style={styles.title}>Добро пожаловать</Text>
@@ -303,22 +347,22 @@ export function LoginView({ onLogin }: LoginViewProps) {
           </Text>
         </TouchableOpacity>
       </View>
+      </KeyboardAvoidingView>
 
       <Modal
         visible={referralOpen}
         transparent
         animationType="fade"
         onRequestClose={() => setReferralOpen(false)}>
-        <Pressable style={styles.modalBackdrop} onPress={() => setReferralOpen(false)}>
-          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-            <Pressable style={[styles.modalCard, { paddingBottom: insets.bottom + 18 }]} onPress={() => {}}>
-              <ScrollView
-                keyboardShouldPersistTaps="handled"
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.modalScroll}>
+        <View style={styles.modalBackdrop}>
+          <Pressable style={styles.modalDismiss} onPress={() => setReferralOpen(false)} />
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={0}>
+            <View style={[styles.modalCard, { paddingBottom: Math.max(insets.bottom, 12) + 10 }]}>
               <Text style={styles.modalTitle}>Реферальный код</Text>
               <Text style={styles.modalSubtitle}>
-                6 символов: латинские буквы любого регистра или цифры. Регистр важен. Код уйдёт вместе со входом или регистрацией.
+                6 символов: латинские буквы или цифры. Регистр важен.
               </Text>
               <View style={styles.howTo}>
                 <Text style={styles.howToTitle}>Как получить бонусы</Text>
@@ -326,11 +370,9 @@ export function LoginView({ onLogin }: LoginViewProps) {
                   <Text key={step} style={styles.howToText}>• {step}</Text>
                 ))}
               </View>
-              <SegmentedDigits
-                groups={[1, 1, 1, 1, 1, 1]}
+              <ReferralCodeInput
                 value={draftCode}
-                onChange={(digits) => setDraftCode(sanitizeChars(digits, 'latin').slice(0, CODE_LENGTH))}
-                charset="latin"
+                onChange={setDraftCode}
                 autoFocus
               />
               <TouchableOpacity
@@ -349,12 +391,11 @@ export function LoginView({ onLogin }: LoginViewProps) {
                   <Text style={styles.clearBtnText}>Отмена</Text>
                 </TouchableOpacity>
               )}
-              </ScrollView>
-            </Pressable>
+            </View>
           </KeyboardAvoidingView>
-        </Pressable>
+        </View>
       </Modal>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
@@ -390,6 +431,29 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: TEXT,
   },
+  codeInputWrap: {
+    position: 'relative',
+    height: 56,
+  },
+  codeBox: {
+    flex: 1,
+    minWidth: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  codeBoxActive: {
+    borderColor: GREEN,
+  },
+  codeBoxText: {
+    color: TEXT,
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  codeHiddenInput: {
+    ...StyleSheet.absoluteFillObject,
+    opacity: 0.02,
+    color: 'transparent',
+  },
   hintError: { color: '#C74335', fontSize: 13, lineHeight: 18 },
   hintOk: { color: GREEN, fontSize: 13, lineHeight: 18 },
   loginBtn: {
@@ -416,6 +480,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(23,23,26,0.45)',
     justifyContent: 'flex-end',
   },
+  modalDismiss: {
+    flex: 1,
+  },
   modalCard: {
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 22,
@@ -423,9 +490,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingTop: 18,
     gap: 12,
-    maxHeight: '88%',
   },
-  modalScroll: { gap: 12 },
   modalTitle: { color: DARK_GREEN, fontSize: 20, fontWeight: '900' },
   modalSubtitle: { color: MUTED, fontSize: 13, lineHeight: 18 },
   howTo: {

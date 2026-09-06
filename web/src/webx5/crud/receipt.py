@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime
 from decimal import Decimal
 
 from sqlalchemy import func, select
@@ -98,24 +99,32 @@ class ReceiptRepository:
         self,
         session: Session,
         loyalty_card_id: uuid.UUID,
+        date_from: datetime | None = None,
+        date_to: datetime | None = None,
     ) -> dict:
+        period = [Receipt.loyalty_card_id == loyalty_card_id]
+        if date_from is not None:
+            period.append(Receipt.purchase_date >= date_from)
+        if date_to is not None:
+            period.append(Receipt.purchase_date < date_to)
+
         row = session.execute(
             select(
                 func.coalesce(func.sum(ReceiptItem.discounted_amount * ReceiptItem.quantity), 0).label("total_saved_discounts"),
                 func.coalesce(func.sum(ReceiptItem.paid_price * ReceiptItem.quantity), 0).label("total_paid_before_cashback"),
             )
             .join(Receipt, ReceiptItem.receipt_id == Receipt.id)
-            .where(Receipt.loyalty_card_id == loyalty_card_id)
+            .where(*period)
         ).one()
 
         # Feature 007: cashback also counts as savings (FR-013).
         cashback_row = session.execute(
             select(func.coalesce(func.sum(Receipt.cashback_applied_rub), 0).label("total_cashback"))
-            .where(Receipt.loyalty_card_id == loyalty_card_id)
+            .where(*period)
         ).one()
 
         receipts_count = session.scalar(
-            select(func.count(Receipt.id)).where(Receipt.loyalty_card_id == loyalty_card_id)
+            select(func.count(Receipt.id)).where(*period)
         ) or 0
 
         total_saved = Decimal(str(row.total_saved_discounts)) + Decimal(

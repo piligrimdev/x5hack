@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import uuid
+from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 from typing import Annotated
+from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, Header, HTTPException, Response
+from fastapi import APIRouter, Header, HTTPException, Query, Response
 from sqlalchemy.orm import Session
 
 from webx5.dependencies.auth import CurrentUserUUID, TerminalTokenDep
@@ -27,6 +29,23 @@ from webx5.schemas.receipt import (
 from webx5.services.discount_calculator import CartItem
 
 receipts_router = APIRouter(prefix="/receipts", tags=["Receipts"])
+
+_MOSCOW = ZoneInfo("Europe/Moscow")
+
+
+def _inclusive_day_bounds(
+    date_from: date | None,
+    date_to: date | None,
+) -> tuple[datetime | None, datetime | None]:
+    start = datetime.combine(date_from, time.min, tzinfo=_MOSCOW) if date_from else None
+    end = (
+        datetime.combine(date_to + timedelta(days=1), time.min, tzinfo=_MOSCOW)
+        if date_to
+        else None
+    )
+    if start is not None and end is not None and end <= start:
+        raise HTTPException(status_code=422, detail="date_to must be on or after date_from")
+    return start, end
 
 
 @receipts_router.post("/calculate", response_model=CalculateResponse)
@@ -231,10 +250,15 @@ def list_receipts(
 def get_economy(
     session: SessionDep,
     user_id: CurrentUserUUID,
+    date_from: date | None = Query(default=None),
+    date_to: date | None = Query(default=None),
 ) -> EconomyResponse:
     from webx5.core.purchases import receipt_repo
 
-    summary = receipt_repo.get_economy_summary(session, user_id)
+    start, end = _inclusive_day_bounds(date_from, date_to)
+    summary = receipt_repo.get_economy_summary(
+        session, user_id, date_from=start, date_to=end
+    )
     return EconomyResponse(
         total_saved=Decimal(str(summary["total_saved"])),
         total_paid=Decimal(str(summary["total_paid"])),

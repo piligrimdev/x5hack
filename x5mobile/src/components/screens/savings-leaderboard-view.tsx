@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { EconomyPeriodCard } from '@/components/screens/economy-period-card';
 import {
   useSavingsLeaderboard,
   type LeaderboardEntry,
@@ -50,7 +51,6 @@ function MeHeader({ me, total }: { me: LeaderboardMe; total: number }) {
 function EntryRow({ entry }: { entry: LeaderboardEntry }) {
   return (
     <View style={[styles.row, entry.is_me && styles.rowMe]}>
-      <Text style={styles.rowRank}>{entry.rank}</Text>
       <Text style={styles.rowLabel} numberOfLines={1}>
         {rowLabel(entry)}
       </Text>
@@ -77,6 +77,8 @@ export function SavingsLeaderboardView({ token, goBack }: SavingsLeaderboardView
         style={styles.body}
         contentContainerStyle={styles.bodyContent}
         showsVerticalScrollIndicator={false}>
+        <EconomyPeriodCard token={token} />
+
         {loading ? (
           <ActivityIndicator color={GREEN} style={styles.loader} />
         ) : error ? (
@@ -173,7 +175,6 @@ const styles = StyleSheet.create({
     borderBottomColor: BORDER,
   },
   rowMe: { backgroundColor: '#F2F8DF' },
-  rowRank: { width: 28, color: MUTED, fontSize: 15, fontWeight: '800' },
   rowLabel: { flex: 1, color: TEXT, fontSize: 15, fontWeight: '700' },
   rowPercent: { color: GREEN, fontSize: 16, fontWeight: '900' },
   stateCard: {

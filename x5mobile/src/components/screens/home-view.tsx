@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { resolvePresetRange, toQueryDate } from '@/constants/economy-period';
 import { BrandColors } from '@/constants/theme';
 import { useEconomy } from '@/hooks/useEconomy';
 import { usePointsBalance } from '@/hooks/usePoints';
@@ -105,7 +106,11 @@ function QuickAction({
 export function HomeView({ token, onPoints, onOpenAppi, onHistory, onInvite, onDiscounts }: HomeViewProps) {
   const insets = useSafeAreaInsets();
   const { balance, loading: pointsLoading } = usePointsBalance(token);
-  const { economy } = useEconomy(token);
+  const monthRange = resolvePresetRange('month', 'current');
+  const { economy } = useEconomy(token, {
+    from: toQueryDate(monthRange.from),
+    to: toQueryDate(monthRange.toInclusive),
+  });
 
   const totalSaved = economy?.total_saved ?? 0;
   const totalPaid = economy?.total_paid ?? 0;
@@ -240,6 +245,7 @@ export function HomeView({ token, onPoints, onOpenAppi, onHistory, onInvite, onD
               <Text style={styles.economyAmount}>−{formatRub(totalSaved)} ₽</Text>
               {savedPct > 0 && <Text style={styles.economyPct}>{savedPct}%</Text>}
             </View>
+            <Text style={styles.economyPeriod}>{monthRange.label}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.saleBanner} activeOpacity={0.9} onPress={onDiscounts}>
@@ -460,6 +466,11 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '800',
     color: BrandColors.green,
+  },
+  economyPeriod: {
+    fontSize: 13,
+    color: BrandColors.textSecondary,
+    fontWeight: '600',
   },
   economyPct: {
     fontSize: 22,

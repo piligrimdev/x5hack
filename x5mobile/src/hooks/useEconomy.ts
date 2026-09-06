@@ -8,7 +8,10 @@ export interface EconomySummary {
   receipts_count: number;
 }
 
-export function useEconomy(token: string | null) {
+export function useEconomy(
+  token: string | null,
+  range?: { from: string; to: string } | null,
+) {
   const [economy, setEconomy] = useState<EconomySummary | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -17,11 +20,14 @@ export function useEconomy(token: string | null) {
     if (!token) return;
     setLoading(true);
     setError(null);
-    apiFetch<EconomySummary>('/receipts/economy', token)
+    const query = range
+      ? `?date_from=${encodeURIComponent(range.from)}&date_to=${encodeURIComponent(range.to)}`
+      : '';
+    apiFetch<EconomySummary>(`/receipts/economy${query}`, token)
       .then(setEconomy)
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
-  }, [token]);
+  }, [token, range?.from, range?.to]);
 
   useEffect(() => {
     refetch();
