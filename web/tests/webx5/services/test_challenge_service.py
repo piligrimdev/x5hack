@@ -236,17 +236,21 @@ def test_generate_batch_existing_active_task_criterion_blocks_new_duplicate():
     assert "llm_habit" not in persisted_slots
 
 
-def test_generate_batch_skips_slot_that_repeats_its_own_previous_cycle():
-    """If llm_habit's newly-resolved criterion is identical to what llm_habit
-    itself resolved to last cycle (from task history), skip persisting it —
-    same target as last time, not a fresh challenge."""
+def test_generate_batch_skips_generic_slot_that_repeats_its_own_previous_cycle():
+    """The cross-cycle repeat check applies ONLY to `generic` — its pick is
+    a pure function of user_id with no natural variation source (before
+    the `cycle_offset` rotation fix, it was a pure function of user_id
+    with no time component at all), so without this check it would return
+    the literal same offer forever. If `generic`'s newly-resolved criterion
+    is identical to what `generic` itself resolved to last cycle, skip
+    persisting it."""
     service, task_repo, log_repo, adapter = _service_with_mocks()
 
     previous_criterion = ("category", uuid.uuid4())
-    task_repo.get_last_criterion_per_slot.return_value = {"llm_habit": previous_criterion}
+    task_repo.get_last_criterion_per_slot.return_value = {"generic": previous_criterion}
 
     def resolve(session, script_result):
-        if script_result["challenge_slot"] == "llm_habit":
+        if script_result["challenge_slot"] == "generic":
             return previous_criterion
         return ("category", uuid.uuid4())
 
@@ -259,23 +263,24 @@ def test_generate_batch_skips_slot_that_repeats_its_own_previous_cycle():
 
     assert len(created) == 3
     persisted_slots = [call.args[2]["challenge_slot"] for call in adapter.persist_challenge.call_args_list]
-    assert "llm_habit" not in persisted_slots
+    assert "generic" not in persisted_slots
 
 
-def test_generate_batch_does_not_skip_when_criterion_matches_a_different_slots_history():
-    """The repeat check is per-slot, not global — if llm_discovery's new
-    criterion happens to equal what llm_habit (a DIFFERENT slot) resolved to
-    last cycle, llm_discovery must still be persisted. Only an exact match
-    against the SAME slot's own history triggers a skip."""
+def test_generate_batch_does_not_skip_non_generic_slots_that_repeat_their_own_previous_cycle():
+    """Regression test: LLM-driven slots (llm_habit/llm_discovery/llm_basket)
+    and vibe must NOT be blocked from repeating their own previous target —
+    a stable purchase habit legitimately produces the same recommendation
+    cycle after cycle, and treating that as a forbidden "repeat" made those
+    slots permanently unfillable in production (the LLM kept recommending
+    the same product, the dedup kept rejecting it, forever). Only `generic`
+    is exempt from this exemption — see the sibling test above."""
     service, task_repo, log_repo, adapter = _service_with_mocks()
 
     llm_habits_previous_criterion = ("category", uuid.uuid4())
     task_repo.get_last_criterion_per_slot.return_value = {"llm_habit": llm_habits_previous_criterion}
 
     def resolve(session, script_result):
-        if script_result["challenge_slot"] == "llm_discovery":
-            # Deliberately collides with llm_habit's PREVIOUS-CYCLE criterion,
-            # not llm_discovery's own history (which is empty/unknown here).
+        if script_result["challenge_slot"] == "llm_habit":
             return llm_habits_previous_criterion
         return ("category", uuid.uuid4())
 
@@ -284,7 +289,8 @@ def test_generate_batch_does_not_skip_when_criterion_matches_a_different_slots_h
     with patch("webx5.services.challenge.generate_challenge_for_user", return_value=_batch_all_four()), \
          patch("webx5.services.challenge.capture_openrouter_io") as mock_capture:
         mock_capture.return_value.__enter__.return_value = {}
-        service.generate_batch(MagicMock(), uuid.uuid4(), count=4)
+        created = service.generate_batch(MagicMock(), uuid.uuid4(), count=4)
 
+    assert len(created) == 4
     persisted_slots = [call.args[2]["challenge_slot"] for call in adapter.persist_challenge.call_args_list]
-    assert "llm_discovery" in persisted_slots
+    assert "llm_habit" in persisted_slots

@@ -73,12 +73,17 @@ class ChallengeService:
         existing_criteria: set[tuple[str, uuid.UUID]] = {
             (t.criterion_type, t.criterion_entity_id) for t in active_tasks if t.criterion_type and t.criterion_entity_id
         }
-        # Cross-cycle duplicate guard: a slot's own previous cycle's target
-        # shouldn't come back unchanged — e.g. llm_habit shouldn't propose
-        # "milk" again right after a "milk" llm_habit challenge already ran.
-        # Keyed by challenge_slot (not by user overall), and independent of
-        # `existing_criteria` above (which only guards THIS batch/active
-        # tasks against each other, not against history).
+        # Cross-cycle duplicate guard for the `generic` slot ONLY (see the
+        # `slot == "generic"` check below, where this is consumed) — its
+        # pick has no natural variation source and would otherwise repeat
+        # forever. LLM-driven slots and `vibe` are deliberately NOT subject
+        # to this: a stable habit legitimately recommending the same target
+        # cycle after cycle is correct behavior, not a duplicate to block —
+        # an earlier version of this check applied to every slot and made
+        # llm_habit/vibe permanently unfillable whenever the LLM kept
+        # recommending the same product. Independent of `existing_criteria`
+        # above (which only guards THIS batch/active tasks against each
+        # other, not against history).
         previous_by_slot = self.task_repo.get_last_criterion_per_slot(session, user_id)
         profile = self.adapter.build_profile(session, user_id, self.synth_config)
 
@@ -196,7 +201,15 @@ class ChallengeService:
                 )
                 continue
 
-            if previous_by_slot.get(slot) == criterion:
+            # Scoped to `generic` only — its pick has no natural source of
+            # variation (a pure function of user_id, only rotated across
+            # cycles via `generic_cycle_index`), so without this check it
+            # could repeat forever. LLM-driven slots (llm_habit/llm_discovery/
+            # llm_basket) and `vibe` legitimately CAN and should repeat their
+            # own previous target when the underlying habit/theme hasn't
+            # changed — blocking that made those slots permanently unfillable
+            # in practice whenever the LLM kept recommending the same thing.
+            if slot == "generic" and previous_by_slot.get(slot) == criterion:
                 logger.info(
                     "generate_batch.repeats_previous_cycle_skip",
                     user_id=str(user_id),
