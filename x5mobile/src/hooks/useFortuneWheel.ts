@@ -1,6 +1,56 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
-export type FortunePrizeType = 'cashback' | 'discount' | 'gift';
+import { apiFetch } from '@/api/client';
+
+export type FortunePrizeType = 'cashback' | 'gift';
+
+export interface WheelGift {
+  criterion_type: 'product' | 'category';
+  criterion_entity_id: string;
+  quantity: number;
+}
+
+export interface WheelSector {
+  code: string;
+  label: string;
+  description: string;
+  prize_type: FortunePrizeType;
+  probability_percent: number;
+  cashback_rub: number | null;
+  gift: WheelGift | null;
+}
+
+export interface WheelState {
+  coupons: number;
+  can_spin: boolean;
+  weekly_coupons: number;
+  week_start: string;
+  sectors: WheelSector[];
+}
+
+export interface SpinResult {
+  spin_id: string;
+  sector_code: string;
+  prize_type: FortunePrizeType;
+  prize_label: string;
+  cashback_rub: number | null;
+  points_awarded: number | null;
+  gift_reward_id: string | null;
+  coupons_after: number;
+  created_at: string;
+}
+
+export interface SpinHistoryItem {
+  id: string;
+  sector_code: string;
+  prize_type: FortunePrizeType;
+  prize_label: string;
+  cashback_rub: number | null;
+  gift_reward_id: string | null;
+  gift_status: 'active' | 'used' | 'expired' | null;
+  coupons_spent: number;
+  created_at: string;
+}
 
 export interface FortunePrize {
   id: string;
@@ -11,200 +61,116 @@ export interface FortunePrize {
   emoji: string;
   color: string;
   textColor: string;
-  weight: number;
 }
 
-export interface FortuneWin {
-  id: string;
-  prize: FortunePrize;
-  wonAt: string;
-}
+const FLESH_LIGHT = '#FFB347';
+const FLESH_DARK = '#F56A00';
 
-export interface FortuneWheelSnapshot {
-  prizes: FortunePrize[];
-  spinsLeft: number;
-  spinsPerDay: number;
-  nextResetAt: string;
-  history: FortuneWin[];
-}
-
-const PRIZES: FortunePrize[] = [
-  {
-    id: 'cashback-50',
-    type: 'cashback',
-    title: '50 баллов',
-    subtitle: 'Зачислим на карту Х5 Клуба',
-    shortLabel: '50 б.',
-    emoji: '💰',
-    color: '#FF6D00',
-    textColor: '#FFFFFF',
-    weight: 24,
-  },
-  {
-    id: 'discount-fruit',
-    type: 'discount',
-    title: 'Скидка 10% на фрукты',
-    subtitle: 'Действует 3 дня на весь отдел',
-    shortLabel: '−10%',
-    emoji: '🍎',
-    color: '#1B5E35',
-    textColor: '#FFFFFF',
-    weight: 16,
-  },
-  {
-    id: 'gift-banana',
-    type: 'gift',
-    title: 'Бесплатный банан',
-    subtitle: 'Подарок в следующем заказе',
-    shortLabel: 'подарок',
-    emoji: '🍌',
-    color: '#F5C518',
-    textColor: '#17171A',
-    weight: 12,
-  },
-  {
-    id: 'cashback-100',
-    type: 'cashback',
-    title: '100 баллов',
-    subtitle: 'Зачислим на карту Х5 Клуба',
-    shortLabel: '100 б.',
-    emoji: '💎',
-    color: '#25A244',
-    textColor: '#FFFFFF',
-    weight: 14,
-  },
-  {
-    id: 'discount-dairy',
-    type: 'discount',
-    title: 'Скидка 15% на молочку',
-    subtitle: 'Действует 5 дней на молочные продукты',
-    shortLabel: '−15%',
-    emoji: '🥛',
-    color: '#E85D04',
-    textColor: '#FFFFFF',
-    weight: 12,
-  },
-  {
-    id: 'gift-spin',
-    type: 'gift',
-    title: 'Ещё одна крутка',
-    subtitle: 'Аппи дарит дополнительный шанс',
-    shortLabel: '+крутка',
-    emoji: '🎁',
-    color: '#7B2D8E',
-    textColor: '#FFFFFF',
-    weight: 8,
-  },
-  {
-    id: 'discount-order',
-    type: 'discount',
-    title: 'Скидка 5% на заказ',
-    subtitle: 'Сработает при следующем оформлении',
-    shortLabel: '−5%',
-    emoji: '🛒',
-    color: '#2A9D8F',
-    textColor: '#FFFFFF',
-    weight: 10,
-  },
-  {
-    id: 'cashback-200',
-    type: 'cashback',
-    title: '200 баллов',
-    subtitle: 'Редкий приз — крупное начисление',
-    shortLabel: '200 б.',
-    emoji: '🏆',
-    color: '#C99A3E',
-    textColor: '#17171A',
-    weight: 4,
-  },
-];
-
-function tomorrowMidnightIso(): string {
-  const d = new Date();
-  d.setDate(d.getDate() + 1);
-  d.setHours(0, 0, 0, 0);
-  return d.toISOString();
-}
-
-function yesterdayIso(hours = 19, minutes = 12): string {
-  const d = new Date();
-  d.setDate(d.getDate() - 1);
-  d.setHours(hours, minutes, 0, 0);
-  return d.toISOString();
-}
-
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function pickWeighted(prizes: FortunePrize[]): FortunePrize {
-  const total = prizes.reduce((sum, prize) => sum + prize.weight, 0);
-  let cursor = Math.random() * total;
-  for (const prize of prizes) {
-    cursor -= prize.weight;
-    if (cursor <= 0) return prize;
-  }
-  return prizes[prizes.length - 1];
-}
-
-function cloneSnapshot(state: FortuneWheelSnapshot): FortuneWheelSnapshot {
+function mapSector(sector: WheelSector, index: number): FortunePrize {
+  const light = index % 2 === 0;
+  const isGift = sector.prize_type === 'gift';
   return {
-    ...state,
-    prizes: state.prizes,
-    history: [...state.history],
+    id: sector.code,
+    type: sector.prize_type,
+    title: sector.label,
+    subtitle: sector.description,
+    shortLabel: isGift
+      ? 'подарок'
+      : sector.cashback_rub != null
+        ? `${sector.cashback_rub} ₽`
+        : sector.label,
+    emoji: isGift ? '🎁' : '💰',
+    color: light ? FLESH_LIGHT : FLESH_DARK,
+    textColor: light ? '#5C2E00' : '#FFFFFF',
   };
 }
 
-/** In-memory stand-in for GET/POST /fortune-wheel — swap for apiFetch later. */
-const store: FortuneWheelSnapshot = {
-  prizes: PRIZES,
-  spinsLeft: 3,
-  spinsPerDay: 3,
-  nextResetAt: tomorrowMidnightIso(),
-  history: [
-    {
-      id: 'win-seed-1',
-      prize: PRIZES[0],
-      wonAt: yesterdayIso(20, 41),
-    },
-    {
-      id: 'win-seed-2',
-      prize: PRIZES[1],
-      wonAt: yesterdayIso(11, 8),
-    },
-  ],
-};
+export function describeWheelError(error: unknown): string {
+  const message = error instanceof Error ? error.message : '';
+  if (message.includes('INSUFFICIENT_COUPONS') || message.startsWith('409')) {
+    return 'Не хватает купонов для крутки';
+  }
+  if (message.startsWith('503')) {
+    return 'Призы временно недоступны';
+  }
+  return error instanceof Error ? error.message : 'Не удалось загрузить колесо';
+}
 
-export function useFortuneWheel(_token: string) {
-  const [snapshot, setSnapshot] = useState<FortuneWheelSnapshot>(() => cloneSnapshot(store));
-  const [loading, setLoading] = useState(false);
+export function useFortuneWheel(token: string) {
+  const [state, setState] = useState<WheelState | null>(null);
+  const [history, setHistory] = useState<SpinHistoryItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    setLoading(false);
+  const load = useCallback(async () => {
+    setLoading(true);
     setError(null);
-    setSnapshot(cloneSnapshot(store));
-  }, [_token]);
-
-  const spin = useCallback(async (): Promise<FortunePrize> => {
-    if (store.spinsLeft <= 0) {
-      throw new Error('Крутки закончились');
+    try {
+      const [wheel, spins] = await Promise.all([
+        apiFetch<WheelState>('/wheel', token),
+        apiFetch<{ items: SpinHistoryItem[] }>('/wheel/spins?limit=8&offset=0', token),
+      ]);
+      setState(wheel);
+      setHistory(spins.items);
+    } catch (e: unknown) {
+      setError(describeWheelError(e));
+    } finally {
+      setLoading(false);
     }
-    await delay(160);
-    const prize = pickWeighted(store.prizes);
-    store.spinsLeft -= 1;
-    if (prize.id === 'gift-spin') {
-      store.spinsLeft += 1;
-    }
-    store.history = [
-      { id: `win-${Date.now()}`, prize, wonAt: new Date().toISOString() },
-      ...store.history,
-    ];
-    setSnapshot(cloneSnapshot(store));
-    return prize;
-  }, []);
+  }, [token]);
 
-  return { snapshot, loading, error, spin };
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const prizes = useMemo(
+    () => (state?.sectors ?? []).map(mapSector),
+    [state?.sectors],
+  );
+
+  const spin = useCallback(async (): Promise<{ prize: FortunePrize; result: SpinResult; targetIndex: number }> => {
+    if (!state?.can_spin) {
+      throw new Error('Не хватает купонов для крутки');
+    }
+    setError(null);
+    try {
+      const result = await apiFetch<SpinResult>('/wheel/spin', token, {
+        method: 'POST',
+        body: '{}',
+      });
+      setState((prev) => (
+        prev
+          ? { ...prev, coupons: result.coupons_after, can_spin: result.coupons_after > 0 }
+          : prev
+      ));
+      setHistory((prev) => [
+        {
+          id: result.spin_id,
+          sector_code: result.sector_code,
+          prize_type: result.prize_type,
+          prize_label: result.prize_label,
+          cashback_rub: result.cashback_rub,
+          gift_reward_id: result.gift_reward_id,
+          gift_status: result.prize_type === 'gift' ? 'active' : null,
+          coupons_spent: 1,
+          created_at: result.created_at,
+        },
+        ...prev,
+      ]);
+      const targetIndex = Math.max(
+        0,
+        prizes.findIndex((prize) => prize.id === result.sector_code),
+      );
+      const prize = prizes[targetIndex];
+      return { prize, result, targetIndex };
+    } catch (e: unknown) {
+      const message = describeWheelError(e);
+      setError(message);
+      throw new Error(message);
+    }
+  }, [prizes, state?.can_spin, token]);
+
+  return { state, prizes, history, loading, error, spin, refetch: load };
 }
 
 export function formatWinTime(iso: string): string {
@@ -227,7 +193,5 @@ export function formatWinTime(iso: string): string {
 }
 
 export function prizeTypeLabel(type: FortunePrizeType): string {
-  if (type === 'cashback') return 'Кешбэк';
-  if (type === 'discount') return 'Скидка';
-  return 'Подарок';
+  return type === 'cashback' ? 'Кешбэк' : 'Подарок';
 }

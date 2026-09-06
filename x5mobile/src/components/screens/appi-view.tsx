@@ -31,6 +31,7 @@ interface AppiViewProps {
   basket: BasketState;
   onOpenBasket: () => void;
   onChallenges: () => void;
+  onOpenWheel: () => void;
 }
 
 function vibeEmoji(vibe: Vibe): string {
@@ -55,6 +56,7 @@ export function AppiView({
   basket,
   onOpenBasket,
   onChallenges,
+  onOpenWheel,
 }: AppiViewProps) {
   const insets = useSafeAreaInsets();
   const { vibes, selectedVibeId, loading: vibesLoading, saving, error, saveVibe } = useVibes(token);
@@ -100,6 +102,14 @@ export function AppiView({
         contentContainerStyle={[styles.content, { paddingTop: insets.top + 12 }]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}>
+
+        <View style={styles.topBar}>
+          <Text style={styles.pageEyebrow}>Аппи</Text>
+          <TouchableOpacity style={styles.wheelChip} onPress={onOpenWheel} activeOpacity={0.8}>
+            <Text style={styles.wheelChipEmoji}>🍊</Text>
+            <Text style={styles.wheelChipText}>Колесо</Text>
+          </TouchableOpacity>
+        </View>
 
         <View style={styles.dashboard}>
           <View style={styles.chartCard}>
@@ -298,6 +308,22 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#FFFFFF' },
   scroll: { flex: 1 },
   content: { paddingHorizontal: 18, paddingBottom: 28, gap: 18 },
+
+  topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  pageEyebrow: { color: DARK_GREEN, fontSize: 22, fontWeight: '900' },
+  wheelChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#FFF3E0',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#F5C89A',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  wheelChipEmoji: { fontSize: 14, lineHeight: 16 },
+  wheelChipText: { color: '#C65300', fontSize: 13, fontWeight: '800' },
 
   dashboard: { flexDirection: 'row', gap: 10, alignItems: 'stretch' },
   chartCard: {
