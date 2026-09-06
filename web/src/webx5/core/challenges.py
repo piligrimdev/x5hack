@@ -11,10 +11,12 @@ from __future__ import annotations
 import os
 
 from webx5.core.basket import basket_repo
+from webx5.core.db import db
 from webx5.crud.challenge_log import ChallengeLogRepository
 from webx5.crud.task import TaskItemRepository, TaskRepository
 from webx5.services.challenge import ChallengeService
 from webx5.services.challenge_adapter import ChallengeAdapter
+from webx5.services.survival import SurvivalCurveStore
 from webx5.services.task_completion import TaskCompletionService
 from webx5.utils.forbidden_categories import get_synth_config
 
@@ -34,6 +36,9 @@ CHALLENGE_LLM_MODEL = os.environ.get("CHALLENGE_LLM_MODEL", "google/gemini-3.1-f
 
 # --- SynthConfig — loaded once, cached ---
 synth_config = get_synth_config()
+
+# --- survival risk curves — lazy, fit once on first use ---
+survival_curve_store = SurvivalCurveStore(db=db)
 
 # --- services ---
 challenge_service = ChallengeService(
