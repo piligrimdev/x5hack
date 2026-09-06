@@ -59,6 +59,12 @@ class PointsTransaction(Base):
             unique=True,
             postgresql_where=text("type = 'earn'"),
         ),
+        Index(
+            "ux_points_tx_earn_spin",
+            "related_spin_id",
+            unique=True,
+            postgresql_where=text("type = 'earn' AND related_spin_id IS NOT NULL"),
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
@@ -72,6 +78,9 @@ class PointsTransaction(Base):
     )
     related_receipt_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("receipts.id", ondelete="SET NULL"), nullable=True
+    )
+    related_spin_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("wheel_spin.id", ondelete="SET NULL"), nullable=True
     )
     rate_at_time: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created_at: Mapped[datetime] = mapped_column(

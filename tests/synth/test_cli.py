@@ -1,6 +1,7 @@
 import csv
 import json
 
+from synth.challenges import CHALLENGE_SLOTS
 from synth.cli import main
 
 
@@ -72,9 +73,9 @@ def test_cli_challenges_dry_run_and_score(tmp_path):
         "--dry-run", "--out", str(challenges_path),
     ])
     challenges = json.loads(challenges_path.read_text(encoding="utf-8"))
-    # each of the 6 profiles yields either 1 record (saturated -> no_challenge)
-    # or 3 (one per PERSONAL_CHALLENGE_SLOTS)
-    assert 6 <= len(challenges) <= 18
+    # every profile now yields exactly len(CHALLENGE_SLOTS) records — no more
+    # saturated/no_challenge short-circuit to a single record
+    assert len(challenges) == 6 * len(CHALLENGE_SLOTS)
     assert len({c["user_id"] for c in challenges}) == 6
 
     main(["score-challenges", "--challenges", str(challenges_path), "--answer-key", str(key_path)])

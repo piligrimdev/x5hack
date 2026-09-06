@@ -193,7 +193,7 @@ export function useBasket(token: string | null, onOrderPlaced?: () => void) {
   }
 
   async function sendInstruction(instruction: string) {
-    if (!token || !hydrated || !storageKey || !instruction.trim() || busy.current) return;
+    if (!token || !hydrated || !storageKey || !instruction.trim() || busy.current) return false;
     busy.current = true;
     setLoading(true);
     const abortController = new AbortController();
@@ -212,8 +212,10 @@ export function useBasket(token: string | null, onOrderPlaced?: () => void) {
       setHasCollected(true);
       setItems(res.items);
       setMessage(res.message);
+      return true;
     } catch (e: unknown) {
       setMessage(e instanceof Error ? e.message : 'Ошибка запроса');
+      return false;
     } finally {
       abortController.abort();
       busy.current = false;

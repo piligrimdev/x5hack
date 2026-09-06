@@ -11,7 +11,7 @@ from __future__ import annotations
 import os
 
 from webx5.crud.challenge_log import ChallengeLogRepository
-from webx5.crud.task import TaskRepository
+from webx5.crud.task import TaskItemRepository, TaskRepository
 from webx5.services.challenge import ChallengeService
 from webx5.services.challenge_adapter import ChallengeAdapter
 from webx5.services.task_completion import TaskCompletionService
@@ -19,10 +19,11 @@ from webx5.utils.forbidden_categories import get_synth_config
 
 # --- repositories ---
 task_repo = TaskRepository()
+task_item_repo = TaskItemRepository()
 challenge_log_repo = ChallengeLogRepository()
 
 # --- adapter (ORM ↔ synth dict-profile) ---
-challenge_adapter = ChallengeAdapter(task_repo=task_repo)
+challenge_adapter = ChallengeAdapter(task_repo=task_repo, task_item_repo=task_item_repo)
 
 # --- LLM config from env ---
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "")
@@ -41,4 +42,4 @@ challenge_service = ChallengeService(
     api_key=OPENROUTER_API_KEY,
 )
 
-task_completion_service = TaskCompletionService(task_repo=task_repo)
+task_completion_service = TaskCompletionService(task_repo=task_repo, task_item_repo=task_item_repo)

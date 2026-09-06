@@ -10,6 +10,7 @@ Compatible with `synth`-package "do not modify" rule from the project.
 from __future__ import annotations
 
 from contextlib import contextmanager
+from threading import Lock
 from typing import Any
 
 import synth.challenges as synth_challenges
@@ -17,17 +18,40 @@ import synth.challenges as synth_challenges
 from webx5.core.langfuse_client import start_llm_trace
 from webx5.utils.metrics import LLM_GENERATION_FAILED, LLM_GENERATION_SUCCESS
 
+_patch_lock = Lock()
+_patch_depth = 0
+_original_call_openrouter = None
+
+
+def _challenge_llm_input(system: str, user: str) -> list[dict[str, str]]:
+    """OpenAI-style messages so Langfuse renders a chat completion, not a raw dict."""
+    return [
+        {"role": "system", "content": system},
+        {"role": "user", "content": user},
+    ]
+
 
 @contextmanager
 def capture_openrouter_io():
     """Yields a mutable dict with the last capture:
     {"system": str, "user": str, "response": str, "error": str | None}.
     Empty until a call occurs.
-    """
-    captured: dict[str, Any] = {}
-    original = synth_challenges.call_openrouter
 
-    def wrapper(model: str, system: str, user: str, api_key: str | None = None, timeout: float = 60.0, max_retries: int = 3):
+    The patch is refcounted so overlapping `generate_batch` calls in one
+    process (threads pool) do not restore `call_openrouter` out from under
+    each other and drop Langfuse wrapping mid-request.
+    """
+    global _patch_depth, _original_call_openrouter
+    captured: dict[str, Any] = {}
+
+    def wrapper(
+        model: str,
+        system: str,
+        user: str,
+        api_key: str | None = None,
+        timeout: float = 60.0,
+        max_retries: int = 3,
+    ):
         captured["system"] = system
         captured["user"] = user
         captured["response"] = None
@@ -35,9 +59,12 @@ def capture_openrouter_io():
         llm_trace = start_llm_trace(
             "challenge_generation",
             model,
-            {"system": system, "user": user},
+            _challenge_llm_input(system, user),
+            generation_name="challenge_generation",
+            metadata={"source": "challenges"},
         )
         try:
+            original = _original_call_openrouter
             response = original(model, system, user, api_key, timeout=timeout, max_retries=max_retries)
             captured["response"] = response
             LLM_GENERATION_SUCCESS.labels(model=model).inc()
@@ -49,8 +76,16 @@ def capture_openrouter_io():
             llm_trace.end_error(e)
             raise
 
-    synth_challenges.call_openrouter = wrapper
+    with _patch_lock:
+        if _patch_depth == 0:
+            _original_call_openrouter = synth_challenges.call_openrouter
+            synth_challenges.call_openrouter = wrapper
+        _patch_depth += 1
     try:
         yield captured
     finally:
-        synth_challenges.call_openrouter = original
+        with _patch_lock:
+            _patch_depth -= 1
+            if _patch_depth == 0:
+                synth_challenges.call_openrouter = _original_call_openrouter
+                _original_call_openrouter = None

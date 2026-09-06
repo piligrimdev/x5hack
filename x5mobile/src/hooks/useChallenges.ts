@@ -2,6 +2,15 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { apiFetch } from '@/api/client';
 
+export interface ChallengeTaskItem {
+  id: string;
+  label: string | null;
+  criterion_type: string;
+  criterion_entity_id: string;
+  quantity_target: number;
+  quantity_current: number;
+}
+
 export interface ChallengeItem {
   id: string;
   title: string;
@@ -14,6 +23,7 @@ export interface ChallengeItem {
   quantity_current: number;
   deadline: string;
   status: string;
+  items?: ChallengeTaskItem[];
 }
 
 export interface PastChallengeItem {

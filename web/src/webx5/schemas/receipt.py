@@ -55,6 +55,7 @@ class CalculateResponse(BaseModel):
     total_paid: JsonDecimal
     total_saved: JsonDecimal
     cashback: CashbackBlock | None = None
+    gift_discounts: list = []
 
 
 # ---- Create Receipt ----

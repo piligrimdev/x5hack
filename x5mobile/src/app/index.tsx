@@ -117,15 +117,18 @@ function AppContent({ token }: { token: string }) {
         {screen === 'home' && (
           <HomeView
             token={token}
-            onHistory={() => navigate('history')}
-            onChallenges={() => navigate('challenges')}
             onPoints={() => navigate('points')}
-            onOpenBasket={() => navigate('savings')}
             onOpenAppi={() => navigate('appi')}
+            onHistory={() => navigate('history')}
           />
         )}
         {screen === 'appi' && (
-          <AppiView token={token} onChallenges={() => navigate('challenges')} />
+          <AppiView
+            token={token}
+            basket={basket}
+            onOpenBasket={() => navigate('savings')}
+            onChallenges={() => navigate('challenges')}
+          />
         )}
         {screen === 'points' && (
           <PointsView token={token} goBack={goBack} />
@@ -159,8 +162,14 @@ function AppContent({ token }: { token: string }) {
         )}
       </View>
       <CustomTabBar
-        activeScreen={(screen === 'savings' ? 'cart' : screen) as TabScreen}
-        onTabPress={(tab) => navigate(tab === 'cart' ? 'savings' : tab)}
+        activeScreen={(
+          screen === 'savings' || screen === 'challenges'
+            ? 'appi'
+            : screen === 'catalog' || screen === 'profile' || screen === 'appi'
+              ? screen
+              : 'home'
+        ) as TabScreen}
+        onTabPress={navigate}
       />
     </View>
   );

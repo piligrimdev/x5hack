@@ -12,6 +12,7 @@ import uuid
 
 import structlog
 from sqlalchemy import select
+from sqlalchemy.orm import noload
 
 from webx5.core.celery_app import celery_app
 from webx5.entities.receipt import Receipt
@@ -48,7 +49,14 @@ def process_receipt(receipt_id: str) -> dict:
                 purchase_date=receipt.purchase_date.isoformat() if receipt.purchase_date else None,
             )
             # Pessimistic user-level lock (FR-014).
-            session.execute(select(User).where(User.id == user_id).with_for_update()).scalar_one()
+            # noload: User.vibe_type is lazy="joined"; FOR UPDATE cannot lock
+            # the nullable side of that LEFT OUTER JOIN in PostgreSQL.
+            session.execute(
+                select(User)
+                .options(noload(User.vibe_type))
+                .where(User.id == user_id)
+                .with_for_update()
+            ).scalar_one()
 
             active = task_repo.get_active_for_user(session, user_id)
             logger.info(
@@ -59,14 +67,14 @@ def process_receipt(receipt_id: str) -> dict:
                 active_task_ids=[str(t.id) for t in active],
             )
 
-            # First-receipt trigger (R9): no active tasks → generate 3.
+            # First-receipt trigger (R9): no active tasks → generate 4.
             if not active:
                 logger.info(
                     "process_receipt.first_receipt_trigger",
                     user_id=str(user_id),
                     receipt_id=receipt_id,
                 )
-                generate_challenges.apply_async(args=[str(user_id), 3], queue="challenges")
+                generate_challenges.apply_async(args=[str(user_id), 4], queue="challenges")
                 return {"status": "first_receipt_generation_enqueued", "user_id": str(user_id)}
 
             # US2: increment progress + reward.

@@ -60,23 +60,39 @@ class UserSimulationResult:
 
 
 def route_for_simulation(profile: dict, config: SynthConfig, challenge_type: str = "llm") -> dict:
-    """The same no_challenge/personal/generic routing decision one slot of
-    `generate_challenge_for_user` makes (that function now builds all three
-    slots — `llm`, `spend_threshold`, `category_expansion` — per user;
-    `route_for_simulation` still evaluates a single channel at a time, via
-    `challenge_type`), WITHOUT calling any LLM — routing itself never
-    depended on the model, only the creative TEXT of a "personal" challenge
-    does (and the simulation doesn't need that text, only which path a user
-    landed on and what reward/mechanic it implies). Lets the simulation run
-    over the full population without an API call per user.
+    """Route ONE profile through the no_challenge/personal/generic decision
+    for a single `challenge_type` ("channel"), WITHOUT calling any LLM —
+    used by this module's offline effect model (`simulate_population` /
+    `summarize_simulation`) to score projected engagement/margin across an
+    entire synthetic population cheaply, one call per user per channel.
+
+    This is deliberately independent of `synth.challenges.generate_challenge_for_user`
+    — the two used to be coupled (this function modeled routing for "the"
+    slot that function would build), but `generate_challenge_for_user` has
+    since dropped receptiveness/saturation gating entirely and issues a
+    fixed 4-slot mix unconditionally to every user (see its own docstring
+    and `CHALLENGE_SLOTS`), so there is no longer a single matching slot to
+    stay in sync with. `route_for_simulation` keeps modeling the OLD
+    single-channel decision on its own terms, via the signal functions
+    `generate_challenge_for_user` used to gate on
+    (`compute_frequency_saturation`/`compute_receptiveness`) plus the two
+    deterministic builders (`build_spend_threshold_challenge`/
+    `build_category_expansion_challenge`) — because the offline effect
+    model this feeds still needs a "would this channel have converted"
+    signal per user, and re-deriving it independently here (rather than
+    calling the live generator) keeps it callable over the full population
+    with no LLM calls and no per-user side effects.
+
+    Routing itself never depended on the LLM — only the creative TEXT of a
+    "personal" challenge does, and the simulation doesn't need that text,
+    only which path a user landed on and what reward/mechanic it implies.
 
     `challenge_type="spend_threshold"` routes a receptive user through
     `build_spend_threshold_challenge` instead of the flat LLM reward
     ceiling. `challenge_type="category_expansion"` routes through
     `build_category_expansion_challenge` instead. Both fall back to
-    generic the same way `generate_challenge_for_user`'s matching slot does
-    when there isn't enough train-period history to build the deterministic
-    offer.
+    `"generic_fallback"` when there isn't enough train-period history to
+    build the deterministic offer.
     """
     saturated, _ = compute_frequency_saturation(profile, config)
     if saturated:

@@ -2,337 +2,440 @@ import { useState } from 'react';
 import {
   ActivityIndicator,
   Image,
+  Keyboard,
+  Modal,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
-  useWindowDimensions,
   View,
 } from 'react-native';
-import Animated, { FadeIn, ZoomIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { FortuneWheel, type SpinRequest } from '@/components/screens/fortune-wheel';
-import {
-  formatWinTime,
-  prizeTypeLabel,
-  useFortuneWheel,
-  type FortunePrize,
-} from '@/hooks/useFortuneWheel';
+import { PersonalChallenges } from '@/components/screens/personal-sections';
+import type { BasketState } from '@/hooks/useBasket';
+import { useChallenges } from '@/hooks/useChallenges';
+import { useMonthlyEconomy } from '@/hooks/useMonthlyEconomy';
+import { useVibes, type Vibe } from '@/hooks/useVibes';
 
-const ORANGE = '#FF6D00';
-const GREEN = '#25A244';
-const GREEN_BANNER = '#1B5E35';
+const GREEN = '#138F3E';
+const DARK_GREEN = '#164E2B';
+const TEXT = '#17211A';
+const MUTED = '#7E827F';
+const BORDER = '#E5E8E5';
 
 interface AppiViewProps {
   token: string;
+  basket: BasketState;
+  onOpenBasket: () => void;
   onChallenges: () => void;
 }
 
-export function AppiView({ token, onChallenges }: AppiViewProps) {
+function vibeEmoji(vibe: Vibe): string {
+  const value = `${vibe.name} ${vibe.description}`.toLowerCase();
+  if (value.includes('здоров') || value.includes('пп')) return '🥗';
+  if (value.includes('готов') || value.includes('быстр')) return '🍱';
+  if (value.includes('коф')) return '☕';
+  if (value.includes('сем')) return '🛍️';
+  if (value.includes('эконом')) return '🛒';
+  if (value.includes('необыч') || value.includes('нов')) return '🍝';
+  return '🍽️';
+}
+
+function mascotState(saved: number, streak: number): string {
+  if (streak >= 2) return `${streak}-й месяц подряд экономите больше. Так держать!`;
+  if (saved > 0) return `В этом месяце уже −${Math.round(saved).toLocaleString('ru-RU')} ₽. Аппи найдёт ещё выгоду.`;
+  return 'Аппи следит за ценами и заданиями, чтобы вы экономили каждый месяц.';
+}
+
+export function AppiView({
+  token,
+  basket,
+  onOpenBasket,
+  onChallenges,
+}: AppiViewProps) {
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
-  const { snapshot, loading, spin } = useFortuneWheel(token);
+  const { vibes, selectedVibeId, loading: vibesLoading, saving, error, saveVibe } = useVibes(token);
+  const { monthlyEconomy, loading: economyLoading } = useMonthlyEconomy(token);
+  const { current, history, loading: challengesLoading } = useChallenges(token);
+  const [query, setQuery] = useState('');
+  const [vibeModalOpen, setVibeModalOpen] = useState(false);
 
-  const [phase, setPhase] = useState<'idle' | 'spinning' | 'result'>('idle');
-  const [wonPrize, setWonPrize] = useState<FortunePrize | null>(null);
-  const [spinRequest, setSpinRequest] = useState<SpinRequest | null>(null);
+  const months = monthlyEconomy?.months ?? [];
+  const maxSaved = Math.max(...months.map(month => month.saved), 1);
+  const currentSaved = monthlyEconomy?.currentMonthSaved ?? 0;
+  const previousSaved = monthlyEconomy?.previousMonthSaved ?? 0;
+  const cashbackSaved = monthlyEconomy?.currentMonthCashbackRub ?? 0;
+  const monthBase = monthlyEconomy?.currentMonthBase ?? 0;
+  const betterThanLast = currentSaved > previousSaved;
+  const savedSharePct = monthBase > 0 ? Math.round((currentSaved / monthBase) * 100) : 0;
+  const selectedVibe = vibes.find(vibe => vibe.id === selectedVibeId) ?? null;
+  const completedCount = history.filter(item =>
+    item.status === 'выполнено' || item.status === 'completed' || item.status === 'done',
+  ).length;
+  const activeCount = current.length;
 
-  const wheelSize = Math.min(300, Math.max(240, width - 72));
-  const spinsLeft = snapshot?.spinsLeft ?? 0;
-  const canSpin = phase === 'idle' && spinsLeft > 0;
-
-  async function handleSpin() {
-    if (!snapshot || !canSpin) return;
-    setPhase('spinning');
-    try {
-      const prize = await spin();
-      const targetIndex = snapshot.prizes.findIndex((item) => item.id === prize.id);
-      setWonPrize(prize);
-      setSpinRequest({
-        targetIndex: targetIndex >= 0 ? targetIndex : 0,
-        nonce: Date.now(),
-      });
-    } catch {
-      setPhase('idle');
+  async function submitBasketRequest(text = query) {
+    const request = text.trim();
+    if (!request || basket.loading || !basket.hydrated) return;
+    Keyboard.dismiss();
+    const applied = await basket.sendInstruction(request);
+    if (applied) {
+      setQuery('');
+      onOpenBasket();
     }
   }
 
-  function handleSpinComplete() {
-    setPhase('result');
-  }
-
-  function dismissResult() {
-    setWonPrize(null);
-    setPhase('idle');
+  async function chooseVibe(vibeId: string | null) {
+    const ok = await saveVibe(vibeId);
+    if (ok) setVibeModalOpen(false);
   }
 
   return (
     <View style={styles.root}>
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <View>
-          <Text style={styles.headerTitle}>Аппи</Text>
-          <Text style={styles.headerSub}>Крути колесо — я уже выбрал призы</Text>
-        </View>
-        <View style={styles.spinsBadge}>
-          <Text style={styles.spinsBadgeValue}>{spinsLeft}</Text>
-          <Text style={styles.spinsBadgeLabel}>крутки</Text>
-        </View>
-      </View>
-
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + 12 }]}
+        keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}>
-        <View style={styles.hero}>
-          <View style={styles.heroText}>
-            <Text style={styles.heroTitle}>Колесо фортуны</Text>
-            <Text style={styles.heroSub}>
-              Кешбэк, скидки и подарки.{'\n'}
-              {snapshot
-                ? `${snapshot.spinsPerDay} крутки в день — успей забрать`
-                : 'Загружаю призы…'}
-            </Text>
-          </View>
-          <Image
-            source={require('../../../assets/images/mascot.png')}
-            style={styles.mascot}
-            resizeMode="contain"
-          />
-        </View>
 
-        <View style={styles.wheelCard}>
-          {loading || !snapshot ? (
-            <ActivityIndicator color={ORANGE} style={{ marginVertical: 80 }} />
-          ) : (
-            <>
-              <FortuneWheel
-                prizes={snapshot.prizes}
-                size={wheelSize}
-                spinRequest={spinRequest}
-                onSpinComplete={handleSpinComplete}
-              />
-              <TouchableOpacity
-                style={[styles.spinBtn, !canSpin && styles.spinBtnDisabled]}
-                onPress={handleSpin}
-                activeOpacity={0.85}
-                disabled={!canSpin}>
-                <Text style={styles.spinBtnText}>
-                  {phase === 'spinning'
-                    ? 'Крутится…'
-                    : spinsLeft > 0
-                      ? 'Крутить'
-                      : 'Крутки закончились'}
-                </Text>
-              </TouchableOpacity>
-              {spinsLeft === 0 && phase === 'idle' ? (
-                <TouchableOpacity onPress={onChallenges} activeOpacity={0.7}>
-                  <Text style={styles.earnMore}>Выполни задание — получи крутку ›</Text>
-                </TouchableOpacity>
-              ) : (
-                <Text style={styles.resetHint}>Новые крутки — каждый день</Text>
-              )}
-            </>
-          )}
-        </View>
-
-        {snapshot && (
-          <>
-            <Text style={styles.sectionTitle}>Призы на колесе</Text>
-            <View style={styles.prizeGrid}>
-              {snapshot.prizes.map((prize) => (
-                <View key={prize.id} style={styles.prizeChip}>
-                  <View style={[styles.prizeDot, { backgroundColor: prize.color }]} />
-                  <Text style={styles.prizeEmoji}>{prize.emoji}</Text>
-                  <View style={styles.prizeChipText}>
-                    <Text style={styles.prizeChipTitle}>{prize.title}</Text>
-                    <Text style={styles.prizeChipType}>{prizeTypeLabel(prize.type)}</Text>
+        <View style={styles.dashboard}>
+          <View style={styles.chartCard}>
+            <Text style={styles.chartTitle}>Экономия по месяцам</Text>
+            {economyLoading ? (
+              <ActivityIndicator color={GREEN} style={styles.chartLoader} />
+            ) : (
+              <>
+                <View style={styles.chartBars}>
+                  {months.map((month, index) => (
+                    <View key={month.key} style={styles.chartCol}>
+                      <Text style={styles.chartValue}>
+                        {month.saved > 0 ? Math.round(month.saved).toLocaleString('ru-RU') : '—'}
+                      </Text>
+                      <View
+                        style={[
+                          styles.chartBar,
+                          {
+                            height: Math.max(10, (month.saved / maxSaved) * 120),
+                            backgroundColor: index === months.length - 1 ? GREEN : '#DCE8DE',
+                          },
+                        ]}
+                      />
+                      <Text style={styles.chartLabel}>{month.label}</Text>
+                    </View>
+                  ))}
+                </View>
+                <View style={styles.chartSummary}>
+                  <View style={styles.summaryItem}>
+                    <Text style={[styles.summaryValue, betterThanLast ? styles.summaryGood : styles.summaryNeutral]}>
+                      {previousSaved === 0 && currentSaved === 0
+                        ? 'нет данных'
+                        : betterThanLast
+                          ? 'лучше прошлого'
+                          : currentSaved === previousSaved
+                            ? 'как в прошлом'
+                            : 'слабее прошлого'}
+                    </Text>
+                    <Text style={styles.summaryCaption}>сравнение с прошлым месяцем</Text>
+                  </View>
+                  <View style={styles.summaryItem}>
+                    <Text style={styles.summaryValue}>{cashbackSaved.toLocaleString('ru-RU')} ₽</Text>
+                    <Text style={styles.summaryCaption}>сэкономлено кешбеком</Text>
+                  </View>
+                  <View style={styles.summaryItem}>
+                    <Text style={styles.summaryValue}>{savedSharePct}%</Text>
+                    <Text style={styles.summaryCaption}>от всех покупок</Text>
                   </View>
                 </View>
-              ))}
-            </View>
+              </>
+            )}
+          </View>
 
-            <Text style={styles.sectionTitle}>Недавние выигрыши</Text>
-            <View style={styles.historyCard}>
-              {snapshot.history.length === 0 ? (
-                <Text style={styles.emptyHistory}>Пока пусто — сделай первую крутку</Text>
+          <View style={styles.mascotCard}>
+            <Image
+              source={require('../../../assets/images/mascot.png')}
+              style={styles.mascot}
+              resizeMode="contain"
+            />
+            <Text style={styles.mascotState}>
+              {mascotState(currentSaved, monthlyEconomy?.consecutiveGrowthMonths ?? 0)}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionCopy}>
+              <Text style={styles.sectionTitle}>Задания</Text>
+              <Text style={styles.sectionDescription}>
+                Персональные цели от Аппи: закрывайте пункты в покупках и получайте баллы.
+              </Text>
+            </View>
+            <View style={styles.statsBadge}>
+              {challengesLoading ? (
+                <ActivityIndicator color={GREEN} size="small" />
               ) : (
-                snapshot.history.slice(0, 6).map((win, index, list) => (
-                  <View
-                    key={win.id}
-                    style={[styles.historyRow, index < list.length - 1 && styles.historyRowBorder]}>
-                    <Text style={styles.historyEmoji}>{win.prize.emoji}</Text>
-                    <View style={styles.historyInfo}>
-                      <Text style={styles.historyTitle}>{win.prize.title}</Text>
-                      <Text style={styles.historyMeta}>
-                        {prizeTypeLabel(win.prize.type)} · {formatWinTime(win.wonAt)}
-                      </Text>
-                    </View>
-                  </View>
-                ))
+                <>
+                  <Text style={styles.statsValue}>{activeCount}</Text>
+                  <Text style={styles.statsLabel}>активных</Text>
+                  <Text style={styles.statsHint}>{completedCount} закрыто</Text>
+                </>
               )}
             </View>
-          </>
-        )}
+          </View>
+          <PersonalChallenges token={token} onDetails={onChallenges} limit={4} showHeading={false} />
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Ваш вайб</Text>
+          <Text style={styles.sectionDescription}>
+            Направление, по которому Аппи подбирает задания и собирает корзину.
+          </Text>
+          <View style={styles.vibeRow}>
+            <View style={styles.vibeInfo}>
+              {vibesLoading ? (
+                <ActivityIndicator color={GREEN} />
+              ) : selectedVibe ? (
+                <>
+                  <Text style={styles.vibeName}>
+                    {vibeEmoji(selectedVibe)} {selectedVibe.name}
+                  </Text>
+                  <Text style={styles.vibeText}>{selectedVibe.description}</Text>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.vibeName}>Вайб не выбран</Text>
+                  <Text style={styles.vibeText}>Выберите направление — Аппи начнёт учитывать его в рекомендациях.</Text>
+                </>
+              )}
+            </View>
+            <TouchableOpacity
+              style={styles.vibeButton}
+              onPress={() => setVibeModalOpen(true)}
+              activeOpacity={0.8}>
+              <Text style={styles.vibeButtonText}>{selectedVibe ? 'Поменять' : 'Выбрать'}</Text>
+            </TouchableOpacity>
+          </View>
+          {error ? <Text style={styles.inlineError}>Не удалось загрузить или сохранить вайб</Text> : null}
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Корзина с Аппи</Text>
+          <Text style={styles.sectionDescription}>
+            Напишите, что нужно собрать — Аппи подберёт товары с учётом вайба и вашей истории.
+          </Text>
+          <View style={styles.basketRow}>
+            <TextInput
+              value={query}
+              onChangeText={setQuery}
+              placeholder="Собрать корзину с Аппи"
+              placeholderTextColor="#8B8F8B"
+              style={styles.basketInput}
+              returnKeyType="send"
+              editable={!basket.loading}
+              onSubmitEditing={() => submitBasketRequest()}
+            />
+            <TouchableOpacity
+              style={[styles.sendButton, (!query.trim() || basket.loading) && styles.sendButtonDisabled]}
+              onPress={() => submitBasketRequest()}
+              activeOpacity={0.8}
+              disabled={!query.trim() || basket.loading}>
+              {basket.loading
+                ? <ActivityIndicator color="#FFFFFF" size="small" />
+                : <Text style={styles.sendButtonText}>Отправить</Text>}
+            </TouchableOpacity>
+          </View>
+          {basket.message ? <Text style={styles.basketMessage}>{basket.message}</Text> : null}
+        </View>
       </ScrollView>
 
-      {phase === 'result' && wonPrize && (
-        <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={dismissResult}>
-          <Animated.View entering={FadeIn.duration(180)} style={StyleSheet.absoluteFill} />
-          <Animated.View entering={ZoomIn.duration(280)} style={styles.resultCard}>
-            <Text style={styles.resultEyebrow}>{prizeTypeLabel(wonPrize.type)}</Text>
-            <Text style={styles.resultEmoji}>{wonPrize.emoji}</Text>
-            <Text style={styles.resultTitle}>{wonPrize.title}</Text>
-            <Text style={styles.resultSub}>{wonPrize.subtitle}</Text>
-            <TouchableOpacity style={styles.resultBtn} onPress={dismissResult} activeOpacity={0.85}>
-              <Text style={styles.resultBtnText}>Забрать</Text>
-            </TouchableOpacity>
-          </Animated.View>
-        </TouchableOpacity>
-      )}
+      <Modal
+        visible={vibeModalOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setVibeModalOpen(false)}>
+        <Pressable style={styles.modalBackdrop} onPress={() => setVibeModalOpen(false)}>
+          <Pressable style={[styles.modalCard, { paddingBottom: insets.bottom + 18 }]} onPress={() => {}}>
+            <Text style={styles.modalTitle}>Выберите вайб</Text>
+            <Text style={styles.modalSubtitle}>На кнопке — название и описание направления</Text>
+            <ScrollView style={styles.modalList} showsVerticalScrollIndicator={false}>
+              {vibes.map(vibe => {
+                const selected = selectedVibeId === vibe.id;
+                return (
+                  <TouchableOpacity
+                    key={vibe.id}
+                    style={[styles.vibeOption, selected && styles.vibeOptionSelected]}
+                    onPress={() => chooseVibe(vibe.id)}
+                    disabled={saving}
+                    activeOpacity={0.8}>
+                    <Text style={styles.vibeOptionEmoji}>{vibeEmoji(vibe)}</Text>
+                    <View style={styles.vibeOptionCopy}>
+                      <Text style={styles.vibeOptionName}>{vibe.name}</Text>
+                      <Text style={styles.vibeOptionDescription}>{vibe.description}</Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+              <TouchableOpacity
+                style={styles.resetOption}
+                onPress={() => chooseVibe(null)}
+                disabled={saving}
+                activeOpacity={0.8}>
+                <Text style={styles.resetOptionText}>Сбросить вайб</Text>
+              </TouchableOpacity>
+            </ScrollView>
+            {saving ? <ActivityIndicator color={GREEN} style={{ marginTop: 10 }} /> : null}
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#F5F5F2' },
-  header: {
+  root: { flex: 1, backgroundColor: '#FFFFFF' },
+  scroll: { flex: 1 },
+  content: { paddingHorizontal: 18, paddingBottom: 28, gap: 18 },
+
+  dashboard: { flexDirection: 'row', gap: 10, alignItems: 'stretch' },
+  chartCard: {
+    flex: 1,
+    backgroundColor: '#F7F8F6',
+    borderRadius: 18,
+    padding: 14,
+    minHeight: 248,
+  },
+  chartTitle: { color: DARK_GREEN, fontSize: 15, fontWeight: '800' },
+  chartLoader: { marginVertical: 48 },
+  chartBars: { height: 156, flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginTop: 12 },
+  chartCol: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', gap: 4 },
+  chartValue: { color: MUTED, fontSize: 9, fontWeight: '700' },
+  chartBar: { width: '100%', borderRadius: 7 },
+  chartLabel: { textAlign: 'center', color: MUTED, fontSize: 11, fontWeight: '600' },
+  chartSummary: {
     flexDirection: 'row',
+    gap: 8,
+    marginTop: 14,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: BORDER,
+  },
+  summaryItem: { flex: 1, gap: 3 },
+  summaryValue: { color: TEXT, fontSize: 12, fontWeight: '800', lineHeight: 15 },
+  summaryGood: { color: GREEN },
+  summaryNeutral: { color: TEXT },
+  summaryCaption: { color: MUTED, fontSize: 10, lineHeight: 13 },
+  mascotCard: {
+    width: 108,
+    borderRadius: 18,
+    backgroundColor: '#FFF6EC',
+    paddingHorizontal: 8,
+    paddingTop: 8,
+    paddingBottom: 10,
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 12,
   },
-  headerTitle: { fontSize: 22, fontWeight: '800', color: '#17171A' },
-  headerSub: { fontSize: 13, color: '#8A8A8E', marginTop: 2 },
-  spinsBadge: {
-    backgroundColor: '#FFF3E0',
+  mascot: { width: 88, height: 110 },
+  mascotState: { color: '#5C564E', fontSize: 10, lineHeight: 13, textAlign: 'center' },
+
+  section: { gap: 8 },
+  sectionHeader: { flexDirection: 'row', gap: 10, alignItems: 'flex-start' },
+  sectionCopy: { flex: 1, gap: 4 },
+  sectionTitle: { color: DARK_GREEN, fontSize: 20, fontWeight: '900' },
+  sectionDescription: { color: MUTED, fontSize: 13, lineHeight: 18 },
+  statsBadge: {
+    minWidth: 78,
     borderRadius: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    backgroundColor: '#F2F8DF',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
     alignItems: 'center',
-    minWidth: 64,
   },
-  spinsBadgeValue: { fontSize: 18, fontWeight: '800', color: ORANGE, lineHeight: 22 },
-  spinsBadgeLabel: { fontSize: 10, fontWeight: '600', color: '#C45A00' },
+  statsValue: { color: GREEN, fontSize: 20, fontWeight: '900', lineHeight: 22 },
+  statsLabel: { color: DARK_GREEN, fontSize: 10, fontWeight: '700' },
+  statsHint: { color: MUTED, fontSize: 9, marginTop: 2 },
 
-  scroll: { flex: 1 },
-  scrollContent: { paddingHorizontal: 16, paddingBottom: 28, gap: 12 },
-
-  hero: {
-    backgroundColor: GREEN_BANNER,
-    borderRadius: 20,
-    paddingLeft: 18,
-    paddingVertical: 16,
-    flexDirection: 'row',
-    overflow: 'hidden',
-    minHeight: 112,
-  },
-  heroText: { flex: 1, justifyContent: 'center', gap: 6 },
-  heroTitle: { color: '#fff', fontSize: 20, fontWeight: '800' },
-  heroSub: { color: 'rgba(255,255,255,0.82)', fontSize: 13, lineHeight: 18 },
-  mascot: { width: 110, height: 120, marginRight: -8, marginBottom: -16 },
-
-  wheelCard: {
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    paddingVertical: 16,
-    paddingHorizontal: 8,
-    alignItems: 'center',
-    gap: 14,
+  vibeRow: {
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.06)',
+    borderColor: BORDER,
+    borderRadius: 16,
+    padding: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
-  spinBtn: {
-    backgroundColor: ORANGE,
-    borderRadius: 100,
-    paddingVertical: 14,
-    paddingHorizontal: 48,
-    minWidth: 200,
+  vibeInfo: { flex: 1, gap: 4 },
+  vibeName: { color: TEXT, fontSize: 15, fontWeight: '800' },
+  vibeText: { color: MUTED, fontSize: 12, lineHeight: 17 },
+  vibeButton: {
+    borderWidth: 1,
+    borderColor: GREEN,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    minWidth: 92,
     alignItems: 'center',
   },
-  spinBtnDisabled: { backgroundColor: '#C8C7C3' },
-  spinBtnText: { color: '#fff', fontSize: 17, fontWeight: '800' },
-  earnMore: { fontSize: 14, color: GREEN, fontWeight: '600' },
-  resetHint: { fontSize: 12, color: '#8A8A8E' },
+  vibeButtonText: { color: GREEN, fontSize: 13, fontWeight: '800' },
+  inlineError: { color: '#C74335', fontSize: 11 },
 
-  sectionTitle: { fontSize: 18, fontWeight: '800', color: '#17171A', marginTop: 4 },
-  prizeGrid: { gap: 8 },
-  prizeChip: {
-    backgroundColor: '#fff',
+  basketRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  basketInput: {
+    flex: 1,
+    minHeight: 52,
+    borderRadius: 26,
+    borderWidth: 1,
+    borderColor: BORDER,
+    paddingHorizontal: 16,
+    color: TEXT,
+    fontSize: 14,
+    backgroundColor: '#FFFFFF',
+  },
+  sendButton: {
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: GREEN,
+    paddingHorizontal: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sendButtonDisabled: { opacity: 0.45 },
+  sendButtonText: { color: '#FFFFFF', fontSize: 13, fontWeight: '800' },
+  basketMessage: { color: MUTED, fontSize: 11 },
+
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(23,23,26,0.45)',
+    justifyContent: 'flex-end',
+  },
+  modalCard: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    paddingHorizontal: 18,
+    paddingTop: 18,
+    maxHeight: '82%',
+  },
+  modalTitle: { color: DARK_GREEN, fontSize: 20, fontWeight: '900' },
+  modalSubtitle: { color: MUTED, fontSize: 13, marginTop: 4, marginBottom: 12 },
+  modalList: { maxHeight: 460 },
+  vibeOption: {
+    borderWidth: 1,
+    borderColor: BORDER,
     borderRadius: 14,
     padding: 12,
     flexDirection: 'row',
-    alignItems: 'center',
     gap: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.06)',
+    marginBottom: 8,
+    backgroundColor: '#FFFFFF',
   },
-  prizeDot: { width: 10, height: 10, borderRadius: 5 },
-  prizeEmoji: { fontSize: 18 },
-  prizeChipText: { flex: 1 },
-  prizeChipTitle: { fontSize: 14, fontWeight: '700', color: '#17171A' },
-  prizeChipType: { fontSize: 12, color: '#8A8A8E', marginTop: 1 },
-
-  historyCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    paddingHorizontal: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.06)',
-  },
-  emptyHistory: {
-    fontSize: 14,
-    color: '#8A8A8E',
-    textAlign: 'center',
-    paddingVertical: 20,
-  },
-  historyRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 12,
-  },
-  historyRowBorder: { borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.06)' },
-  historyEmoji: { fontSize: 22 },
-  historyInfo: { flex: 1 },
-  historyTitle: { fontSize: 14, fontWeight: '700', color: '#17171A' },
-  historyMeta: { fontSize: 12, color: '#8A8A8E', marginTop: 2 },
-
-  overlay: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(23,23,26,0.45)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 28,
-    zIndex: 20,
-  },
-  resultCard: {
-    backgroundColor: '#fff',
-    borderRadius: 24,
-    paddingHorizontal: 24,
-    paddingVertical: 28,
-    alignItems: 'center',
-    width: '100%',
-    maxWidth: 340,
-    gap: 6,
-  },
-  resultEyebrow: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: ORANGE,
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-  },
-  resultEmoji: { fontSize: 56, marginVertical: 6 },
-  resultTitle: { fontSize: 22, fontWeight: '800', color: '#17171A', textAlign: 'center' },
-  resultSub: { fontSize: 14, color: '#8A8A8E', textAlign: 'center', lineHeight: 20, marginBottom: 8 },
-  resultBtn: {
-    backgroundColor: GREEN,
-    borderRadius: 100,
-    paddingVertical: 13,
-    paddingHorizontal: 36,
-    marginTop: 6,
-  },
-  resultBtnText: { color: '#fff', fontSize: 16, fontWeight: '800' },
+  vibeOptionSelected: { borderColor: GREEN, backgroundColor: '#F7FCF8' },
+  vibeOptionEmoji: { fontSize: 28 },
+  vibeOptionCopy: { flex: 1, gap: 3 },
+  vibeOptionName: { color: TEXT, fontSize: 15, fontWeight: '800' },
+  vibeOptionDescription: { color: MUTED, fontSize: 12, lineHeight: 17 },
+  resetOption: { alignItems: 'center', paddingVertical: 12 },
+  resetOptionText: { color: GREEN, fontSize: 13, fontWeight: '700' },
 });

@@ -103,13 +103,14 @@ def call_openrouter_tools_traced(
     api_key: str | None = None,
     timeout: float = 30.0,
     max_retries: int = 3,
+    tool_choice: str | dict = "auto",
     trace_name: str | None = None,
 ) -> list[ToolCall]:
     """call_openrouter_tools wrapped with Langfuse tracing and Prometheus metrics.
 
     Falls back to untraced call when Langfuse is unavailable — never blocks execution.
     """
-    from webx5.utils.metrics import LLM_GENERATION_SUCCESS, LLM_GENERATION_FAILED
+    from webx5.utils.metrics import LLM_GENERATION_FAILED, LLM_GENERATION_SUCCESS
 
     user_id = user_id_context.get()
     llm_trace = start_llm_trace(
@@ -119,7 +120,16 @@ def call_openrouter_tools_traced(
     )
 
     try:
-        result = call_openrouter_tools(model, system, user, tools, api_key, timeout, max_retries)
+        result = call_openrouter_tools(
+            model=model,
+            system=system,
+            user=user,
+            tools=tools,
+            api_key=api_key,
+            timeout=timeout,
+            max_retries=max_retries,
+            tool_choice=tool_choice,
+        )
         LLM_GENERATION_SUCCESS.labels(model=model).inc()
         llm_trace.end_success([{"name": tc.name, "arguments": tc.arguments} for tc in result])
 

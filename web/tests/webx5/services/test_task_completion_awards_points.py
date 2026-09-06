@@ -55,7 +55,10 @@ def test_completion_awards_points_and_marks_completed_without_reward():
     fake_points_service = MagicMock()
     fake_points_service.award_for_task.return_value = 50
 
-    service = TaskCompletionService(task_repo=task_repo)
+    task_item_repo = MagicMock()
+    task_item_repo.get_items_for_task.return_value = []
+
+    service = TaskCompletionService(task_repo=task_repo, task_item_repo=task_item_repo)
     session = MagicMock()
 
     with patch(
@@ -63,6 +66,8 @@ def test_completion_awards_points_and_marks_completed_without_reward():
         return_value=2,
     ), patch(
         "webx5.core.points.points_service", fake_points_service
+    ), patch(
+        "webx5.core.wheel.coupon_service"
     ), patch.dict(
         "webx5.services.task_completion.CHECKERS_BY_KIND",
         {"item_quantity": lambda s, t, c, r: True},

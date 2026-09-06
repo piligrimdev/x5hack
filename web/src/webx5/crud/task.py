@@ -10,7 +10,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from webx5.entities.discount import Discount, DiscountLinkType, DiscountType
-from webx5.entities.task import Task, TaskCriterion, TaskReceiptIncrement, TaskStatus
+from webx5.entities.task import Task, TaskCriterion, TaskItem, TaskReceiptIncrement, TaskStatus
 
 
 STATUS_OPEN = "открыто"
@@ -236,3 +236,45 @@ class TaskRepository:
         session.add(discount)
         session.flush()
         return discount
+
+
+class TaskItemRepository:
+    def create_item(
+        self,
+        session: Session,
+        *,
+        task_id: uuid.UUID,
+        criterion_type: str,
+        criterion_entity_id: uuid.UUID,
+        quantity_target: int,
+        label: str | None = None,
+    ) -> TaskItem:
+        item = TaskItem(
+            task_id=task_id,
+            criterion_type=criterion_type,
+            criterion_entity_id=criterion_entity_id,
+            quantity_target=quantity_target,
+            quantity_current=0,
+            label=label,
+        )
+        session.add(item)
+        session.flush()
+        return item
+
+    def get_items_for_task(self, session: Session, task_id: uuid.UUID) -> list[TaskItem]:
+        return list(
+            session.execute(
+                select(TaskItem).where(TaskItem.task_id == task_id)
+            ).scalars().all()
+        )
+
+    def bump_item_progress(self, session: Session, item: TaskItem, delta: int) -> TaskItem:
+        item.quantity_current = min(item.quantity_current + delta, item.quantity_target)
+        session.flush()
+        return item
+
+    def all_items_complete(self, session: Session, task_id: uuid.UUID) -> bool:
+        items = self.get_items_for_task(session, task_id)
+        if not items:
+            return False
+        return all(i.quantity_current >= i.quantity_target for i in items)

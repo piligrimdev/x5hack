@@ -7,6 +7,13 @@ import { BasketItem, BasketState } from '@/hooks/useBasket';
 import { ChallengeItem, useChallenges } from '@/hooks/useChallenges';
 import { LeaderboardEntry, Savings } from '@/mock-data';
 
+function formatRub(value: number): string {
+  return value.toLocaleString('ru-RU', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
 interface SavingsViewProps {
   leaderboard: LeaderboardEntry[];
   savings: Savings;
@@ -110,7 +117,7 @@ export function SavingsView({ leaderboard, savings, token, goHome, goHistory, go
           <View style={styles.cardHeaderRow}>
             <Text style={styles.cardHeaderLabel}>ЭКОНОМИЯ ЗА НЕДЕЛЮ</Text>
             <View style={styles.savedBadge}>
-              <Text style={styles.savedBadgeText}>−{savedAmount} ₽ ({savedPct}%)</Text>
+              <Text style={styles.savedBadgeText}>−{formatRub(savedAmount)} ₽ ({savedPct}%)</Text>
             </View>
           </View>
 
@@ -124,11 +131,11 @@ export function SavingsView({ leaderboard, savings, token, goHome, goHistory, go
           <View style={styles.legendRow}>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: BrandColors.textSecondary }]} />
-              <Text style={styles.legendText}>Потрачено {savings.paid.toLocaleString('ru')} ₽</Text>
+              <Text style={styles.legendText}>Потрачено {formatRub(savings.paid)} ₽</Text>
             </View>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: BrandColors.green }]} />
-              <Text style={styles.legendText}>Сэкономлено {savedAmount} ₽</Text>
+              <Text style={styles.legendText}>Сэкономлено {formatRub(savedAmount)} ₽</Text>
             </View>
           </View>
         </View>

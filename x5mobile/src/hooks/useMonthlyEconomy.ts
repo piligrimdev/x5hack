@@ -20,6 +20,7 @@ export interface MonthData {
 export interface MonthlyEconomy {
   months: MonthData[];
   currentMonthSaved: number;
+  previousMonthSaved: number;
   currentMonthCashbackRub: number;
   currentMonthBase: number;
   consecutiveGrowthMonths: number;
@@ -59,7 +60,9 @@ export function useMonthlyEconomy(token: string) {
         }
 
         const currentKey = monthKey(now);
+        const previousKey = monthKey(new Date(now.getFullYear(), now.getMonth() - 1, 1));
         const currentMonthSaved = Math.round(bySaved.get(currentKey) ?? 0);
+        const previousMonthSaved = Math.round(bySaved.get(previousKey) ?? 0);
         const currentMonthCashbackRub = Math.round(byCashback.get(currentKey) ?? 0);
         const currentMonthBase = Math.round(byBase.get(currentKey) ?? 0);
 
@@ -72,6 +75,7 @@ export function useMonthlyEconomy(token: string) {
         setData({
           months,
           currentMonthSaved,
+          previousMonthSaved,
           currentMonthCashbackRub,
           currentMonthBase,
           consecutiveGrowthMonths: streak,

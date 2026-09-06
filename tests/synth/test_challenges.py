@@ -3,13 +3,15 @@ import json
 import pytest
 
 from synth.challenges import (
+    CHALLENGE_SLOTS,
     GENERIC_CHALLENGES,
-    PERSONAL_CHALLENGE_SLOTS,
     PERSONAL_TARGET_QUANTITY,
+    VIBE_CATEGORIES,
     backfill_target_sku,
     build_category_expansion_challenge,
     build_personal_prompt,
     build_spend_threshold_challenge,
+    build_vibe_prompt,
     compute_frequency_saturation,
     compute_receptiveness,
     estimate_max_reward_rub,
@@ -20,6 +22,7 @@ from synth.challenges import (
     parse_and_validate_challenge,
     pick_generic_challenge,
     pick_sku_in_category,
+    pick_vibe_category,
     rewrite_descriptions_for_tracked_item,
     score_against_answer_key,
 )
@@ -37,6 +40,31 @@ def test_generic_challenges_never_target_a_forbidden_category():
     forbidden = set(_config.forbidden_categories)
     for offer in GENERIC_CHALLENGES:
         assert not (set(offer["target_categories"]) & forbidden)
+
+
+def test_vibe_categories_partition_all_non_forbidden_categories_without_overlap():
+    all_vibe_categories = [c for cats in VIBE_CATEGORIES.values() for c in cats]
+    assert len(all_vibe_categories) == len(set(all_vibe_categories))
+    expected = {c.name for c in _config.categories} - set(_config.forbidden_categories)
+    assert set(all_vibe_categories) == expected
+
+
+def test_pick_vibe_category_is_deterministic():
+    assert pick_vibe_category("user-1", "2026-09") == pick_vibe_category("user-1", "2026-09")
+
+
+def test_pick_vibe_category_varies_by_user():
+    themes = {pick_vibe_category(f"user-{i}", "2026-09") for i in range(30)}
+    assert len(themes) > 1
+
+
+def test_pick_vibe_category_can_change_across_months():
+    themes = {pick_vibe_category("user-1", f"2026-{m:02d}") for m in range(1, 13)}
+    assert len(themes) > 1
+
+
+def test_pick_vibe_category_always_returns_a_known_theme():
+    assert pick_vibe_category("user-1", "2026-09") in VIBE_CATEGORIES
 
 
 def test_pick_generic_challenge_is_deterministic():
@@ -224,12 +252,55 @@ def test_parse_and_validate_challenge_strips_markdown_code_fence():
     assert result["target_categories"] == ["овощи"]
 
 
+def test_parse_and_validate_challenge_accepts_category_within_allowed_set():
+    raw = json.dumps({
+        "challenge_title": "Test",
+        "description": "desc",
+        "target_categories": ["бакалея"],
+        "mechanic": "скидка",
+        "reward_rub": 30,
+    })
+    result = parse_and_validate_challenge(
+        raw, _config, max_reward_rub=100, allowed_categories={"бакалея", "консервация"}
+    )
+    assert result["target_categories"] == ["бакалея"]
+
+
+def test_parse_and_validate_challenge_rejects_category_outside_allowed_set():
+    raw = json.dumps({
+        "challenge_title": "Test",
+        "description": "desc",
+        "target_categories": ["овощи"],
+        "mechanic": "скидка",
+        "reward_rub": 30,
+    })
+    with pytest.raises(ValueError, match="outside allowed set"):
+        parse_and_validate_challenge(raw, _config, max_reward_rub=100, allowed_categories={"бакалея"})
+
+
 def test_build_personal_prompt_mentions_forbidden_categories_and_reward_ceiling():
     profile = _profile("promo_hunter", seed=1)
     system, user = build_personal_prompt(profile, _config, max_reward_rub=77.0)
     assert "алкоголь" in system
     assert "77" in system
     assert profile["chain"] in user
+
+
+def test_build_personal_prompt_discovery_focus_differs_from_habit_focus():
+    profile = _profile("promo_hunter", seed=1)
+    habit_system, _ = build_personal_prompt(profile, _config, max_reward_rub=50.0, focus="habit")
+    discovery_system, _ = build_personal_prompt(profile, _config, max_reward_rub=50.0, focus="discovery")
+    assert habit_system != discovery_system
+    assert "почти" in discovery_system
+
+
+def test_build_vibe_prompt_restricts_to_theme_categories_and_mentions_reward_ceiling():
+    profile = _profile("promo_hunter", seed=1)
+    system, user = build_vibe_prompt(profile, _config, max_reward_rub=65.0, vibe_category="Экономия и запасы")
+    for cat in VIBE_CATEGORIES["Экономия и запасы"]:
+        assert cat in system
+    assert "65" in system
+    assert "Экономия и запасы" in user
 
 
 def test_compute_frequency_saturation_true_for_already_optimal():
@@ -243,13 +314,6 @@ def test_compute_frequency_saturation_false_for_ordinary_frequency():
     profile = _profile("promo_hunter", seed=1)
     saturated, signal = compute_frequency_saturation(profile, _config)
     assert saturated is False
-
-
-def test_generate_challenge_for_user_routes_already_optimal_to_no_challenge():
-    profile = _profile("already_optimal_no_challenge", seed=1)
-    results = generate_challenge_for_user(profile, _config, model="fake/model", dry_run=True)
-    assert len(results) == 1
-    assert results[0]["path"] == "no_challenge"
 
 
 def test_build_spend_threshold_challenge_targets_the_most_bought_item():
@@ -296,40 +360,26 @@ def _by_slot(results: list[dict]) -> dict[str, dict]:
     return {r["challenge_slot"]: r for r in results if "challenge_slot" in r}
 
 
-def test_generate_challenge_for_user_returns_one_record_per_slot(monkeypatch):
+def test_generate_challenge_for_user_always_returns_four_slots_regardless_of_pattern_strength(monkeypatch):
+    """The receptiveness/saturation gates are gone from the live routing
+    function — these three profile classes used to hit three DIFFERENT old
+    branches (strong pattern -> mostly personal, weak pattern -> all
+    generic, already_optimal -> zero records). Now all three get the exact
+    same 4-slot shape."""
     def fail_if_called(*args, **kwargs):
         raise AssertionError("call_openrouter should not be called under dry_run")
 
     monkeypatch.setattr("synth.challenges.call_openrouter", fail_if_called)
-    profile = _profile("bakes_on_weekends", seed=4)
-    results = generate_challenge_for_user(profile, _config, model="fake/model", dry_run=True)
-    assert len(results) == len(PERSONAL_CHALLENGE_SLOTS)
-    by_slot = _by_slot(results)
-    assert set(by_slot) == set(PERSONAL_CHALLENGE_SLOTS)
-    # deterministic, no-network slots build for real even under dry_run
-    assert by_slot["spend_threshold"]["path"] == "personal"
-    assert "spend_threshold_rub" in by_slot["spend_threshold"]
-    assert by_slot["category_expansion"]["path"] == "personal"
-    # only the llm slot is short-circuited by dry_run
-    assert by_slot["llm"]["path"] == "personal_dry_run"
-
-
-def test_generate_challenge_for_user_non_receptive_uses_generic_for_every_slot_without_network(monkeypatch):
-    def fail_if_called(*args, **kwargs):
-        raise AssertionError("call_openrouter should not be called for a non-receptive user")
-
-    monkeypatch.setattr("synth.challenges.call_openrouter", fail_if_called)
-    profile = _profile("promo_hunter", seed=1)
-    profile = {**profile, "receipts": [
-        r for r in profile["receipts"] if r["purchase_date"] > _config.temporal_split.train_end.isoformat()
-    ]}
-    results = generate_challenge_for_user(profile, _config, model="fake/model")
-    assert len(results) == len(PERSONAL_CHALLENGE_SLOTS)
-    assert all(r["path"] == "generic" for r in results)
-    assert all("challenge_title" in r for r in results)
-    # distinct offers, not the same generic card three times
-    assert len({r["challenge_title"] for r in results}) == len(PERSONAL_CHALLENGE_SLOTS)
-    assert len({r["target_sku_id"] for r in results}) == len(PERSONAL_CHALLENGE_SLOTS)
+    for generation_class in ("bakes_on_weekends", "one_off_no_pattern", "already_optimal_no_challenge"):
+        profile = _profile(generation_class, seed=1)
+        results = generate_challenge_for_user(profile, _config, model="fake/model", dry_run=True)
+        assert len(results) == len(CHALLENGE_SLOTS)
+        by_slot = _by_slot(results)
+        assert set(by_slot) == set(CHALLENGE_SLOTS)
+        assert by_slot["llm_habit"]["path"] == "personal_dry_run"
+        assert by_slot["llm_discovery"]["path"] == "personal_dry_run"
+        assert by_slot["vibe"]["path"] == "personal_dry_run"
+        assert by_slot["generic"]["path"] == "generic"
 
 
 def test_build_category_expansion_challenge_targets_least_bought_category():
@@ -342,7 +392,7 @@ def test_build_category_expansion_challenge_targets_least_bought_category():
     assert expected_sku is not None
 
 
-def test_generate_challenge_for_user_personal_path_with_mocked_llm(monkeypatch):
+def test_generate_challenge_for_user_llm_habit_personal_path_with_mocked_llm(monkeypatch):
     profile = _profile("bakes_on_weekends", seed=4)
 
     def fake_call(model, system, user, api_key=None, timeout=60.0, max_retries=3):
@@ -357,14 +407,12 @@ def test_generate_challenge_for_user_personal_path_with_mocked_llm(monkeypatch):
 
     monkeypatch.setattr("synth.challenges.call_openrouter", fake_call)
     results = generate_challenge_for_user(profile, _config, model="fake/model", api_key="fake-key")
-    llm_result = _by_slot(results)["llm"]
+    llm_result = _by_slot(results)["llm_habit"]
     assert llm_result["path"] == "personal"
     assert llm_result["target_categories"] == ["бакалея"]
     assert llm_result["target_quantity"] == PERSONAL_TARGET_QUANTITY
-    sku = pick_sku_in_category(_config, "бакалея", seed_key=f"{profile['user_id']}:sku:llm")
+    sku = pick_sku_in_category(_config, "бакалея", seed_key=f"{profile['user_id']}:sku:llm_habit")
     assert llm_result["target_sku_id"] == sku.sku_id
-    # title stays the LLM's own (personalized) copy; description is rewritten
-    # to name the concrete item/count actually tracked
     assert llm_result["challenge_title"] == "Допеки выходные"
     assert sku.item in llm_result["description"]
     assert llm_result["description"] == item_action_description(sku.item, PERSONAL_TARGET_QUANTITY, 40)
@@ -378,28 +426,138 @@ def test_generate_challenge_for_user_falls_back_on_bad_llm_output(monkeypatch):
 
     monkeypatch.setattr("synth.challenges.call_openrouter", fake_call)
     results = generate_challenge_for_user(profile, _config, model="fake/model", api_key="fake-key")
-    llm_result = _by_slot(results)["llm"]
+    llm_result = _by_slot(results)["llm_habit"]
     assert llm_result["path"] == "generic_fallback"
     assert "error" in llm_result
-    # model must still record which model was actually attempted, even
-    # though the record's content is the generic fallback offer
     assert llm_result["model"] == "fake/model"
-    # the other two slots are unaffected by the llm failure
-    assert len(results) == len(PERSONAL_CHALLENGE_SLOTS)
+    assert len(results) == len(CHALLENGE_SLOTS)
 
 
-def test_generate_challenge_for_user_deterministic_fallbacks_never_record_a_model(monkeypatch):
-    # spend_threshold/category_expansion fallbacks never touched any model —
-    # model must stay None for those, unlike the llm-slot fallback above.
-    monkeypatch.setattr("synth.challenges.build_spend_threshold_challenge", lambda *a, **k: None)
-    monkeypatch.setattr("synth.challenges.build_category_expansion_challenge", lambda *a, **k: None)
+def test_generate_challenge_for_user_vibe_slot_uses_profile_vibe_category(monkeypatch):
     profile = _profile("bakes_on_weekends", seed=4)
-    results = generate_challenge_for_user(profile, _config, model="fake/model", dry_run=True)
+    profile = {**profile, "vibe_category": "Экономия и запасы"}
+
+    def fake_call(model, system, user, api_key=None, timeout=60.0, max_retries=3):
+        assert "Экономия и запасы" in system
+        return json.dumps({
+            "challenge_title": "Экономь на бакалее",
+            "description": "desc",
+            "target_categories": ["бакалея"],
+            "mechanic": "скидка",
+            "reward_rub": 30,
+        })
+
+    monkeypatch.setattr("synth.challenges.call_openrouter", fake_call)
+    results = generate_challenge_for_user(profile, _config, model="fake/model", api_key="fake-key")
+    vibe_result = _by_slot(results)["vibe"]
+    assert vibe_result["path"] == "personal"
+    assert vibe_result["target_categories"] == ["бакалея"]
+
+
+def test_generate_challenge_for_user_vibe_slot_falls_back_when_llm_picks_category_outside_theme(monkeypatch):
+    profile = _profile("bakes_on_weekends", seed=4)
+    profile = {**profile, "vibe_category": "Забота о питомце"}  # only "товары для животных" allowed
+
+    def fake_call(model, system, user, api_key=None, timeout=60.0, max_retries=3):
+        return json.dumps({
+            "challenge_title": "Скидка на бакалею",
+            "description": "desc",
+            "target_categories": ["бакалея"],
+            "mechanic": "скидка",
+            "reward_rub": 30,
+        })
+
+    monkeypatch.setattr("synth.challenges.call_openrouter", fake_call)
+    results = generate_challenge_for_user(profile, _config, model="fake/model", api_key="fake-key")
+    vibe_result = _by_slot(results)["vibe"]
+    assert vibe_result["path"] == "generic_fallback"
+    assert "outside allowed set" in vibe_result["error"]
+
+
+def test_generate_challenge_for_user_recovers_from_unrecognized_vibe_category(monkeypatch):
+    # profile["vibe_category"] is a nullable free-text column with no CHECK
+    # constraint at the DB level (by design — flexible for a future
+    # manual-selection feature), so nothing guarantees a persisted value is
+    # still one of the 6 known VIBE_CATEGORIES keys. An unrecognized value
+    # must not crash the whole function (dropping all 4 slots) — it must
+    # fall back to a freshly-picked valid theme for the vibe slot only.
+    profile = _profile("bakes_on_weekends", seed=4)
+    profile = {**profile, "vibe_category": "not-a-real-theme"}
+
+    def fake_call(model, system, user, api_key=None, timeout=60.0, max_retries=3):
+        return json.dumps({
+            "challenge_title": "Test",
+            "description": "desc",
+            "target_categories": ["бакалея"],
+            "mechanic": "скидка",
+            "reward_rub": 30,
+        })
+
+    monkeypatch.setattr("synth.challenges.call_openrouter", fake_call)
+    results = generate_challenge_for_user(profile, _config, model="fake/model", api_key="fake-key")
+    assert len(results) == len(CHALLENGE_SLOTS)
+    vibe_result = _by_slot(results)["vibe"]
+    assert vibe_result["path"] in ("personal", "generic_fallback")
+    if vibe_result["path"] == "personal":
+        assert vibe_result["target_categories"] == ["бакалея"]
+
+
+def test_generate_challenge_for_user_llm_slots_carry_their_own_prompt_and_response(monkeypatch):
+    """Regression for the audit-log mismatch: `llm_habit`/`llm_discovery`
+    (and `vibe`) must each carry THEIR OWN prompt/response on the result
+    dict, not another slot's — this is what lets the web layer
+    (`ChallengeService.generate_batch`) log the right prompt/response per
+    `challenge_generation_log` row instead of reusing whichever slot
+    happened to call the LLM last."""
+    profile = _profile("bakes_on_weekends", seed=4)
+
+    def fake_call(model, system, user, api_key=None, timeout=60.0, max_retries=3):
+        # habit vs discovery focus instructions are textually distinct
+        # (build_personal_prompt) — use that to return a distinct, slot-
+        # identifiable response for each call.
+        if "почти" in system:  # discovery-focus marker
+            return json.dumps({
+                "challenge_title": "Discovery title",
+                "description": "discovery desc",
+                "target_categories": ["бакалея"],
+                "mechanic": "скидка",
+                "reward_rub": 20,
+            })
+        return json.dumps({
+            "challenge_title": "Habit title",
+            "description": "habit desc",
+            "target_categories": ["бакалея"],
+            "mechanic": "скидка",
+            "reward_rub": 25,
+        })
+
+    monkeypatch.setattr("synth.challenges.call_openrouter", fake_call)
+    results = generate_challenge_for_user(profile, _config, model="fake/model", api_key="fake-key")
     by_slot = _by_slot(results)
-    assert by_slot["spend_threshold"]["path"] == "generic_fallback"
-    assert by_slot["spend_threshold"]["model"] is None
-    assert by_slot["category_expansion"]["path"] == "generic_fallback"
-    assert by_slot["category_expansion"]["model"] is None
+    habit, discovery = by_slot["llm_habit"], by_slot["llm_discovery"]
+
+    assert habit["prompt"] != discovery["prompt"]
+    assert "почти" not in habit["prompt"]
+    assert "почти" in discovery["prompt"]
+    assert habit["response"] != discovery["response"]
+    assert json.loads(habit["response"])["challenge_title"] == "Habit title"
+    assert json.loads(discovery["response"])["challenge_title"] == "Discovery title"
+
+    # generic never calls the LLM — must not carry a prompt/response at all.
+    assert "prompt" not in by_slot["generic"]
+    assert "response" not in by_slot["generic"]
+
+
+def test_generate_challenge_for_user_all_llm_fallbacks_get_distinct_generic_offers(monkeypatch):
+    def fail_if_called(*args, **kwargs):
+        raise RuntimeError("simulated LLM outage")
+
+    monkeypatch.setattr("synth.challenges.call_openrouter", fail_if_called)
+    profile = _profile("bakes_on_weekends", seed=4)
+    results = generate_challenge_for_user(profile, _config, model="fake/model", api_key="fake-key")
+    assert len(results) == len(CHALLENGE_SLOTS)
+    assert len({r["challenge_title"] for r in results}) == len(CHALLENGE_SLOTS)
+    assert len({r["target_sku_id"] for r in results}) == len(CHALLENGE_SLOTS)
 
 
 def test_score_against_answer_key_basic():
