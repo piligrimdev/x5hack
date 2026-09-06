@@ -85,7 +85,7 @@ Add `import pytest` at the top of the test file alongside the existing import.
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `cd /Users/dimonzhi/Documents/proga/x5hack && poetry run pytest tests/synth/test_survival.py -v`
+Run: `cd /Users/dimonzhi/Documents/proga/x5hack/.worktrees/challenge-survival-risk/web && VENV=$(python3 -m poetry env info --path) && cd /Users/dimonzhi/Documents/proga/x5hack/.worktrees/challenge-survival-risk && "$VENV/bin/python" -m pytest tests/synth/test_survival.py -v`
 Expected: FAIL with `ModuleNotFoundError: No module named 'synth.survival'`
 
 - [ ] **Step 3: Implement `synth/survival.py`**
@@ -168,7 +168,7 @@ def fit_km_curve(durations: list[int], censored: list[bool]) -> SurvivalCurve:
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `cd /Users/dimonzhi/Documents/proga/x5hack && poetry run pytest tests/synth/test_survival.py -v`
+Run: `cd /Users/dimonzhi/Documents/proga/x5hack/.worktrees/challenge-survival-risk/web && VENV=$(python3 -m poetry env info --path) && cd /Users/dimonzhi/Documents/proga/x5hack/.worktrees/challenge-survival-risk && "$VENV/bin/python" -m pytest tests/synth/test_survival.py -v`
 Expected: PASS (all 6 tests)
 
 - [ ] **Step 5: Commit**
@@ -252,7 +252,7 @@ def test_purchase_dates_from_profiles_groups_dates_by_user_and_category():
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `cd /Users/dimonzhi/Documents/proga/x5hack && poetry run pytest tests/synth/test_survival.py -v -k "population_curves or purchase_dates_from_profiles"`
+Run: `cd /Users/dimonzhi/Documents/proga/x5hack/.worktrees/challenge-survival-risk/web && VENV=$(python3 -m poetry env info --path) && cd /Users/dimonzhi/Documents/proga/x5hack/.worktrees/challenge-survival-risk && "$VENV/bin/python" -m pytest tests/synth/test_survival.py -v -k "population_curves or purchase_dates_from_profiles"`
 Expected: FAIL with `ImportError: cannot import name 'fit_population_curves'`
 
 - [ ] **Step 3: Implement**
@@ -322,7 +322,7 @@ def purchase_dates_from_profiles(profiles: list[dict]) -> dict[str, dict[str, li
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `cd /Users/dimonzhi/Documents/proga/x5hack && poetry run pytest tests/synth/test_survival.py -v`
+Run: `cd /Users/dimonzhi/Documents/proga/x5hack/.worktrees/challenge-survival-risk/web && VENV=$(python3 -m poetry env info --path) && cd /Users/dimonzhi/Documents/proga/x5hack/.worktrees/challenge-survival-risk && "$VENV/bin/python" -m pytest tests/synth/test_survival.py -v`
 Expected: PASS (all tests in the file)
 
 - [ ] **Step 5: Commit**
@@ -459,7 +459,7 @@ Add `build_survival_risk_challenge` to the existing `from synth.challenges impor
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `cd /Users/dimonzhi/Documents/proga/x5hack && poetry run pytest tests/synth/test_challenges.py -v -k build_survival_risk_challenge`
+Run: `cd /Users/dimonzhi/Documents/proga/x5hack/.worktrees/challenge-survival-risk/web && VENV=$(python3 -m poetry env info --path) && cd /Users/dimonzhi/Documents/proga/x5hack/.worktrees/challenge-survival-risk && "$VENV/bin/python" -m pytest tests/synth/test_challenges.py -v -k build_survival_risk_challenge`
 Expected: FAIL with `ImportError: cannot import name 'build_survival_risk_challenge'`
 
 - [ ] **Step 3: Implement**
@@ -564,7 +564,7 @@ def build_survival_risk_challenge(
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `cd /Users/dimonzhi/Documents/proga/x5hack && poetry run pytest tests/synth/test_challenges.py -v -k build_survival_risk_challenge`
+Run: `cd /Users/dimonzhi/Documents/proga/x5hack/.worktrees/challenge-survival-risk/web && VENV=$(python3 -m poetry env info --path) && cd /Users/dimonzhi/Documents/proga/x5hack/.worktrees/challenge-survival-risk && "$VENV/bin/python" -m pytest tests/synth/test_challenges.py -v -k build_survival_risk_challenge`
 Expected: PASS (all 7 tests)
 
 - [ ] **Step 5: Commit**
@@ -653,7 +653,7 @@ Add `from collections import Counter` and `from synth.survival import fit_km_cur
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `cd /Users/dimonzhi/Documents/proga/x5hack && poetry run pytest tests/synth/test_challenges.py -v -k "uses_survival_risk_not_llm or falls_back_without_category_curves or dry_run_no_longer_affects"`
+Run: `cd /Users/dimonzhi/Documents/proga/x5hack/.worktrees/challenge-survival-risk/web && VENV=$(python3 -m poetry env info --path) && cd /Users/dimonzhi/Documents/proga/x5hack/.worktrees/challenge-survival-risk && "$VENV/bin/python" -m pytest tests/synth/test_challenges.py -v -k "uses_survival_risk_not_llm or falls_back_without_category_curves or dry_run_no_longer_affects"`
 Expected: FAIL — `call_openrouter` still gets called for `llm_habit`/`llm_discovery` (old code path), or `TypeError: unexpected keyword argument 'category_curves'`.
 
 - [ ] **Step 3: Implement**
@@ -755,7 +755,7 @@ CHALLENGE_SLOTS = ("llm_habit", "llm_discovery", "llm_basket", "generic", "vibe"
 
 - [ ] **Step 4: Run the new tests, then fix the now-broken old tests**
 
-Run: `cd /Users/dimonzhi/Documents/proga/x5hack && poetry run pytest tests/synth/test_challenges.py -v`
+Run: `cd /Users/dimonzhi/Documents/proga/x5hack/.worktrees/challenge-survival-risk/web && VENV=$(python3 -m poetry env info --path) && cd /Users/dimonzhi/Documents/proga/x5hack/.worktrees/challenge-survival-risk && "$VENV/bin/python" -m pytest tests/synth/test_challenges.py -v`
 
 The 3 new tests from Step 1 now pass, but several pre-existing tests fail because they assumed `llm_habit`/`llm_discovery` call the LLM. Fix them:
 
@@ -840,7 +840,7 @@ def test_generate_challenge_for_user_without_curves_or_working_llm_gets_distinct
     assert len({r["target_sku_id"] for r in results}) == len(CHALLENGE_SLOTS)
 ```
 
-Run: `cd /Users/dimonzhi/Documents/proga/x5hack && poetry run pytest tests/synth/test_challenges.py -v`
+Run: `cd /Users/dimonzhi/Documents/proga/x5hack/.worktrees/challenge-survival-risk/web && VENV=$(python3 -m poetry env info --path) && cd /Users/dimonzhi/Documents/proga/x5hack/.worktrees/challenge-survival-risk && "$VENV/bin/python" -m pytest tests/synth/test_challenges.py -v`
 Expected: PASS (entire file, no failures, no skips)
 
 - [ ] **Step 5: Commit**
@@ -900,7 +900,7 @@ def test_generate_challenges_fits_population_curves_once_and_uses_them(monkeypat
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd /Users/dimonzhi/Documents/proga/x5hack && poetry run pytest tests/synth/test_challenges.py -v -k fits_population_curves_once`
+Run: `cd /Users/dimonzhi/Documents/proga/x5hack/.worktrees/challenge-survival-risk/web && VENV=$(python3 -m poetry env info --path) && cd /Users/dimonzhi/Documents/proga/x5hack/.worktrees/challenge-survival-risk && "$VENV/bin/python" -m pytest tests/synth/test_challenges.py -v -k fits_population_curves_once`
 Expected: FAIL (every `llm_habit` result is `"generic_fallback"` — `generate_challenges` doesn't fit/pass curves yet)
 
 - [ ] **Step 3: Implement**
@@ -968,7 +968,7 @@ In `synth/cli.py`, update the two `--dry-run`/`challenges` help strings (`:75-95
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `cd /Users/dimonzhi/Documents/proga/x5hack && poetry run pytest tests/synth/test_challenges.py -v`
+Run: `cd /Users/dimonzhi/Documents/proga/x5hack/.worktrees/challenge-survival-risk/web && VENV=$(python3 -m poetry env info --path) && cd /Users/dimonzhi/Documents/proga/x5hack/.worktrees/challenge-survival-risk && "$VENV/bin/python" -m pytest tests/synth/test_challenges.py -v`
 Expected: PASS (entire file)
 
 - [ ] **Step 5: Commit**
@@ -1058,7 +1058,7 @@ def test_build_profile_reads_full_history_and_computes_category_last_purchase():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd /Users/dimonzhi/Documents/proga/x5hack/web && poetry run pytest tests/webx5/services/test_challenge_adapter.py -v -k category_last_purchase`
+Run: `cd /Users/dimonzhi/Documents/proga/x5hack/.worktrees/challenge-survival-risk/web && python3 -m poetry run pytest tests/webx5/services/test_challenge_adapter.py -v -k category_last_purchase`
 Expected: FAIL with `KeyError: 'category_last_purchase'`
 
 - [ ] **Step 3: Implement**
@@ -1126,7 +1126,7 @@ Add the new field to the returned profile dict (`:189-199`):
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `cd /Users/dimonzhi/Documents/proga/x5hack/web && poetry run pytest tests/webx5/services/test_challenge_adapter.py -v`
+Run: `cd /Users/dimonzhi/Documents/proga/x5hack/.worktrees/challenge-survival-risk/web && python3 -m poetry run pytest tests/webx5/services/test_challenge_adapter.py -v`
 Expected: PASS (entire file)
 
 - [ ] **Step 5: Commit**
@@ -1198,7 +1198,7 @@ def test_fetch_purchase_dates_returns_empty_dict_for_no_rows():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd /Users/dimonzhi/Documents/proga/x5hack/web && poetry run pytest tests/webx5/crud/test_survival.py -v`
+Run: `cd /Users/dimonzhi/Documents/proga/x5hack/.worktrees/challenge-survival-risk/web && python3 -m poetry run pytest tests/webx5/crud/test_survival.py -v`
 Expected: FAIL with `ModuleNotFoundError: No module named 'webx5.crud.survival'`
 
 - [ ] **Step 3: Implement**
@@ -1257,7 +1257,7 @@ class SurvivalRepository:
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `cd /Users/dimonzhi/Documents/proga/x5hack/web && poetry run pytest tests/webx5/crud/test_survival.py -v`
+Run: `cd /Users/dimonzhi/Documents/proga/x5hack/.worktrees/challenge-survival-risk/web && python3 -m poetry run pytest tests/webx5/crud/test_survival.py -v`
 Expected: PASS (both tests)
 
 - [ ] **Step 5: Commit**
@@ -1325,7 +1325,7 @@ def test_curves_are_fetched_lazily_and_cached():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd /Users/dimonzhi/Documents/proga/x5hack/web && poetry run pytest tests/webx5/services/test_survival.py -v`
+Run: `cd /Users/dimonzhi/Documents/proga/x5hack/.worktrees/challenge-survival-risk/web && python3 -m poetry run pytest tests/webx5/services/test_survival.py -v`
 Expected: FAIL with `ModuleNotFoundError: No module named 'webx5.services.survival'`
 
 - [ ] **Step 3: Implement**
@@ -1381,12 +1381,12 @@ survival_curve_store = SurvivalCurveStore(db=db)
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `cd /Users/dimonzhi/Documents/proga/x5hack/web && poetry run pytest tests/webx5/services/test_survival.py -v`
+Run: `cd /Users/dimonzhi/Documents/proga/x5hack/.worktrees/challenge-survival-risk/web && python3 -m poetry run pytest tests/webx5/services/test_survival.py -v`
 Expected: PASS
 
 Also sanity-check the wiring module still imports cleanly with no DB call:
 
-Run: `cd /Users/dimonzhi/Documents/proga/x5hack/web && poetry run python -c "import webx5.core.challenges"`
+Run: `cd /Users/dimonzhi/Documents/proga/x5hack/.worktrees/challenge-survival-risk/web && python3 -m poetry run python -c "import webx5.core.challenges"`
 Expected: no exception (this only works if `DATABASE_URL` env var is set for `webx5.core.db`, matching the existing behavior of importing `webx5.core.challenges` today — this step doesn't change that pre-existing requirement, it only confirms the NEW `SurvivalCurveStore(db=db)` line doesn't itself add a query).
 
 - [ ] **Step 5: Commit**
@@ -1476,7 +1476,7 @@ from webx5.services.challenge import ChallengeService
 
 - [ ] **Step 2: Run tests to verify the new one fails**
 
-Run: `cd /Users/dimonzhi/Documents/proga/x5hack/web && poetry run pytest tests/webx5/services/test_challenge_service.py -v`
+Run: `cd /Users/dimonzhi/Documents/proga/x5hack/.worktrees/challenge-survival-risk/web && python3 -m poetry run pytest tests/webx5/services/test_challenge_service.py -v`
 Expected: FAIL — `TypeError: ChallengeService.__init__() got an unexpected keyword argument 'curve_store'`
 
 - [ ] **Step 3: Implement**
@@ -1566,7 +1566,7 @@ challenge_service = ChallengeService(
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `cd /Users/dimonzhi/Documents/proga/x5hack/web && poetry run pytest tests/webx5/services/test_challenge_service.py -v`
+Run: `cd /Users/dimonzhi/Documents/proga/x5hack/.worktrees/challenge-survival-risk/web && python3 -m poetry run pytest tests/webx5/services/test_challenge_service.py -v`
 Expected: PASS (entire file)
 
 - [ ] **Step 5: Commit**
@@ -1635,7 +1635,7 @@ def test_persist_challenge_leaves_deadline_none_when_absent():
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `cd /Users/dimonzhi/Documents/proga/x5hack/web && poetry run pytest tests/webx5/services/test_challenge_adapter.py -v -k deadline_days`
+Run: `cd /Users/dimonzhi/Documents/proga/x5hack/.worktrees/challenge-survival-risk/web && python3 -m poetry run pytest tests/webx5/services/test_challenge_adapter.py -v -k deadline_days`
 Expected: FAIL — `task_repo.create` is called without a `deadline` kwarg at all today, so `kwargs["deadline"]` raises `KeyError`.
 
 - [ ] **Step 3: Implement**
@@ -1670,15 +1670,15 @@ In `web/src/webx5/services/challenge_adapter.py::persist_challenge`, right befor
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `cd /Users/dimonzhi/Documents/proga/x5hack/web && poetry run pytest tests/webx5/services/test_challenge_adapter.py -v`
+Run: `cd /Users/dimonzhi/Documents/proga/x5hack/.worktrees/challenge-survival-risk/web && python3 -m poetry run pytest tests/webx5/services/test_challenge_adapter.py -v`
 Expected: PASS (entire file)
 
 - [ ] **Step 5: Run the FULL test suite (both packages) to confirm nothing else broke**
 
 Run:
 ```bash
-cd /Users/dimonzhi/Documents/proga/x5hack && poetry run pytest tests/ -v
-cd /Users/dimonzhi/Documents/proga/x5hack/web && poetry run pytest tests/ -v
+cd /Users/dimonzhi/Documents/proga/x5hack/.worktrees/challenge-survival-risk/web && VENV=$(python3 -m poetry env info --path) && cd /Users/dimonzhi/Documents/proga/x5hack/.worktrees/challenge-survival-risk && "$VENV/bin/python" -m pytest tests/synth -v
+cd /Users/dimonzhi/Documents/proga/x5hack/.worktrees/challenge-survival-risk/web && python3 -m poetry run pytest tests/ -v
 ```
 Expected: PASS, 0 failures, in both.
 
