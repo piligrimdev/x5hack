@@ -20,7 +20,7 @@ import structlog
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from webx5.crud.task import TaskRepository
+from webx5.crud.task import TaskItemRepository, TaskRepository
 from webx5.entities.product import Product
 from webx5.entities.receipt import Receipt, ReceiptItem
 from webx5.entities.task import Task, TaskCriterion
@@ -83,13 +83,26 @@ CHECKERS_BY_KIND: dict[str, Callable[[Session, Task, TaskCriterion, Receipt], bo
 
 
 class TaskCompletionService:
-    def __init__(self, task_repo: TaskRepository) -> None:
+    def __init__(self, task_repo: TaskRepository, task_item_repo: TaskItemRepository) -> None:
         self.task_repo = task_repo
+        self.task_item_repo = task_item_repo
 
     def _count_matching_quantity(
         self, session: Session, task: Task, receipt: Receipt
     ) -> int:
         """How many qualifying units did this receipt bring for the task's main criterion."""
+        return self._count_matching_for_criterion(
+            session, task.criterion_type, task.criterion_entity_id, receipt
+        )
+
+    def _count_matching_for_criterion(
+        self,
+        session: Session,
+        criterion_type: str,
+        criterion_entity_id: uuid.UUID,
+        receipt: Receipt,
+    ) -> int:
+        """How many qualifying units did this receipt bring for an explicit criterion type/entity."""
         forbidden = get_forbidden_categories()
         lines = _receipt_lines_with_products(session, receipt.id)
         total_qty = 0
@@ -99,9 +112,9 @@ class TaskCompletionService:
             if category_name in forbidden:
                 continue
             matches = False
-            if task.criterion_type == "product" and ri.product_id == task.criterion_entity_id:
+            if criterion_type == "product" and ri.product_id == criterion_entity_id:
                 matches = True
-            elif task.criterion_type == "category" and product.category_id == task.criterion_entity_id:
+            elif criterion_type == "category" and product.category_id == criterion_entity_id:
                 matches = True
             if matches:
                 total_qty += int(ri.quantity)
@@ -130,7 +143,20 @@ class TaskCompletionService:
         if matching_qty > 0:
             self.task_repo.bump_progress(session, task, matching_qty)
 
+        # Bump per-item progress (parallel — each item checked independently)
+        items = self.task_item_repo.get_items_for_task(session, task.id)
+        for item in items:
+            item_qty = self._count_matching_for_criterion(
+                session, item.criterion_type, item.criterion_entity_id, receipt
+            )
+            if item_qty > 0:
+                self.task_item_repo.bump_item_progress(session, item, item_qty)
+
         # 3) Evaluate all criteria — logical AND.
+        # First check: all task_item records must be complete (if any exist).
+        if items and not self.task_item_repo.all_items_complete(session, task.id):
+            return False
+
         criteria = self.task_repo.get_task_criteria(session, task.id)
         if not criteria:
             return False
@@ -149,6 +175,23 @@ class TaskCompletionService:
 
         # 4) All criteria passed — award cashback points + mark completed atomically.
         # Feature 007: reward = points (not Discount), scaled by the configured spend rate.
+
+        # Create gift_reward if reward type is 'gift'
+        if task.reward_type == "gift":
+            from webx5.crud.reward import GiftRewardRepository
+            gift_repo = GiftRewardRepository()
+            gift_repo.create(
+                session,
+                task_id=task.id,
+                loyalty_card_id=task.loyalty_card_id,
+                criterion_type=task.criterion_type,
+                criterion_entity_id=task.criterion_entity_id,
+                quantity=1,
+                valid_to=task.deadline,
+            )
+            self.task_repo.mark_completed_without_reward(session, task)
+            return True
+
         from webx5.core.points import points_service
 
         points_service.award_for_task(session, task)

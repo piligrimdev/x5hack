@@ -124,6 +124,33 @@ class ReceiptService:
             items=items_data,
         )
 
+        # Apply and mark gift rewards as used
+        if is_new and data.loyalty_card_id is not None:
+            from webx5.crud.reward import GiftRewardRepository
+            from webx5.entities.product import Product
+            gift_repo = GiftRewardRepository()
+            active_gifts = gift_repo.get_active_for_user(session, data.loyalty_card_id)
+            product_ids_in_receipt = {item.product_id for item in data.items}
+            products_in_receipt: dict[uuid.UUID, Product] = {}
+            if product_ids_in_receipt:
+                from sqlalchemy import select as sa_select
+                products_in_receipt = {
+                    p.id: p for p in session.scalars(
+                        sa_select(Product).where(Product.id.in_(product_ids_in_receipt))
+                    )
+                }
+            for gift in active_gifts:
+                applicable = False
+                if gift.criterion_type == "product" and gift.criterion_entity_id in product_ids_in_receipt:
+                    applicable = True
+                elif gift.criterion_type == "category":
+                    for p in products_in_receipt.values():
+                        if p.category_id == gift.criterion_entity_id:
+                            applicable = True
+                            break
+                if applicable:
+                    gift_repo.mark_used(session, gift)
+
         # Spend cashback points atomically with the receipt insert (FR-008, FR-010).
         # Skip on idempotent replay (is_new=False) — the original amount is already stored.
         if is_new and wants_points and data.loyalty_card_id is not None:

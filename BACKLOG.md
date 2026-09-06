@@ -40,9 +40,11 @@
 ### Concurrent-spend integration test (SC-003)
 - Реальный integration-тест с 100 параллельными потоками против живой Postgres, проверяющий инвариант `balance >= 0` (сейчас — только логика через MagicMock + DB constraint).
 
-### Составные задания (multi-criterion)
-- task_progress таблица: task_id, criterion_id, current_value, target_value
-- Поддержка нескольких критериев на одно задание
+### ~~Составные задания (multi-criterion)~~ — реализовано (feature 008)
+- ~~task_progress таблица: task_id, criterion_id, current_value, target_value~~
+- ~~Поддержка нескольких критериев на одно задание~~
+- Реализовано через таблицу `task_item` с per-criterion прогрессом (T001–T017 feature 008).
+- Оставшееся: комплексная генерация LLM-челленджей с несколькими `task_item` через `persist_challenge` (сейчас создаётся 1 item на задание — расширение через `challenge_adapter` по мере необходимости).
 
 ### Скидки по расписанию
 - Скидки по дням недели / времени суток (is_recurrent, schedule)
@@ -61,8 +63,12 @@
 - Для продакшна нужна серверная персистентность на пользователя (таблица вида
   `user_baskets`) или как минимум ключ AsyncStorage, включающий user_id
 
+### ~~Подарочная награда (gift reward)~~ — реализовано (feature 008)
+- ~~Coupon-сущность (id, code, discount_value, expires_at, used_at) как второй `task.reward_type`~~
+- Реализован `reward_type='gift'` → таблица `gift_reward`, применяется при preview корзины и оформлении чека (feature 008, T018–T026).
+- **Не сделано**: gift reward UI выбора на фронтенде (список активных наград, применение при checkout через мобильное приложение). GET /rewards доступен, но мобильный клиент не интегрирован.
+
 ### Дополнительные типы наград (мост FR-011a готов)
-- Coupon-сущность (id, code, discount_value, expires_at, used_at) как второй `task.reward_type`
 - Points/апельсинки как третий `task.reward_type` (требует таблицы транзакций баллов из «Апельсинки»-раздела)
 
 ### Langfuse интеграция

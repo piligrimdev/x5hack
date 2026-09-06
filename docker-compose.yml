@@ -41,6 +41,9 @@ services:
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       CHALLENGE_LLM_MODEL: ${CHALLENGE_LLM_MODEL:-anthropic/claude-haiku-4.5}
       SYNTH_CONFIG_PATH: ${SYNTH_CONFIG_PATH:-/config/synth_schema.yaml}
+      LANGFUSE_HOST: ${LANGFUSE_HOST:-http://langfuse:3000}
+      LANGFUSE_API_KEY: ${LANGFUSE_API_KEY:-}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-}
     ports:
       - "${PORT:-8000}:8000"
     volumes:
@@ -66,6 +69,9 @@ services:
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       CHALLENGE_LLM_MODEL: ${CHALLENGE_LLM_MODEL:-anthropic/claude-haiku-4.5}
       SYNTH_CONFIG_PATH: ${SYNTH_CONFIG_PATH:-/config/synth_schema.yaml}
+      LANGFUSE_HOST: ${LANGFUSE_HOST:-http://langfuse:3000}
+      LANGFUSE_API_KEY: ${LANGFUSE_API_KEY:-}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-}
     volumes:
       - ./dataset:/data:ro
       - ./config:/config:ro
@@ -98,5 +104,127 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    depends_on:
+      - web
+
+  loki:
+    image: grafana/loki:latest
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./monitoring/loki/loki-config.yml:/etc/loki/local-config.yaml:ro
+      - loki_data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --tries=1 --spider http://localhost:3100/ready 2>/dev/null || curl -sf http://localhost:3100/ready || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  promtail:
+    image: grafana/promtail:latest
+    volumes:
+      - ./monitoring/promtail/promtail-config.yml:/etc/promtail/config.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: -config.file=/etc/promtail/config.yml
+    restart: unless-stopped
+    depends_on:
+      - loki
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./monitoring/grafana/provisioning/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+      - ./monitoring/grafana/provisioning/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml:ro
+      - ./monitoring/grafana/dashboards:/etc/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+      - loki
+
+  flower:
+    image: mher/flower:latest
+    ports:
+      - "5555:5555"
+    environment:
+      CELERY_BROKER_URL: ${REDIS_URL:-redis://redis:6379/0}
+      CELERY_RESULT_BACKEND: ${REDIS_URL:-redis://redis:6379/0}
+      FLOWER_UNAUTHENTICATED_API: "true"
+    restart: unless-stopped
+    depends_on:
+      - redis
+      - worker
+
+  langfuse-postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: langfuse
+      POSTGRES_PASSWORD: ${LANGFUSE_DB_PASSWORD:-langfuse}
+      POSTGRES_DB: langfuse
+    volumes:
+      - langfuse_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U langfuse -d langfuse"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  langfuse:
+    image: ghcr.io/langfuse/langfuse:2
+    ports:
+      - "3001:3000"
+    environment:
+      DATABASE_URL: postgresql://langfuse:${LANGFUSE_DB_PASSWORD:-langfuse}@langfuse-postgres:5432/langfuse
+      NEXTAUTH_SECRET: ${LANGFUSE_NEXTAUTH_SECRET:-change-this-secret-32-chars-min!}
+      NEXTAUTH_URL: http://localhost:3001
+      ENCRYPTION_KEY: ${LANGFUSE_ENCRYPTION_KEY:-0000000000000000000000000000000000000000000000000000000000000000}
+      SALT: ${LANGFUSE_SALT:-change-this-salt-in-production-env}
+      TELEMETRY_ENABLED: "false"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:3000/api/public/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+    depends_on:
+      langfuse-postgres:
+        condition: service_healthy
+
 volumes:
   pgdata:
+  prometheus_data:
+  loki_data:
+  grafana_data:
+  langfuse_db:

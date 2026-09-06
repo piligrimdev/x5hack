@@ -669,6 +669,37 @@ def build_basket_prompt(
     return system, user
 
 
+def build_vibe_prompt_from_context(
+    profile: dict, config: SynthConfig, max_reward_rub: float, vibe_name: str, vibe_context: str
+) -> tuple[str, str]:
+    """Variant of build_vibe_prompt that uses a free-form llm_context string
+    (from VibeType.llm_context) instead of a VIBE_CATEGORIES key lookup.
+    This allows POS operators to define custom vibes with arbitrary categories.
+    """
+    summary = summarize_purchase_pattern(profile, config)
+
+    system = (
+        "Ты — модуль персональных рекомендаций программы лояльности X5 "
+        "(Пятёрочка/Перекрёсток/Чижик). Пользователю выбран вайб: "
+        f'"{vibe_name}". Предложи ОДИН челлендж строго в рамках этого вайба.\n\n'
+        f"Контекст вайба (используй как ориентир для target_categories): {vibe_context}\n"
+        f"reward_rub не должен превышать {max_reward_rub:.0f} ₽.\n\n"
+        "Ответь СТРОГО в виде одного JSON-объекта, без текста вне JSON:\n"
+        '{"challenge_title": string, "description": string, '
+        '"target_categories": [string, ...], "mechanic": string, '
+        '"reward_rub": number, "reasoning": string}'
+    )
+
+    user = (
+        f"Сеть: {profile['chain']}\n"
+        f"Вайб: {vibe_name}\n"
+        f"Чеков за 90 дней: {summary['n_receipts_90d_train']}\n"
+        f"Топ категорий по числу позиций: {summary['top_categories']}\n"
+        f"Средний чек: {summary['mean_receipt_total_rub']:.0f} ₽\n"
+    )
+    return system, user
+
+
 def call_openrouter(
     model: str,
     system: str,
@@ -959,20 +990,28 @@ def generate_challenge_for_user(
         _run_llm_slot("llm_basket", system, user_msg, allowed_categories=allowed_categories)
 
     # slot: vibe
-    vibe_category = profile.get("vibe_category") or pick_vibe_category(
-        profile["user_id"], vibe_month_key or date.today().strftime("%Y-%m")
-    )
-    if vibe_category not in VIBE_CATEGORIES:
-        # `vibe_category` is a nullable free-text column with no CHECK
-        # constraint (by design, to stay flexible for a future
-        # manual-selection feature) — nothing guarantees a persisted value
-        # is still one of the 6 known theme keys. Never let an unrecognized
-        # value crash all 4 slots; fall back to a freshly-picked valid one.
-        vibe_category = pick_vibe_category(
+    # If user has a VibeType selected, profile["vibe_context"] carries its
+    # llm_context (comma-separated category list). Fall back to the old
+    # VIBE_CATEGORIES-based logic for users without a vibe selection.
+    vibe_context: str | None = profile.get("vibe_context")
+    if vibe_context:
+        vibe_category = profile.get("vibe_category") or pick_vibe_category(
             profile["user_id"], vibe_month_key or date.today().strftime("%Y-%m")
         )
-    system, user_msg = build_vibe_prompt(profile, config, max_reward, vibe_category)
-    _run_llm_slot("vibe", system, user_msg, allowed_categories=set(VIBE_CATEGORIES[vibe_category]))
+        # Parse allowed categories from llm_context (comma-separated list).
+        allowed_from_context = {cat.strip() for cat in vibe_context.split(",") if cat.strip()}
+        system, user_msg = build_vibe_prompt_from_context(profile, config, max_reward, vibe_category, vibe_context)
+        _run_llm_slot("vibe", system, user_msg, allowed_categories=allowed_from_context or None)
+    else:
+        vibe_category = profile.get("vibe_category") or pick_vibe_category(
+            profile["user_id"], vibe_month_key or date.today().strftime("%Y-%m")
+        )
+        if vibe_category not in VIBE_CATEGORIES:
+            vibe_category = pick_vibe_category(
+                profile["user_id"], vibe_month_key or date.today().strftime("%Y-%m")
+            )
+        system, user_msg = build_vibe_prompt(profile, config, max_reward, vibe_category)
+        _run_llm_slot("vibe", system, user_msg, allowed_categories=set(VIBE_CATEGORIES[vibe_category]))
 
     return results
 

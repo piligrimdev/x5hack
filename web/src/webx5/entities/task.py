@@ -58,6 +58,7 @@ class Task(Base):
 
     status: Mapped[TaskStatus] = relationship(lazy="joined")
     criteria: Mapped[list[TaskCriterion]] = relationship(back_populates="task", lazy="select")
+    items: Mapped[list[TaskItem]] = relationship(back_populates="task", lazy="select")
 
 
 class TaskCriterion(Base):
@@ -77,6 +78,27 @@ class TaskCriterion(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     task: Mapped[Task] = relationship(back_populates="criteria")
+
+
+class TaskItem(Base):
+    __tablename__ = "task_item"
+    __table_args__ = (
+        CheckConstraint("criterion_type IN ('product', 'category', 'brand')", name="ck_task_item_criterion_type"),
+        CheckConstraint("quantity_target >= 1", name="ck_task_item_quantity_target"),
+        CheckConstraint("quantity_current >= 0", name="ck_task_item_quantity_current"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    task_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("task.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    criterion_type: Mapped[str] = mapped_column(String(20), nullable=False)
+    criterion_entity_id: Mapped[uuid.UUID] = mapped_column(nullable=False)
+    quantity_target: Mapped[int] = mapped_column(Integer, nullable=False)
+    quantity_current: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    label: Mapped[str | None] = mapped_column(String(200), nullable=True)
+
+    task: Mapped[Task] = relationship(back_populates="items")
 
 
 class TaskReceiptIncrement(Base):

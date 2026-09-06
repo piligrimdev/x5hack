@@ -18,7 +18,10 @@ def basket_apply_instruction(user_id_str: str, items_json: str, instruction: str
     from webx5.core.db import db
     from webx5.schemas.basket import BasketItemIn
 
-    logger.info("basket_apply_instruction.enter", instruction_len=len(instruction))
+    from webx5.utils.contextvars_utils import user_id_context
+
+    user_id_context.set(user_id_str)
+    logger.info("basket_apply_instruction.enter", user_id=user_id_str, instruction_len=len(instruction))
 
     user_id = uuid.UUID(user_id_str)
     raw_items: list[dict] = json.loads(items_json)

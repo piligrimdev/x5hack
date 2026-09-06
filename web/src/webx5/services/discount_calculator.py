@@ -3,6 +3,7 @@ from __future__ import annotations
 import uuid
 from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal
+from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Session
 
@@ -10,6 +11,10 @@ from webx5.crud.discount import DiscountRepository
 from webx5.entities.discount import Discount
 from webx5.entities.product import Product
 from webx5.entities.store import Store
+
+if TYPE_CHECKING:
+    from webx5.entities.reward import GiftReward
+    from webx5.schemas.reward import GiftDiscountApplied
 
 
 @dataclass
@@ -168,3 +173,65 @@ class DiscountCalculatorService:
             )
 
         return result
+
+    def apply_gift_rewards(
+        self,
+        items: list[CalculatedItem],
+        session: Session,
+        gift_rewards: list["GiftReward"],
+    ) -> tuple[list[CalculatedItem], list["GiftDiscountApplied"]]:
+        """Apply gift rewards to cart items. Returns updated items and applied discounts.
+
+        For each active gift reward: find matching items in cart (by product_id or category_id),
+        pick the cheapest one (per unit), zero its paid_price for `quantity` units.
+        One reward = one unit of one item zeroed.
+        """
+        import sqlalchemy
+        from webx5.entities.reward import GiftReward as _GiftReward  # noqa: F401
+        from webx5.schemas.reward import GiftDiscountApplied
+
+        if not gift_rewards:
+            return items, []
+
+        # Build product lookup
+        product_ids = [i.product_id for i in items]
+        products: dict[uuid.UUID, Product] = {
+            p.id: p
+            for p in session.scalars(
+                sqlalchemy.select(Product).where(Product.id.in_(product_ids))
+            )
+        }
+
+        applied: list[GiftDiscountApplied] = []
+        # Work with mutable copy of items as dicts
+        items_data = [
+            {"product_id": i.product_id, "paid_price": getattr(i, "paid_price", None), "item": i}
+            for i in items
+        ]
+
+        for reward in gift_rewards:
+            # Find matching items
+            matching = []
+            for entry in items_data:
+                product = products.get(entry["product_id"])
+                if product is None:
+                    continue
+                if reward.criterion_type == "product" and entry["product_id"] == reward.criterion_entity_id:
+                    matching.append(entry)
+                elif reward.criterion_type == "category" and product.category_id == reward.criterion_entity_id:
+                    matching.append(entry)
+
+            if not matching:
+                continue
+
+            # Pick cheapest (by paid_price)
+            cheapest = min(matching, key=lambda e: e["item"].paid_price)
+            discount_rub = cheapest["item"].paid_price
+
+            applied.append(GiftDiscountApplied(
+                gift_reward_id=reward.id,
+                applied_to_product_id=cheapest["product_id"],
+                discount_rub=discount_rub,
+            ))
+
+        return items, applied

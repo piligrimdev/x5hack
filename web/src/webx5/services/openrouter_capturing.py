@@ -14,6 +14,9 @@ from typing import Any
 
 import synth.challenges as synth_challenges
 
+from webx5.core.langfuse_client import start_llm_trace
+from webx5.utils.metrics import LLM_GENERATION_FAILED, LLM_GENERATION_SUCCESS
+
 
 @contextmanager
 def capture_openrouter_io():
@@ -29,12 +32,21 @@ def capture_openrouter_io():
         captured["user"] = user
         captured["response"] = None
         captured["error"] = None
+        llm_trace = start_llm_trace(
+            "challenge_generation",
+            model,
+            {"system": system, "user": user},
+        )
         try:
             response = original(model, system, user, api_key, timeout=timeout, max_retries=max_retries)
             captured["response"] = response
+            LLM_GENERATION_SUCCESS.labels(model=model).inc()
+            llm_trace.end_success(response)
             return response
         except Exception as e:  # noqa: BLE001
             captured["error"] = str(e)
+            LLM_GENERATION_FAILED.labels(model=model, error_type=type(e).__name__).inc()
+            llm_trace.end_error(e)
             raise
 
     synth_challenges.call_openrouter = wrapper

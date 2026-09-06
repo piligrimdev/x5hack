@@ -2,10 +2,12 @@ import os
 import uuid
 from typing import Annotated
 
+import structlog
 from fastapi import Depends, Header, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from webx5.utils.auth import decode_access_jwt
+from webx5.utils.contextvars_utils import user_id_context
 
 _bearer = HTTPBearer(auto_error=False)
 
@@ -15,7 +17,11 @@ def _get_current_user_id(
 ) -> uuid.UUID:
     if not credentials:
         raise HTTPException(status_code=401, detail="Could not validate credentials")
-    return decode_access_jwt(credentials.credentials)
+    user_id = decode_access_jwt(credentials.credentials)
+    user_id_str = str(user_id)
+    user_id_context.set(user_id_str)
+    structlog.contextvars.bind_contextvars(user_id=user_id_str)
+    return user_id
 
 
 CurrentUserUUID = Annotated[uuid.UUID, Depends(_get_current_user_id)]

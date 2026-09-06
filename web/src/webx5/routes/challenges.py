@@ -10,6 +10,7 @@ from webx5.schemas.challenge import (
     ChallengeListResponse,
     EmptyReason,
     PastChallengeItem,
+    TaskItemOut,
 )
 
 challenges_router = APIRouter(prefix="/challenges", tags=["Challenges"])
@@ -20,7 +21,7 @@ def get_current_challenges(
     session: SessionDep,
     user_id: CurrentUserUUID,
 ) -> ChallengeListResponse:
-    from webx5.core.challenges import challenge_service
+    from webx5.core.challenges import challenge_service, task_item_repo
 
     tasks, reason = challenge_service.get_current(session, user_id)
     items = [
@@ -36,6 +37,17 @@ def get_current_challenges(
             quantity_current=t.quantity_current,
             deadline=t.deadline,
             status="открыто",
+            items=[
+                TaskItemOut(
+                    id=ti.id,
+                    label=ti.label,
+                    criterion_type=ti.criterion_type,
+                    criterion_entity_id=ti.criterion_entity_id,
+                    quantity_target=ti.quantity_target,
+                    quantity_current=ti.quantity_current,
+                )
+                for ti in task_item_repo.get_items_for_task(session, t.id)
+            ],
         )
         for t in tasks
     ]
