@@ -117,7 +117,12 @@ export async function apiListAvailableDiscounts(token: string): Promise<UserDisc
   return apiFetch<UserDiscountListOut>('/discounts/available', token);
 }
 
-export type CouponTxType = 'weekly_grant' | 'task_complete' | 'spin' | 'referral';
+export type CouponTxType =
+  | 'weekly_grant'
+  | 'task_complete'
+  | 'spin'
+  | 'referral'
+  | 'purchase';
 
 export interface CouponTxOut {
   id: string;
@@ -126,6 +131,7 @@ export interface CouponTxOut {
   related_task_id: string | null;
   related_spin_id: string | null;
   related_referral_link_id: string | null;
+  related_receipt_id: string | null;
   week_start: string | null;
   created_at: string;
 }

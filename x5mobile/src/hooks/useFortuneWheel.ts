@@ -23,8 +23,6 @@ export interface WheelSector {
 export interface WheelState {
   coupons: number;
   can_spin: boolean;
-  weekly_coupons: number;
-  week_start: string;
   sectors: WheelSector[];
 }
 
@@ -168,6 +166,7 @@ export function useFortuneWheel(token: string) {
           related_task_id: null,
           related_spin_id: result.spin_id,
           related_referral_link_id: null,
+          related_receipt_id: null,
           week_start: null,
           created_at: result.created_at,
         },

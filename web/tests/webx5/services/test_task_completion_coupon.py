@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 import uuid
 from decimal import Decimal
 from unittest.mock import MagicMock, patch
@@ -31,7 +32,7 @@ def _make_criterion() -> TaskCriterion:
     return c
 
 
-def test_completion_awards_coupon_with_points() -> None:
+def test_completion_does_not_award_coupon() -> None:
     task = _make_task()
     task_repo = MagicMock()
     task_repo.record_increment.return_value = True
@@ -41,16 +42,12 @@ def test_completion_awards_coupon_with_points() -> None:
     service = TaskCompletionService(task_repo=task_repo, task_item_repo=task_item_repo)
     session = MagicMock()
     fake_points = MagicMock()
-    fake_coupons = MagicMock()
-    fake_coupons.award_for_task.return_value = 1
 
     with patch(
         "webx5.services.task_completion.TaskCompletionService._count_matching_quantity",
         return_value=2,
     ), patch(
         "webx5.core.points.points_service", fake_points
-    ), patch(
-        "webx5.core.wheel.coupon_service", fake_coupons
     ), patch.dict(
         "webx5.services.task_completion.CHECKERS_BY_KIND",
         {"item_quantity": lambda s, t, c, r: True},
@@ -60,37 +57,12 @@ def test_completion_awards_coupon_with_points() -> None:
 
     assert result is True
     fake_points.award_for_task.assert_called_once_with(session, task)
-    fake_coupons.award_for_task.assert_called_once_with(session, task)
-
-
-def test_completion_coupon_idempotent_via_service() -> None:
-    from webx5.entities.coupon import CouponAccount
-    from webx5.services.coupon import CouponService
-
-    task = _make_task()
-    account = CouponAccount()
-    account.id = uuid.uuid4()
-    account.loyalty_card_id = task.loyalty_card_id
-    account.balance = 0
-    repo = MagicMock()
-    repo.has_task_grant.side_effect = [False] + [True] * 99
-    repo.get_or_create_account.return_value = account
-    service = CouponService(
-        repo=repo, weekly_n=lambda: 3, week_start=lambda: None
-    )
-    session = MagicMock()
-
-    awards = [service.award_for_task(session, task) for _ in range(100)]
-
-    assert awards[0] == 1
-    assert all(a == 0 for a in awards[1:])
-    assert repo.bump_balance.call_count == 1
+    source = inspect.getsource(TaskCompletionService.apply_receipt)
+    assert "coupon_service" not in source
 
 
 def test_expiration_path_does_not_award_coupon() -> None:
     """Expiration sweep must not import or call coupon awarding."""
-    import inspect
-
     from webx5.tasks import expiration
 
     source = inspect.getsource(expiration)

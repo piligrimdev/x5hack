@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import date, datetime
+from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -26,8 +26,6 @@ class SectorOut(BaseModel):
 class WheelStateOut(BaseModel):
     coupons: int = Field(ge=0)
     can_spin: bool
-    weekly_coupons: int = Field(ge=0)
-    week_start: date
     sectors: list[SectorOut]
 
 

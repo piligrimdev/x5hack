@@ -98,7 +98,9 @@ def test_points_to_spend_zero_skips_spend(service):
     )
 
     fake_points = MagicMock()
-    with patch("webx5.core.points.points_service", fake_points):
+    with patch("webx5.core.points.points_service", fake_points), patch(
+        "webx5.core.referral.referral_service"
+    ), patch("webx5.core.wheel.coupon_service"):
         svc.create_receipt(session, receipt.id, data)
 
     fake_points.spend_for_receipt.assert_not_called()
@@ -125,7 +127,10 @@ def test_happy_path_spends_points_and_sets_receipt_fields(service):
 
     fake_points = MagicMock()
     fake_points.spend_for_receipt.return_value = (500, 50, 10)
-    with patch("webx5.core.points.points_service", fake_points):
+    fake_coupons = MagicMock()
+    with patch("webx5.core.points.points_service", fake_points), patch(
+        "webx5.core.referral.referral_service"
+    ), patch("webx5.core.wheel.coupon_service", fake_coupons):
         svc.create_receipt(session, receipt.id, data)
 
     # subtotal = 100 * 2 = 200 rub, integer
@@ -138,6 +143,9 @@ def test_happy_path_spends_points_and_sets_receipt_fields(service):
     assert receipt.cashback_applied_points == 500
     assert receipt.cashback_applied_rub == 50
     assert receipt.points_rate_at_purchase == 10
+    fake_coupons.award_for_purchase.assert_called_once_with(
+        session, loyalty_id, 150, receipt.id
+    )
 
 
 def test_idempotent_replay_skips_spend(service):
@@ -159,11 +167,15 @@ def test_idempotent_replay_skips_spend(service):
     )
 
     fake_points = MagicMock()
-    with patch("webx5.core.points.points_service", fake_points):
+    fake_coupons = MagicMock()
+    with patch("webx5.core.points.points_service", fake_points), patch(
+        "webx5.core.referral.referral_service"
+    ), patch("webx5.core.wheel.coupon_service", fake_coupons):
         r, is_new = svc.create_receipt(session, existing.id, data)
 
     assert is_new is False
     fake_points.spend_for_receipt.assert_not_called()
+    fake_coupons.award_for_purchase.assert_not_called()
 
 
 def test_points_to_spend_all_string_passes_through(service):
@@ -186,7 +198,9 @@ def test_points_to_spend_all_string_passes_through(service):
 
     fake_points = MagicMock()
     fake_points.spend_for_receipt.return_value = (0, 0, 10)
-    with patch("webx5.core.points.points_service", fake_points):
+    with patch("webx5.core.points.points_service", fake_points), patch(
+        "webx5.core.referral.referral_service"
+    ), patch("webx5.core.wheel.coupon_service"):
         svc.create_receipt(session, receipt.id, data)
 
     fake_points.spend_for_receipt.assert_called_once()

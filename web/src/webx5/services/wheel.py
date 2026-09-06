@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import random
 import uuid
-from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
@@ -36,25 +35,18 @@ class WheelService:
         spin_repo: WheelSpinRepository,
         catalog: PrizeCatalogProvider,
         gift_repo: GiftRewardRepository,
-        weekly_n: Callable[[], int],
-        week_start: Callable[[], Any],
     ) -> None:
         self._coupons = coupon_service
         self._spins = spin_repo
         self._catalog = catalog
         self._gifts = gift_repo
-        self._weekly_n = weekly_n
-        self._week_start = week_start
 
     def get_state(self, session: Session, user_id: uuid.UUID) -> dict[str, Any]:
-        self._coupons.ensure_weekly_grant(session, user_id)
         sectors = self._catalog.get_sectors(session, user_id)
         coupons = self._coupons.get_balance(session, user_id)
         return {
             "coupons": coupons,
             "can_spin": coupons > 0,
-            "weekly_coupons": self._weekly_n(),
-            "week_start": self._week_start(),
             "sectors": [self._sector_to_out(s) for s in sectors],
         }
 
@@ -66,7 +58,6 @@ class WheelService:
         rng: random.Random | None = None,
     ) -> dict[str, Any]:
         picker = rng or random.SystemRandom()
-        self._coupons.ensure_weekly_grant(session, user_id)
         sectors = self._catalog.get_sectors(session, user_id)
         chosen = picker.choices(
             sectors, weights=[s.probability_percent for s in sectors], k=1

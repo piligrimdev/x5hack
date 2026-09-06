@@ -189,16 +189,11 @@ class TaskCompletionService:
                 quantity=1,
                 valid_to=task.deadline,
             )
-            from webx5.core.wheel import coupon_service
-
-            coupon_service.award_for_task(session, task)
             self.task_repo.mark_completed_without_reward(session, task)
             return True
 
         from webx5.core.points import points_service
-        from webx5.core.wheel import coupon_service
 
         points_service.award_for_task(session, task)
-        coupon_service.award_for_task(session, task)
         self.task_repo.mark_completed_without_reward(session, task)
         return True

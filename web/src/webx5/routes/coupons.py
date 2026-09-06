@@ -29,6 +29,7 @@ def list_coupon_transactions(
                 related_task_id=tx.related_task_id,
                 related_spin_id=tx.related_spin_id,
                 related_referral_link_id=tx.related_referral_link_id,
+                related_receipt_id=tx.related_receipt_id,
                 week_start=tx.week_start,
                 created_at=tx.created_at,
             )

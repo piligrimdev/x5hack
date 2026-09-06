@@ -36,6 +36,7 @@ const COUPON_TX_LABEL: Record<CouponTxType, string> = {
   task_complete: 'За задание',
   spin: 'Крутка колеса',
   referral: 'За приглашение друга',
+  purchase: 'За покупки',
 };
 
 function CouponTxRow({ item }: { item: CouponTxOut }) {
@@ -108,8 +109,9 @@ export function FortuneWheelView({ token, goBack }: FortuneWheelViewProps) {
           <Text style={styles.couponLabel}>купонов</Text>
           {state ? (
             <Text style={styles.couponHint}>
-              {state.can_spin ? '1 купон = 1 крутка' : 'Купоны появятся за задания и в начале недели'}
-              {` · неделя +${state.weekly_coupons}`}
+              {state.can_spin
+                ? '1 купон = 1 крутка'
+                : 'Купоны за каждую 1000 ₽ покупок и за рефералов'}
             </Text>
           ) : null}
         </View>
@@ -175,7 +177,9 @@ export function FortuneWheelView({ token, goBack }: FortuneWheelViewProps) {
 
         <Text style={styles.sectionTitle}>История купонов</Text>
         {couponTx.length === 0 ? (
-          <Text style={styles.empty}>Пока нет операций — купоны появятся за задания, реферал и в начале недели.</Text>
+          <Text style={styles.empty}>
+            Пока нет операций — купоны появятся за каждую 1000 ₽ покупок и за рефералов.
+          </Text>
         ) : couponTx.map((item) => (
           <CouponTxRow key={item.id} item={item} />
         ))}

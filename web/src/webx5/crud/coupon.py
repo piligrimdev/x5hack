@@ -61,6 +61,7 @@ class CouponRepository:
         related_task_id: uuid.UUID | None = None,
         related_spin_id: uuid.UUID | None = None,
         related_referral_link_id: uuid.UUID | None = None,
+        related_receipt_id: uuid.UUID | None = None,
         week_start: date | None = None,
     ) -> CouponTransaction:
         tx = CouponTransaction(
@@ -70,6 +71,7 @@ class CouponRepository:
             related_task_id=related_task_id,
             related_spin_id=related_spin_id,
             related_referral_link_id=related_referral_link_id,
+            related_receipt_id=related_receipt_id,
             week_start=week_start,
         )
         session.add(tx)
@@ -93,6 +95,15 @@ class CouponRepository:
             select(CouponTransaction.id).where(
                 CouponTransaction.type == "task_complete",
                 CouponTransaction.related_task_id == task_id,
+            )
+        ).first()
+        return row is not None
+
+    def has_purchase_grant(self, session: Session, receipt_id: uuid.UUID) -> bool:
+        row = session.execute(
+            select(CouponTransaction.id).where(
+                CouponTransaction.type == "purchase",
+                CouponTransaction.related_receipt_id == receipt_id,
             )
         ).first()
         return row is not None

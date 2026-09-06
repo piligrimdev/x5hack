@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import date, datetime, timezone
+from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -43,8 +43,6 @@ def _service(coupons, spins, catalog, gifts) -> WheelService:
         spin_repo=spins,
         catalog=catalog,
         gift_repo=gifts,
-        weekly_n=lambda: 3,
-        week_start=lambda: date(2026, 9, 1),
     )
 
 

@@ -177,7 +177,9 @@ def test_gift_reward_mark_used_after_receipt(
         items=[ReceiptItemCreate(product_id=product.id, quantity=1)],
     )
 
-    with patch("webx5.crud.reward.GiftRewardRepository", return_value=gift_repo_mock) as mock_cls:
+    with patch("webx5.crud.reward.GiftRewardRepository", return_value=gift_repo_mock) as mock_cls, patch(
+        "webx5.core.referral.referral_service"
+    ), patch("webx5.core.wheel.coupon_service"):
         service.create_receipt(session, receipt.id, data)
 
     gift_repo_mock.get_active_for_user.assert_called_once_with(session, receipt.loyalty_card_id)

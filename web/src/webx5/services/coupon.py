@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from collections.abc import Callable
-from datetime import date
+from datetime import UTC, datetime
 
 import structlog
 from sqlalchemy.exc import IntegrityError
@@ -10,21 +9,15 @@ from sqlalchemy.orm import Session
 
 from webx5.crud.coupon import CouponRepository
 from webx5.entities.coupon import CouponTransaction
-from webx5.entities.task import Task
 
 logger = structlog.get_logger("coupon")
 
+RUB_PER_COUPON = 1000
+
 
 class CouponService:
-    def __init__(
-        self,
-        repo: CouponRepository,
-        weekly_n: Callable[[], int],
-        week_start: Callable[[], date],
-    ) -> None:
+    def __init__(self, repo: CouponRepository) -> None:
         self._repo = repo
-        self._weekly_n = weekly_n
-        self._week_start = week_start
 
     def get_or_create_account(self, session: Session, user_id: uuid.UUID):
         return self._repo.get_or_create_account(session, user_id)
@@ -44,42 +37,6 @@ class CouponService:
         items = self._repo.list_transactions(session, account.id, limit, offset)
         total = self._repo.count_transactions(session, account.id)
         return items, total
-
-    def ensure_weekly_grant(
-        self,
-        session: Session,
-        user_id: uuid.UUID,
-        week_start: date | None = None,
-    ) -> int:
-        n = self._weekly_n()
-        week = week_start or self._week_start()
-        account = self._repo.lock_account_for_update(session, user_id)
-        if self._repo.has_weekly_grant(session, account.id, week):
-            return 0
-        if n <= 0:
-            return 0
-        nested = session.begin_nested()
-        try:
-            self._repo.insert_transaction(
-                session,
-                account_id=account.id,
-                type="weekly_grant",
-                amount=n,
-                week_start=week,
-            )
-            nested.commit()
-        except IntegrityError:
-            nested.rollback()
-            return 0
-        self._repo.bump_balance(session, account, n)
-        logger.info(
-            "coupon.weekly_grant",
-            loyalty_card_id=str(user_id),
-            amount=n,
-            week_start=str(week),
-            new_balance=account.balance,
-        )
-        return n
 
     def debit_for_spin(
         self, session: Session, user_id: uuid.UUID, spin_id: uuid.UUID
@@ -102,32 +59,6 @@ class CouponService:
             related_spin_id=spin_id,
         )
         return True
-
-    def award_for_task(self, session: Session, task: Task) -> int:
-        if self._repo.has_task_grant(session, task.id):
-            return 0
-        account = self._repo.get_or_create_account(session, task.loyalty_card_id)
-        nested = session.begin_nested()
-        try:
-            self._repo.insert_transaction(
-                session,
-                account_id=account.id,
-                type="task_complete",
-                amount=1,
-                related_task_id=task.id,
-            )
-            nested.commit()
-        except IntegrityError:
-            nested.rollback()
-            return 0
-        self._repo.bump_balance(session, account, 1)
-        logger.info(
-            "coupon.task_complete",
-            loyalty_card_id=str(task.loyalty_card_id),
-            task_id=str(task.id),
-            new_balance=account.balance,
-        )
-        return 1
 
     def award_for_referral(
         self,
@@ -161,3 +92,47 @@ class CouponService:
             new_balance=account.balance,
         )
         return amount
+
+    def award_for_purchase(
+        self,
+        session: Session,
+        user_id: uuid.UUID,
+        paid_rub: int,
+        receipt_id: uuid.UUID,
+    ) -> int:
+        if paid_rub <= 0:
+            return 0
+        account = self._repo.lock_account_for_update(session, user_id)
+        if self._repo.has_purchase_grant(session, receipt_id):
+            return 0
+        pool = int(account.spend_remainder_rub) + paid_rub
+        coupons = pool // RUB_PER_COUPON
+        new_remainder = pool % RUB_PER_COUPON
+        if coupons > 0:
+            nested = session.begin_nested()
+            try:
+                self._repo.insert_transaction(
+                    session,
+                    account_id=account.id,
+                    type="purchase",
+                    amount=coupons,
+                    related_receipt_id=receipt_id,
+                )
+                nested.commit()
+            except IntegrityError:
+                nested.rollback()
+                return 0
+            self._repo.bump_balance(session, account, coupons)
+        account.spend_remainder_rub = new_remainder
+        account.updated_at = datetime.now(UTC)
+        session.flush()
+        logger.info(
+            "coupon.purchase",
+            loyalty_card_id=str(user_id),
+            receipt_id=str(receipt_id),
+            paid_rub=paid_rub,
+            amount=coupons,
+            remainder_rub=new_remainder,
+            new_balance=account.balance,
+        )
+        return coupons

@@ -177,9 +177,20 @@ class ReceiptService:
 
         if is_new and data.loyalty_card_id is not None:
             from webx5.core.referral import referral_service
+            from webx5.core.wheel import coupon_service
 
             referral_service.award_on_receipt(
                 session, data.loyalty_card_id, receipt.id
+            )
+            paid_before_cashback = int(
+                sum(
+                    Decimal(str(item["paid_price"])) * item["quantity"]
+                    for item in items_data
+                )
+            )
+            paid_rub = max(paid_before_cashback - int(receipt.cashback_applied_rub), 0)
+            coupon_service.award_for_purchase(
+                session, data.loyalty_card_id, paid_rub, receipt.id
             )
 
         session.commit()

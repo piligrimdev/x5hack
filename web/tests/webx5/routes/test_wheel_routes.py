@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 import uuid
-from datetime import date, datetime, timezone
+from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -14,7 +14,6 @@ os.environ.setdefault(
 )
 os.environ.setdefault("JWT_SECRET_KEY", "test-secret")
 os.environ.setdefault("TERMINAL_TOKEN", "test-terminal-token")
-os.environ.setdefault("FORTUNE_WHEEL_WEEKLY_COUPONS", "3")
 
 from webx5.core.server import app  # noqa: E402
 from webx5.dependencies.auth import _get_current_user_id  # noqa: E402
@@ -44,8 +43,6 @@ def _state(user_id: uuid.UUID) -> dict:
     return {
         "coupons": 3,
         "can_spin": True,
-        "weekly_coupons": 3,
-        "week_start": date(2026, 9, 1),
         "sectors": [
             {
                 "code": "small_cashback",
