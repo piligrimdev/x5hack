@@ -213,11 +213,80 @@ def test_generate_batch_no_slots_when_all_active():
     """No remaining challenge_slot for the user (CHALLENGE_SLOTS is a
     5-tuple as of the llm_basket slot) → early return, no synth call."""
     service, task_repo, log_repo, adapter = _service_with_mocks()
-    task_repo.get_active_for_user.return_value = [MagicMock() for _ in range(5)]
+    active_tasks = []
+    for slot in CHALLENGE_SLOTS:
+        task = MagicMock()
+        task.challenge_slot = slot
+        active_tasks.append(task)
+    task_repo.get_active_for_user.return_value = active_tasks
 
     created = service.generate_batch(MagicMock(), uuid.uuid4(), count=4)
     assert created == []
     log_repo.record.assert_not_called()
+
+
+def test_generate_batch_repairs_missing_named_slot_even_when_five_tasks_are_active():
+    """A legacy/partial batch can have five active tasks but still miss the
+    basket or vibe slot. The slot invariant must win over the raw count."""
+    service, task_repo, log_repo, adapter = _service_with_mocks()
+    active_tasks = []
+    for slot in ("llm_habit", "llm_discovery", "generic", "spend_threshold", "legacy"):
+        task = MagicMock()
+        task.challenge_slot = slot
+        task.criterion_type = None
+        task.criterion_entity_id = None
+        active_tasks.append(task)
+    task_repo.get_active_for_user.return_value = active_tasks
+
+    with patch("webx5.services.challenge.generate_challenge_for_user", return_value=_batch_all_five()), \
+         patch("webx5.services.challenge.capture_openrouter_io") as mock_capture:
+        mock_capture.return_value.__enter__.return_value = {}
+        created = service.generate_batch(MagicMock(), uuid.uuid4(), count=1)
+
+    persisted_slots = {
+        call.args[2]["challenge_slot"] for call in adapter.persist_challenge.call_args_list
+    }
+    assert created
+    assert {"llm_basket", "vibe"}.issubset(persisted_slots)
+
+
+def test_generate_batch_replaces_old_generic_basket_and_vibe_cards():
+    """Existing fallback cards must not permanently occupy the two themed
+    slots after the generator has been fixed."""
+    service, task_repo, log_repo, adapter = _service_with_mocks()
+
+    old_basket = MagicMock(
+        challenge_slot="llm_basket",
+        path="generic_fallback",
+        mechanic="партнёрский кэшбэк",
+    )
+    old_vibe = MagicMock(
+        challenge_slot="vibe",
+        path="generic_fallback",
+        title="Скидка партнёра на молочную продукцию",
+    )
+    remaining = []
+    for slot in ("llm_habit", "llm_discovery", "generic"):
+        remaining.append(MagicMock(
+            challenge_slot=slot,
+            criterion_type=None,
+            criterion_entity_id=None,
+        ))
+    task_repo.get_active_for_user.side_effect = [[old_basket, old_vibe, *remaining], remaining]
+
+    with patch("webx5.services.challenge.generate_challenge_for_user", return_value=_batch_all_five()), \
+         patch("webx5.services.challenge.capture_openrouter_io") as mock_capture:
+        mock_capture.return_value.__enter__.return_value = {}
+        created = service.generate_batch(MagicMock(), uuid.uuid4(), count=1)
+
+    assert len(created) == 2
+    repaired_tasks = [call.args[1] for call in task_repo.mark_expired_for_replacement.call_args_list]
+    assert repaired_tasks[0] is old_basket
+    assert repaired_tasks[1] is old_vibe
+    persisted_slots = {
+        call.args[2]["challenge_slot"] for call in adapter.persist_challenge.call_args_list
+    }
+    assert persisted_slots == {"llm_basket", "vibe"}
 
 
 def test_generate_batch_skips_slot_already_active():

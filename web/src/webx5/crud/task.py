@@ -207,6 +207,18 @@ class TaskRepository:
         session.flush()
         return task
 
+    def mark_expired_for_replacement(self, session: Session, task: Task) -> Task:
+        """Retire an obsolete active challenge before rebuilding its slot.
+
+        This is used for cards created by an older generator version (for
+        example a basket/vibe slot persisted as a generic fallback). Keeping
+        the row in history preserves auditability while freeing the slot for
+        the corrected challenge.
+        """
+        task.task_status_id = self.get_status_id(session, STATUS_EXPIRED)
+        session.flush()
+        return task
+
     def mark_completed(
         self, session: Session, task: Task, reward_id: uuid.UUID
     ) -> Task:

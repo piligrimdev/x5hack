@@ -216,7 +216,7 @@ export function AppiView({
               )}
             </View>
           </View>
-          <PersonalChallenges token={token} onDetails={onChallenges} limit={4} showHeading={false} />
+          <PersonalChallenges token={token} onDetails={onChallenges} limit={5} showHeading={false} />
         </View>
 
         <View style={styles.section}>

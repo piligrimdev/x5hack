@@ -485,7 +485,7 @@ def test_build_basket_spend_challenge_returns_none_without_suggested_items():
     assert build_basket_spend_challenge(profile, _config) is None
 
 
-def test_build_basket_spend_challenge_returns_none_without_train_receipts():
+def test_build_basket_spend_challenge_uses_live_receipts_when_train_split_is_empty():
     profile = _profile("bakes_on_weekends", seed=4)
     profile = _with_suggested_basket_items(profile, [
         {"item": "Молоко 3.2%", "category": "молочные продукты и яйца", "weekly_quantity": 2},
@@ -493,7 +493,10 @@ def test_build_basket_spend_challenge_returns_none_without_train_receipts():
     profile = {**profile, "receipts": [
         r for r in profile["receipts"] if r["purchase_date"] > _config.temporal_split.train_end.isoformat()
     ]}
-    assert build_basket_spend_challenge(profile, _config) is None
+    challenge = build_basket_spend_challenge(profile, _config)
+    assert challenge is not None
+    assert challenge["challenge_title"] == "Кэшбэк за полную корзину"
+    assert "доступная история" in challenge["reasoning"]
 
 
 def _by_slot(results: list[dict]) -> dict[str, dict]:
@@ -692,7 +695,9 @@ def test_generate_challenge_for_user_vibe_slot_falls_back_when_llm_picks_categor
     monkeypatch.setattr("synth.challenges.call_openrouter", fake_call)
     results = generate_challenge_for_user(profile, _config, model="fake/model", api_key="fake-key")
     vibe_result = _by_slot(results)["vibe"]
-    assert vibe_result["path"] == "generic_fallback"
+    assert vibe_result["path"] == "personal"
+    assert vibe_result["challenge_title"].startswith("Вайб месяца:")
+    assert vibe_result["target_categories"] == ["товары для животных"]
     assert "outside allowed set" in vibe_result["error"]
 
 
@@ -719,7 +724,8 @@ def test_generate_challenge_for_user_recovers_from_unrecognized_vibe_category(mo
     results = generate_challenge_for_user(profile, _config, model="fake/model", api_key="fake-key")
     assert len(results) == len(CHALLENGE_SLOTS)
     vibe_result = _by_slot(results)["vibe"]
-    assert vibe_result["path"] in ("personal", "generic_fallback")
+    assert vibe_result["path"] == "personal"
+    assert vibe_result["challenge_title"].startswith("Вайб месяца:")
     if vibe_result["path"] == "personal":
         assert vibe_result["target_categories"] == ["бакалея"]
 
@@ -750,12 +756,12 @@ def test_generate_challenge_for_user_only_vibe_carries_prompt_and_response(monke
         assert "response" not in by_slot[slot]
 
 
-def test_generate_challenge_for_user_without_curves_or_working_llm_gets_distinct_generic_offers(monkeypatch):
+def test_generate_challenge_for_user_without_curves_or_working_llm_keeps_vibe_slot(monkeypatch):
     """Every slot without personalization data (no category_curves for the
     three risk-ranked slots, no suggested_basket_items for llm_basket) or a
-    working LLM call (vibe, mocked to fail here) falls back to
-    `_pick_distinct_generic_offer` — which must still hand out 5 distinct
-    offers, not silently repeat one."""
+    working LLM call (vibe, mocked to fail here) still produces five records,
+    and the failed vibe response remains a themed challenge instead of an
+    unrelated generic card."""
     def fail_if_called(*args, **kwargs):
         raise RuntimeError("simulated LLM outage")
 
@@ -763,8 +769,9 @@ def test_generate_challenge_for_user_without_curves_or_working_llm_gets_distinct
     profile = _profile("bakes_on_weekends", seed=4)
     results = generate_challenge_for_user(profile, _config, model="fake/model", api_key="fake-key")
     assert len(results) == len(CHALLENGE_SLOTS)
-    assert len({r["challenge_title"] for r in results}) == len(CHALLENGE_SLOTS)
-    assert len({r["target_sku_id"] for r in results}) == len(CHALLENGE_SLOTS)
+    vibe_result = _by_slot(results)["vibe"]
+    assert vibe_result["path"] == "personal"
+    assert vibe_result["challenge_title"].startswith("Вайб месяца:")
 
 
 def test_generic_slot_rotates_offer_by_generic_cycle_index():

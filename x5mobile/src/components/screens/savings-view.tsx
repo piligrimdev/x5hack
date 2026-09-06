@@ -3,6 +3,7 @@ import { ActivityIndicator, ScrollView, StyleSheet, Switch, Text, TextInput, Tou
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BasketItem, BasketState } from '@/hooks/useBasket';
+import { isBasketChallenge, type ChallengeItem, useChallenges } from '@/hooks/useChallenges';
 
 const GREEN = '#138F3E';
 const DARK_GREEN = '#164E2B';
@@ -13,10 +14,17 @@ const BORDER = '#E5E8E5';
 interface SavingsViewProps {
   onOrderPlaced: () => void;
   basket: BasketState;
+  token: string;
 }
 
-export function SavingsView({ onOrderPlaced, basket }: SavingsViewProps) {
+export function SavingsView({ onOrderPlaced, basket, token }: SavingsViewProps) {
   const insets = useSafeAreaInsets();
+  const {
+    current: challenges,
+    loading: challengesLoading,
+    error: challengesError,
+    refetch: refetchChallenges,
+  } = useChallenges(token, true);
   const {
     items: basketItems,
     loading: basketLoading,
@@ -40,7 +48,16 @@ export function SavingsView({ onOrderPlaced, basket }: SavingsViewProps) {
   }
 
   async function handleCheckout() {
-    if (await checkout()) onOrderPlaced();
+    if (!(await checkout())) return;
+    onOrderPlaced();
+
+    // Receipt processing happens in the background. Refresh a few times so
+    // the tracker reflects progress/completion and the replacement challenge
+    // instead of staying on the pre-checkout snapshot.
+    for (const delayMs of [500, 1000, 1500]) {
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+      await refetchChallenges();
+    }
   }
 
   const pricedItems = basketItems.map((item: BasketItem) => {
@@ -188,7 +205,66 @@ export function SavingsView({ onOrderPlaced, basket }: SavingsViewProps) {
             }
           </TouchableOpacity>
         </View>
+
+        <Text style={styles.sectionTitle}>Задания</Text>
+        <View style={styles.challengeList}>
+          {challengesLoading && challenges.length === 0 && (
+            <ActivityIndicator color={GREEN} />
+          )}
+          {!challengesLoading && challengesError && (
+            <Text style={styles.challengeMessage}>Не удалось загрузить задания</Text>
+          )}
+          {!challengesLoading && !challengesError && challenges.length === 0 && (
+            <Text style={styles.challengeMessage}>Нет активных заданий</Text>
+          )}
+          {challenges.map(challenge => (
+            <BasketChallengeCard key={challenge.id} challenge={challenge} />
+          ))}
+        </View>
       </ScrollView>
+    </View>
+  );
+}
+
+function BasketChallengeCard({ challenge }: { challenge: ChallengeItem }) {
+  const done = challenge.status === 'выполнено' || challenge.status === 'completed' || challenge.status === 'done';
+  const current = done
+    ? challenge.quantity_target
+    : isBasketChallenge(challenge)
+      ? 0
+      : challenge.quantity_current;
+  const progress = Math.min(100, Math.round((current / challenge.quantity_target) * 100));
+
+  return (
+    <View style={[styles.challengeCard, done && styles.challengeCardDone]}>
+      <View style={styles.challengeTopRow}>
+        <View style={styles.challengeText}>
+          <Text style={[styles.challengeTitle, done && styles.challengeTitleDone]}>{challenge.title}</Text>
+          <Text style={styles.challengeDescription}>{challenge.description}</Text>
+        </View>
+        {done ? (
+          <View style={styles.challengeDoneCircle}>
+            <Text style={styles.challengeDoneCheck}>✓</Text>
+          </View>
+        ) : (
+          <View style={styles.challengeProgressPill}>
+            <Text style={styles.challengeProgressText}>
+              {current}/{challenge.quantity_target}
+            </Text>
+          </View>
+        )}
+      </View>
+      <View style={styles.challengeProgressTrack}>
+        <View style={[styles.challengeProgressFill, done && styles.challengeProgressFillDone, { width: `${progress}%` as `${number}%` }]} />
+      </View>
+      <View style={styles.challengeFooter}>
+        <Text style={[styles.challengeReward, done && styles.challengeRewardDone]}>
+          {done ? 'Выполнено' : `+${challenge.reward_rub} баллов`}
+        </Text>
+        <Text style={styles.challengeDeadline}>
+          до {new Date(challenge.deadline).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}
+        </Text>
+      </View>
     </View>
   );
 }
@@ -199,6 +275,7 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: 18, paddingBottom: 28, gap: 12 },
   pageEyebrow: { color: DARK_GREEN, fontSize: 22, fontWeight: '900' },
   pageDescription: { color: MUTED, fontSize: 13, lineHeight: 18, marginBottom: 4 },
+  sectionTitle: { color: TEXT, fontSize: 18, fontWeight: '900', marginTop: 8 },
   basketCard: {
     backgroundColor: '#F7F8F6',
     borderRadius: 18,
@@ -281,4 +358,46 @@ const styles = StyleSheet.create({
   },
   checkoutBtnDisabled: { backgroundColor: '#D5D8D5' },
   checkoutBtnText: { color: '#fff', fontSize: 15, fontWeight: '800' },
+  challengeList: { gap: 10 },
+  challengeMessage: { color: MUTED, fontSize: 13, paddingVertical: 12 },
+  challengeCard: {
+    backgroundColor: '#F7F8F6',
+    borderRadius: 16,
+    padding: 14,
+    gap: 10,
+  },
+  challengeCardDone: { backgroundColor: '#EAF6ED' },
+  challengeTopRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+  challengeText: { flex: 1, gap: 4 },
+  challengeTitle: { color: TEXT, fontSize: 15, fontWeight: '800' },
+  challengeTitleDone: { color: DARK_GREEN },
+  challengeDescription: { color: MUTED, fontSize: 12, lineHeight: 17 },
+  challengeProgressPill: {
+    backgroundColor: '#E7EFE9',
+    borderRadius: 100,
+    paddingVertical: 4,
+    paddingHorizontal: 9,
+  },
+  challengeProgressText: { color: DARK_GREEN, fontSize: 12, fontWeight: '800' },
+  challengeDoneCircle: {
+    width: 25,
+    height: 25,
+    borderRadius: 13,
+    backgroundColor: GREEN,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  challengeDoneCheck: { color: '#fff', fontSize: 15, fontWeight: '900' },
+  challengeProgressTrack: {
+    height: 7,
+    borderRadius: 100,
+    backgroundColor: '#E1E5E1',
+    overflow: 'hidden',
+  },
+  challengeProgressFill: { height: 7, borderRadius: 100, backgroundColor: GREEN },
+  challengeProgressFillDone: { backgroundColor: GREEN },
+  challengeFooter: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
+  challengeReward: { color: GREEN, fontSize: 12, fontWeight: '800' },
+  challengeRewardDone: { color: DARK_GREEN },
+  challengeDeadline: { color: MUTED, fontSize: 11 },
 });

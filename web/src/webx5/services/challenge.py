@@ -51,6 +51,29 @@ class ChallengeService:
         self.api_key = api_key
         self.curve_store = curve_store
 
+    @staticmethod
+    def _needs_slot_repair(task: Task) -> bool:
+        """Detect old generic cards occupying the themed slots.
+
+        Earlier generator versions created the basket and vibe records via
+        ``generic_fallback`` when the train split/LLM was unavailable. Those
+        records still count as active slots, so changing the generator alone
+        cannot make the corrected cards appear for existing users.
+        """
+        slot = task.challenge_slot
+        path = getattr(task, "path", None)
+        if slot == "llm_basket":
+            return path == "generic_fallback" or (
+                isinstance(getattr(task, "mechanic", None), str)
+                and task.mechanic != "кэшбэк за сумму корзины"
+            )
+        if slot == "vibe":
+            return path == "generic_fallback" or (
+                isinstance(getattr(task, "title", None), str)
+                and not task.title.startswith("Вайб месяца:")
+            )
+        return False
+
     def generate_batch(self, session: Session, user_id: uuid.UUID, count: int) -> list[uuid.UUID]:
         """Fill every currently-missing challenge slot for `user_id` in one
         shot. Respects invariant "no more than 5 active tasks" (FR-001) —
@@ -76,7 +99,25 @@ class ChallengeService:
         cannot make the five-slot batch shorter.
         """
         active_tasks = self.task_repo.get_active_for_user(session, user_id)
-        if len(active_tasks) >= len(CHALLENGE_SLOTS):
+        obsolete_tasks = [task for task in active_tasks if self._needs_slot_repair(task)]
+        if obsolete_tasks:
+            for task in obsolete_tasks:
+                self.task_repo.mark_expired_for_replacement(session, task)
+            logger.info(
+                "generate_batch.repaired_obsolete_slots",
+                user_id=str(user_id),
+                slots=[task.challenge_slot for task in obsolete_tasks],
+            )
+            active_tasks = self.task_repo.get_active_for_user(session, user_id)
+        active_slots = {t.challenge_slot for t in active_tasks if t.challenge_slot}
+        # The count alone is not enough: users created before the five-slot
+        # scheme (or a previous partial generation) can have five active
+        # tasks while `llm_basket` or `vibe` is still absent. In that case we
+        # must repair the missing slots instead of returning early.
+        if (
+            len(active_tasks) >= len(CHALLENGE_SLOTS)
+            and set(CHALLENGE_SLOTS).issubset(active_slots)
+        ):
             logger.info(
                 "generate_batch.no_slots",
                 user_id=str(user_id),
@@ -85,7 +126,6 @@ class ChallengeService:
             )
             return []
 
-        active_slots = {t.challenge_slot for t in active_tasks if t.challenge_slot}
         # Cross-slot duplicate telemetry: two independently-LLM-routed
         # slots (or a new slot and an already-active task) can land on the
         # same (criterion_type, criterion_entity_id) pair — e.g. `vibe`

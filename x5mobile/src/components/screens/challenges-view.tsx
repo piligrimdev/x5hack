@@ -2,7 +2,7 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BrandColors } from '@/constants/theme';
-import { type ChallengeItem, type PastChallengeItem, useChallenges } from '@/hooks/useChallenges';
+import { isBasketChallenge, type ChallengeItem, type PastChallengeItem, useChallenges } from '@/hooks/useChallenges';
 
 interface ChallengesViewProps {
   token: string;
@@ -22,7 +22,8 @@ function formatDate(iso: string): string {
 }
 
 function ActiveChallengeCard({ item }: { item: ChallengeItem }) {
-  const pct = Math.min(100, Math.round((item.quantity_current / item.quantity_target) * 100));
+  const displayCurrent = isBasketChallenge(item) ? 0 : item.quantity_current;
+  const pct = Math.min(100, Math.round((displayCurrent / item.quantity_target) * 100));
   const daysLeft = Math.ceil((new Date(item.deadline).getTime() - Date.now()) / 86400000);
   const isUrgent = daysLeft <= 2 && daysLeft >= 0;
 
@@ -35,7 +36,7 @@ function ActiveChallengeCard({ item }: { item: ChallengeItem }) {
         </View>
         <View style={[styles.progressPill, isUrgent && styles.progressPillUrgent]}>
           <Text style={[styles.progressPillText, isUrgent && styles.progressPillTextUrgent]}>
-            {item.quantity_current}/{item.quantity_target}
+            {displayCurrent}/{item.quantity_target}
           </Text>
         </View>
       </View>
