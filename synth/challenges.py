@@ -1015,10 +1015,10 @@ def compute_frequency_saturation(
 
 
 # The five independent challenge slots every user gets, one attempt each,
-# unconditionally — no receptiveness/saturation gate decides who gets
-# personalization any more (see `compute_receptiveness`/
-# `compute_frequency_saturation`, still used by `synth/simulation.py`'s
-# offline effect model, but no longer by `generate_challenge_for_user`).
+# unconditionally. llm_habit/llm_discovery/generic are risk-ranked picks
+# from build_survival_risk_challenge (no LLM call); llm_basket is the
+# deterministic build_basket_spend_challenge; vibe is the only slot that
+# still calls the LLM (see generate_challenge_for_user's docstring).
 CHALLENGE_SLOTS = ("llm_habit", "llm_discovery", "llm_basket", "generic", "vibe")
 
 
@@ -1058,6 +1058,7 @@ def generate_challenge_for_user(
     api_key: str | None = None,
     dry_run: bool = False,
     vibe_month_key: str | None = None,
+    category_curves: dict[str, SurvivalCurve] | None = None,
 ) -> list[dict]:
     """Route one profile to exactly `len(CHALLENGE_SLOTS)` records — one per
     slot (`llm_habit`, `llm_discovery`, `llm_basket`, `generic`, `vibe`) —
@@ -1067,15 +1068,12 @@ def generate_challenge_for_user(
     (`summarize_purchase_pattern` already renders "—" for empty fields)
     rather than being rejected upfront.
 
-    `llm_habit` and `llm_discovery` both call the LLM
-    (`build_personal_prompt` with `focus="habit"`/`"discovery"`) — same
-    failure/fallback handling, different instructions. `generic` is the
-    deterministic `GENERIC_CHALLENGES` pool, unconditionally attempted for
-    everyone (not just as a fallback, unlike before) — it is drawn FIRST in
-    the code below, before any LLM slot is attempted, so its own offer
-    never depends on whether an earlier LLM slot happened to fail and
-    consume a `used_generic_indices` pool slot this cycle. `vibe` calls the LLM
-    constrained to the user's monthly theme: `profile["vibe_category"]` if
+    `llm_habit`, `llm_discovery`, and `generic` are all
+    `build_survival_risk_challenge` picks (ranks 0, 1, 2 by churn risk) —
+    no LLM call for any of them. Each falls back to a (slot-distinct)
+    generic offer when the user has no purchase history or that rank isn't
+    available. `vibe` is the only slot left that calls the LLM, constrained
+    to the user's monthly theme: `profile["vibe_category"]` if
     the caller already resolved/persisted one (the web layer always does,
     see `ChallengeAdapter._resolve_vibe_category`), otherwise
     `pick_vibe_category` picks one deterministically from `vibe_month_key`
@@ -1147,38 +1145,57 @@ def generate_challenge_for_user(
         except Exception as e:  # noqa: BLE001 — deliberately broad: any failure must fall back, not propagate
             results.append(_generic(slot, "generic_fallback", error=str(e), model_attempted=model))
 
-    # slot: generic — deterministic, no API call, always attempted for
-    # everyone. Drawn FIRST, before any LLM slot is attempted, so its own
-    # offer never depends on whether an earlier LLM slot happened to fail
-    # this cycle (a failed LLM slot also draws from this same
-    # used_generic_indices pool via `_generic`/`_pick_distinct_generic_offer`).
-    # `cycle_offset` rotates the pick across generation cycles (see
-    # `_pick_distinct_generic_offer`'s docstring) — without it, the
-    # cross-cycle dedup check in `ChallengeService.generate_batch` would
-    # skip this slot forever after its first cycle.
-    generic_cycle_index = profile.get("generic_cycle_index", 0)
-    offer = _pick_distinct_generic_offer(
-        profile["user_id"], config, used_generic_indices, cycle_offset=generic_cycle_index
+    # slot: generic — tries the survival-risk pick (rank 2, after llm_habit
+    # and llm_discovery's ranks 0/1) first; falls back to the fixed
+    # GENERIC_CHALLENGES pool only when there's no purchase history / no
+    # fitted curve to rank against (new user, cold start). Drawn FIRST so
+    # its fallback pool draw never depends on whether an earlier slot's own
+    # fallback already consumed a used_generic_indices slot this cycle.
+    generic_risk_challenge = build_survival_risk_challenge(
+        profile, config, category_curves or {}, rank=2, slot="generic",
     )
-    results.append({
-        "user_id": profile["user_id"], "path": "generic",
-        "model": None, "challenge_slot": "generic", **offer,
-    })
+    if generic_risk_challenge is not None:
+        results.append({
+            "user_id": profile["user_id"], "path": "personal",
+            "model": None, "challenge_slot": "generic", **generic_risk_challenge,
+        })
+    else:
+        generic_cycle_index = profile.get("generic_cycle_index", 0)
+        offer = _pick_distinct_generic_offer(
+            profile["user_id"], config, used_generic_indices, cycle_offset=generic_cycle_index
+        )
+        results.append({
+            "user_id": profile["user_id"], "path": "generic",
+            "model": None, "challenge_slot": "generic", **offer,
+        })
 
-    # slots: llm_habit / llm_discovery — constrained to the catalog's real,
-    # non-forbidden category names (same mechanism `vibe`/`llm_basket` use
-    # for their own narrower allowed sets) so a hallucinated near-miss
-    # category name (e.g. "мясо, птица, рыба") is rejected here instead of
-    # failing DB category resolution later.
-    allowed_personal_categories = set(non_forbidden_category_names(config))
+    # slots: llm_habit / llm_discovery — the rank-0 and rank-1 riskiest
+    # categories (by survival-analysis churn risk) from the user's own
+    # purchase history. Deterministic, no LLM call — see
+    # `build_survival_risk_challenge`. Falls back to a generic offer when
+    # there's no purchase history (cold start) or that rank isn't
+    # available (fewer than 2 distinct categories with a fitted curve).
+    habit_challenge = build_survival_risk_challenge(
+        profile, config, category_curves or {}, rank=0, slot="llm_habit",
+    )
+    if habit_challenge is not None:
+        results.append({
+            "user_id": profile["user_id"], "path": "personal",
+            "model": None, "challenge_slot": "llm_habit", **habit_challenge,
+        })
+    else:
+        results.append(_generic("llm_habit", "generic_fallback"))
 
-    # slot: llm_habit
-    system, user_msg = build_personal_prompt(profile, config, max_reward, focus="habit")
-    _run_llm_slot("llm_habit", system, user_msg, allowed_categories=allowed_personal_categories)
-
-    # slot: llm_discovery
-    system, user_msg = build_personal_prompt(profile, config, max_reward, focus="discovery")
-    _run_llm_slot("llm_discovery", system, user_msg, allowed_categories=allowed_personal_categories)
+    discovery_challenge = build_survival_risk_challenge(
+        profile, config, category_curves or {}, rank=1, slot="llm_discovery",
+    )
+    if discovery_challenge is not None:
+        results.append({
+            "user_id": profile["user_id"], "path": "personal",
+            "model": None, "challenge_slot": "llm_discovery", **discovery_challenge,
+        })
+    else:
+        results.append(_generic("llm_discovery", "generic_fallback"))
 
     # slot: llm_basket — deterministic (see `build_basket_spend_challenge`):
     # spend threshold from the user's own mean receipt total, cashback
