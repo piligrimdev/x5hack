@@ -46,10 +46,27 @@ function vibeEmoji(vibe: Vibe): string {
   return '🍽️';
 }
 
-function mascotState(saved: number, streak: number): string {
-  if (streak >= 2) return `${streak}-й месяц подряд экономите больше. Так держать!`;
-  if (saved > 0) return `В этом месяце уже −${Math.round(saved).toLocaleString('ru-RU')} ₽. Аппи найдёт ещё выгоду.`;
-  return 'Аппи следит за ценами и заданиями, чтобы вы экономили каждый месяц.';
+type AppiMood = 'sad' | 'happy' | 'cool';
+
+const APPI_SAD_MAX = 2000;
+const APPI_COOL_MIN = 10000;
+
+const APPI_IMAGES = {
+  sad: require('../../../assets/images/appi-sad.png'),
+  happy: require('../../../assets/images/appi-happy.png'),
+  cool: require('../../../assets/images/appi-cool.png'),
+} as const;
+
+const APPI_CAPTIONS: Record<AppiMood, string> = {
+  sad: 'Экономия пока скромная. Аппи поможет набрать темп.',
+  happy: 'Хороший месяц! Аппи вами гордится.',
+  cool: 'Королевская экономия! Аппи в восторге.',
+};
+
+function appiMood(saved: number): AppiMood {
+  if (saved >= APPI_COOL_MIN) return 'cool';
+  if (saved >= APPI_SAD_MAX) return 'happy';
+  return 'sad';
 }
 
 export function AppiView({
@@ -70,6 +87,7 @@ export function AppiView({
   const months = monthlyEconomy?.months ?? [];
   const maxSaved = Math.max(...months.map(month => month.saved), 1);
   const currentSaved = monthlyEconomy?.currentMonthSaved ?? 0;
+  const mood = appiMood(currentSaved);
   const previousSaved = monthlyEconomy?.previousMonthSaved ?? 0;
   const cashbackSaved = monthlyEconomy?.currentMonthCashbackRub ?? 0;
   const monthBase = monthlyEconomy?.currentMonthBase ?? 0;
@@ -168,12 +186,12 @@ export function AppiView({
 
           <View style={styles.mascotCard}>
             <Image
-              source={require('../../../assets/images/mascot.png')}
+              source={APPI_IMAGES[mood]}
               style={styles.mascot}
               resizeMode="contain"
             />
             <Text style={styles.mascotState}>
-              {mascotState(currentSaved, monthlyEconomy?.consecutiveGrowthMonths ?? 0)}
+              {APPI_CAPTIONS[mood]}
             </Text>
           </View>
         </View>
@@ -358,7 +376,7 @@ const styles = StyleSheet.create({
   summaryNeutral: { color: TEXT },
   summaryCaption: { color: MUTED, fontSize: 10, lineHeight: 13 },
   mascotCard: {
-    width: 108,
+    width: 118,
     borderRadius: 18,
     backgroundColor: '#FFF6EC',
     paddingHorizontal: 8,
@@ -366,8 +384,9 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 8,
   },
-  mascot: { width: 88, height: 110 },
+  mascot: { width: 102, height: 102 },
   mascotState: { color: '#5C564E', fontSize: 10, lineHeight: 13, textAlign: 'center' },
 
   section: { gap: 8 },
