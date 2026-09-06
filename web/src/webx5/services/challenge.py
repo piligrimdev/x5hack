@@ -13,7 +13,6 @@ import uuid
 import structlog
 from sqlalchemy import exists, select
 from sqlalchemy.orm import Session
-
 from synth.challenges import CHALLENGE_SLOTS, generate_challenge_for_user
 from synth.config import SynthConfig
 
@@ -248,12 +247,12 @@ class ChallengeService:
             # PURE function of unchanging train-period stats and has no
             # rotation at all — without this check it repeats the exact
             # same target forever once the previous task completes.
-            # llm_habit/llm_discovery/generic are all survival-risk picks
-            # now and `vibe` is its own thing — all four legitimately CAN
-            # and should repeat their own previous target when the
-            # underlying habit/theme hasn't changed — blocking that made
-            # those slots permanently unfillable in practice whenever the
-            # pick kept recommending the same thing.
+            # `llm_habit`/`llm_discovery` and `vibe` legitimately CAN and
+            # should repeat their own previous target when the underlying
+            # habit/theme hasn't changed — a stable habit or theme deserves
+            # stable recommendations. `generic` and `llm_basket` remain
+            # guarded (see `_SLOTS_WITHOUT_NATURAL_VARIATION` above for why
+            # each needs this check).
             if slot in _SLOTS_WITHOUT_NATURAL_VARIATION and previous_by_slot.get(slot) == criterion:
                 logger.info(
                     "generate_batch.repeats_previous_cycle_skip",
