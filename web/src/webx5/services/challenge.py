@@ -30,12 +30,23 @@ logger = structlog.get_logger("challenges")
 # Slots whose pick has no natural source of cycle-to-cycle variation — see
 # the cross-cycle-repeat guard in `ChallengeService.generate_batch` below.
 # `llm_basket` is deterministic (`build_basket_spend_challenge`) with no
-# rotation of its own, so it's the only slot left here — llm_habit/
-# llm_discovery/generic are all survival-risk picks now, and risk changes
-# day by day as days-since-last-purchase grows, giving them the same kind
-# of natural variation the LLM-driven versions used to get from the LLM's
-# own non-determinism.
-_SLOTS_WITHOUT_NATURAL_VARIATION = frozenset({"llm_basket"})
+# rotation of its own, so without this guard it repeats the exact same
+# target forever once the previous task completes.
+#
+# `generic` stays here too, even though its pick is now risk-ranked
+# (`build_survival_risk_challenge`) rather than hash-based: if a `generic`
+# challenge EXPIRES without being completed, the user's purchase history —
+# and therefore `category_last_purchase`/the risk ranking — is unchanged
+# between generation cycles, so the risk-ranked pick resolves to the exact
+# same category again. That's the identical "eternal repeat" bug this guard
+# was built to prevent, just reached via risk ranking staying constant
+# instead of a pure hash of user_id. `llm_habit`/`llm_discovery` don't need
+# this guard despite also being survival-risk picks: for them, repeating a
+# genuinely still-highest-risk habitual category cycle after cycle is
+# desired behavior, not a bug — `generic`'s role is different, and a
+# repeated identical "generic" offer forever, with zero new signal, is a
+# bug specifically for this slot.
+_SLOTS_WITHOUT_NATURAL_VARIATION = frozenset({"llm_basket", "generic"})
 
 
 class ChallengeService:

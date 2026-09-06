@@ -244,6 +244,36 @@ def test_generate_batch_existing_active_task_criterion_blocks_new_duplicate():
     assert "llm_habit" not in persisted_slots
 
 
+def test_generate_batch_skips_generic_slot_that_repeats_its_own_previous_cycle():
+    """The cross-cycle repeat check applies ONLY to `generic` — its pick is
+    a pure function of user_id with no natural variation source (before
+    the `cycle_offset` rotation fix, it was a pure function of user_id
+    with no time component at all), so without this check it would return
+    the literal same offer forever. If `generic`'s newly-resolved criterion
+    is identical to what `generic` itself resolved to last cycle, skip
+    persisting it."""
+    service, task_repo, log_repo, adapter = _service_with_mocks()
+
+    previous_criterion = ("category", uuid.uuid4())
+    task_repo.get_last_criterion_per_slot.return_value = {"generic": previous_criterion}
+
+    def resolve(session, script_result):
+        if script_result["challenge_slot"] == "generic":
+            return previous_criterion
+        return ("category", uuid.uuid4())
+
+    adapter.resolve_criterion.side_effect = resolve
+
+    with patch("webx5.services.challenge.generate_challenge_for_user", return_value=_batch_all_four()), \
+         patch("webx5.services.challenge.capture_openrouter_io") as mock_capture:
+        mock_capture.return_value.__enter__.return_value = {}
+        created = service.generate_batch(MagicMock(), uuid.uuid4(), count=4)
+
+    assert len(created) == 3
+    persisted_slots = [call.args[2]["challenge_slot"] for call in adapter.persist_challenge.call_args_list]
+    assert "generic" not in persisted_slots
+
+
 def test_generate_batch_fills_every_eligible_slot_regardless_of_count():
     """Regression test: an earlier design capped persistence at `count`
     slots, walking generate_challenge_for_user's FIXED result order
@@ -294,14 +324,16 @@ def test_generate_batch_fills_missing_slot_even_when_it_was_never_previously_act
 
 
 def test_generate_batch_does_not_skip_non_generic_slots_that_repeat_their_own_previous_cycle():
-    """Regression test: llm_habit/llm_discovery/generic (all survival-risk
-    picks) and vibe must NOT be blocked from repeating their own previous
-    target — a stable purchase habit legitimately produces the same
-    recommendation cycle after cycle, and treating that as a forbidden
-    "repeat" made those slots permanently unfillable in production (the
-    pick kept recommending the same product, the dedup kept rejecting it,
-    forever). Only `llm_basket` is still subject to this guard — it's a
-    pure function of unchanging train-period stats with no rotation."""
+    """Regression test: llm_habit/llm_discovery (survival-risk picks) and
+    llm_basket/vibe must NOT be blocked from repeating their own previous
+    target — a stable purchase habit or unchanging train-period pattern
+    legitimately produces the same recommendation cycle after cycle, and
+    treating that as a forbidden "repeat" made those slots permanently
+    unfillable in production. Only `generic` is exempt from this exemption
+    — see the sibling test above: an expired, uncompleted generic challenge
+    leaves the risk ranking unchanged, so without the guard the identical
+    category would repeat forever with zero new signal, which IS a bug for
+    this slot specifically."""
     service, task_repo, log_repo, adapter = _service_with_mocks()
 
     llm_habits_previous_criterion = ("category", uuid.uuid4())
