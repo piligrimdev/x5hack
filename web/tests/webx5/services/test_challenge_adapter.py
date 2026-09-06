@@ -129,3 +129,33 @@ def test_build_profile_reads_full_history_and_computes_category_last_purchase():
 
     assert profile["category_last_purchase"] == {"молочные продукты и яйца": "2026-08-01"}
     assert len(profile["receipts"]) == 2  # spans >90 days — the cutoff is gone
+
+
+def test_persist_challenge_uses_deadline_days_when_present():
+    adapter = ChallengeAdapter(task_repo=MagicMock(), basket_repo=MagicMock())
+    adapter.task_repo.create.return_value = MagicMock(id=uuid.uuid4())
+    adapter.task_item_repo = MagicMock()
+    session = MagicMock()
+
+    with patch.object(adapter, "resolve_criterion", return_value=("category", uuid.uuid4())):
+        adapter.persist_challenge(
+            session, uuid.uuid4(),
+            {"challenge_title": "T", "reward_rub": 10, "deadline_days": 14, "challenge_slot": "llm_habit"},
+        )
+
+    _, kwargs = adapter.task_repo.create.call_args
+    assert kwargs["deadline"] is not None
+    assert 13 <= (kwargs["deadline"] - datetime.now(UTC)).days <= 14
+
+
+def test_persist_challenge_leaves_deadline_none_when_absent():
+    adapter = ChallengeAdapter(task_repo=MagicMock(), basket_repo=MagicMock())
+    adapter.task_repo.create.return_value = MagicMock(id=uuid.uuid4())
+    adapter.task_item_repo = MagicMock()
+    session = MagicMock()
+
+    with patch.object(adapter, "resolve_criterion", return_value=("category", uuid.uuid4())):
+        adapter.persist_challenge(session, uuid.uuid4(), {"challenge_title": "T", "reward_rub": 10})
+
+    _, kwargs = adapter.task_repo.create.call_args
+    assert kwargs["deadline"] is None

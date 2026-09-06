@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import uuid
 from collections import Counter
-from datetime import date
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 
 from sqlalchemy import func, select
@@ -327,6 +327,11 @@ class ChallengeAdapter:
             qty_target = 1
         qty_target = max(qty_target, 1)
 
+        deadline = None
+        deadline_days = script_result.get("deadline_days")
+        if deadline_days is not None:
+            deadline = datetime.now(UTC) + timedelta(days=int(deadline_days))
+
         task = self.task_repo.create(
             session,
             loyalty_card_id=user_id,
@@ -341,6 +346,7 @@ class ChallengeAdapter:
             path=str(script_result.get("path", "personal")),
             model=script_result.get("model"),
             challenge_slot=script_result.get("challenge_slot"),
+            deadline=deadline,
         )
 
         # Base criterion: item_quantity mirrors task.quantity_target.
