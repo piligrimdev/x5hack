@@ -193,6 +193,70 @@ class TestCalculatePersonalDiscounts:
         assert result[0].discount_id == d_personal.id
         assert result[0].paid_price == Decimal("50.00")
 
+    def test_referral_percent_all_products_applies_to_card(
+        self,
+        service: DiscountCalculatorService,
+        discount_repo: MagicMock,
+        session: MagicMock,
+    ) -> None:
+        product = _make_product(price="100.00")
+        store = _make_store()
+        invitee = uuid.uuid4()
+        personal_type = MagicMock(spec=DiscountType)
+        personal_type.id = uuid.uuid4()
+
+        referral = _make_discount(value="10", entity_id=product.id)
+        referral.entity_id = None
+        referral.value_type = "percent"
+        referral.discount_type_id = personal_type.id
+        referral.loyalty_card_id = invitee
+
+        session.scalars.return_value = [product]
+        discount_repo.find_applicable_for_cart.return_value = [referral]
+        session.scalar.return_value = personal_type
+
+        result = service.calculate(
+            [CartItem(product_id=product.id, quantity=1)],
+            store,
+            invitee,
+            session,
+        )
+        assert result[0].discount_id == referral.id
+        assert result[0].paid_price == Decimal("90.00")
+
+    def test_better_promo_beats_referral_percent(
+        self,
+        service: DiscountCalculatorService,
+        discount_repo: MagicMock,
+        session: MagicMock,
+    ) -> None:
+        product = _make_product(price="100.00")
+        store = _make_store()
+        invitee = uuid.uuid4()
+        personal_type = MagicMock(spec=DiscountType)
+        personal_type.id = uuid.uuid4()
+
+        referral = _make_discount(value="10", entity_id=product.id)
+        referral.entity_id = None
+        referral.value_type = "percent"
+        referral.discount_type_id = personal_type.id
+        referral.loyalty_card_id = invitee
+        promo = _make_discount(value="25", entity_id=product.id)
+        promo.value_type = "percent"
+
+        session.scalars.return_value = [product]
+        discount_repo.find_applicable_for_cart.return_value = [referral, promo]
+        session.scalar.return_value = personal_type
+
+        result = service.calculate(
+            [CartItem(product_id=product.id, quantity=1)],
+            store,
+            invitee,
+            session,
+        )
+        assert result[0].discount_id == promo.id
+        assert result[0].paid_price == Decimal("75.00")
+
 
 class TestCalculatePriceRounding:
     def test_rounds_paid_price_to_two_decimal_places(

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { apiFetch } from '@/api/client';
+import { apiFetch, apiListCouponTransactions, type CouponTxOut } from '@/api/client';
 
 export type FortunePrizeType = 'cashback' | 'gift';
 
@@ -99,6 +99,7 @@ export function describeWheelError(error: unknown): string {
 export function useFortuneWheel(token: string) {
   const [state, setState] = useState<WheelState | null>(null);
   const [history, setHistory] = useState<SpinHistoryItem[]>([]);
+  const [couponTx, setCouponTx] = useState<CouponTxOut[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -106,12 +107,14 @@ export function useFortuneWheel(token: string) {
     setLoading(true);
     setError(null);
     try {
-      const [wheel, spins] = await Promise.all([
+      const [wheel, spins, coupons] = await Promise.all([
         apiFetch<WheelState>('/wheel', token),
         apiFetch<{ items: SpinHistoryItem[] }>('/wheel/spins?limit=8&offset=0', token),
+        apiListCouponTransactions(token, 20, 0),
       ]);
       setState(wheel);
       setHistory(spins.items);
+      setCouponTx(coupons.items);
     } catch (e: unknown) {
       setError(describeWheelError(e));
     } finally {
@@ -157,6 +160,19 @@ export function useFortuneWheel(token: string) {
         },
         ...prev,
       ]);
+      setCouponTx((prev) => [
+        {
+          id: `${result.spin_id}-coupon`,
+          type: 'spin',
+          amount: -1,
+          related_task_id: null,
+          related_spin_id: result.spin_id,
+          related_referral_link_id: null,
+          week_start: null,
+          created_at: result.created_at,
+        },
+        ...prev,
+      ]);
       const targetIndex = Math.max(
         0,
         prizes.findIndex((prize) => prize.id === result.sector_code),
@@ -170,7 +186,7 @@ export function useFortuneWheel(token: string) {
     }
   }, [prizes, state?.can_spin, token]);
 
-  return { state, prizes, history, loading, error, spin, refetch: load };
+  return { state, prizes, history, couponTx, loading, error, spin, refetch: load };
 }
 
 export function formatWinTime(iso: string): string {

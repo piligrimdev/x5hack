@@ -4,9 +4,15 @@ import uuid
 
 from fastapi import APIRouter, HTTPException
 
-from webx5.dependencies.auth import TerminalTokenDep
+from webx5.dependencies.auth import CurrentUserUUID, TerminalTokenDep
 from webx5.dependencies.db import SessionDep
-from webx5.schemas.discount import DiscountCreate, DiscountResponse, DiscountTypeResponse, DiscountUpdate
+from webx5.schemas.discount import (
+    DiscountCreate,
+    DiscountResponse,
+    DiscountTypeResponse,
+    DiscountUpdate,
+    UserDiscountListOut,
+)
 
 discounts_router = APIRouter(prefix="/discounts", tags=["Discounts"])
 
@@ -29,6 +35,25 @@ def list_discount_types(session: SessionDep) -> list[DiscountTypeResponse]:
     repo = DiscountRepository()
     types = repo.list_types(session)
     return [DiscountTypeResponse(id=t.id, name=t.name) for t in types]
+
+
+@discounts_router.get("/available", response_model=UserDiscountListOut)
+def list_available_discounts(
+    session: SessionDep,
+    user_id: CurrentUserUUID,
+) -> UserDiscountListOut:
+    from webx5.crud.discount import DiscountRepository
+    from webx5.services.discount_catalog import describe_discount, resolve_entity_names
+
+    repo = DiscountRepository()
+    discounts = repo.list_available_for_user(session, user_id)
+    names = resolve_entity_names(session, discounts)
+    return UserDiscountListOut(
+        items=[
+            describe_discount(discount, names.get(discount.entity_id) if discount.entity_id else None)
+            for discount in discounts
+        ]
+    )
 
 
 @discounts_router.get("", response_model=list[DiscountResponse])

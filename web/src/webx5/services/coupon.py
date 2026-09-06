@@ -128,3 +128,36 @@ class CouponService:
             new_balance=account.balance,
         )
         return 1
+
+    def award_for_referral(
+        self,
+        session: Session,
+        inviter_id: uuid.UUID,
+        amount: int,
+        referral_link_id: uuid.UUID,
+    ) -> int:
+        if amount <= 0:
+            return 0
+        account = self._repo.lock_account_for_update(session, inviter_id)
+        nested = session.begin_nested()
+        try:
+            self._repo.insert_transaction(
+                session,
+                account_id=account.id,
+                type="referral",
+                amount=amount,
+                related_referral_link_id=referral_link_id,
+            )
+            nested.commit()
+        except IntegrityError:
+            nested.rollback()
+            return 0
+        self._repo.bump_balance(session, account, amount)
+        logger.info(
+            "coupon.referral",
+            loyalty_card_id=str(inviter_id),
+            referral_link_id=str(referral_link_id),
+            amount=amount,
+            new_balance=account.balance,
+        )
+        return amount

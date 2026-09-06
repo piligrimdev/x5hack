@@ -40,6 +40,8 @@ interface HomeViewProps {
   onPoints?: () => void;
   onOpenAppi: () => void;
   onHistory: () => void;
+  onInvite?: () => void;
+  onDiscounts?: () => void;
 }
 
 interface ReplaceableIconProps {
@@ -100,7 +102,7 @@ function QuickAction({
   );
 }
 
-export function HomeView({ token, onPoints, onOpenAppi, onHistory }: HomeViewProps) {
+export function HomeView({ token, onPoints, onOpenAppi, onHistory, onInvite, onDiscounts }: HomeViewProps) {
   const insets = useSafeAreaInsets();
   const { balance, loading: pointsLoading } = usePointsBalance(token);
   const { economy } = useEconomy(token);
@@ -192,14 +194,19 @@ export function HomeView({ token, onPoints, onOpenAppi, onHistory }: HomeViewPro
               </View>
 
               <View style={styles.clubFooter}>
-                <View style={styles.cashbackCircle}><Text style={styles.cashbackArrow}>↶</Text></View>
-                <View style={styles.cashbackCopy}>
-                  <Text style={styles.cashbackLabel}>Кешбэк</Text>
-                  <Text style={styles.cashbackValue}>0.5%</Text>
-                </View>
-                <TouchableOpacity style={styles.chooseButton} onPress={onPoints} activeOpacity={0.8}>
-                  <Text style={styles.chooseButtonText}>Выбрать 3</Text>
-                  <Text style={styles.chooseButtonIcon}>♣</Text>
+                <TouchableOpacity
+                  style={styles.cashbackBlock}
+                  onPress={onDiscounts}
+                  activeOpacity={0.8}>
+                  <View style={styles.cashbackCircle}><Text style={styles.cashbackArrow}>↶</Text></View>
+                  <View style={styles.cashbackCopy}>
+                    <Text style={styles.cashbackLabel}>Кешбэк и скидки</Text>
+                    <Text style={styles.cashbackValue}>0.5%</Text>
+                  </View>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.chooseButton} onPress={onDiscounts} activeOpacity={0.8}>
+                  <Text style={styles.chooseButtonText}>Скидки</Text>
+                  <Text style={styles.chooseButtonIcon}>%</Text>
                 </TouchableOpacity>
               </View>
             </TouchableOpacity>
@@ -223,7 +230,7 @@ export function HomeView({ token, onPoints, onOpenAppi, onHistory }: HomeViewPro
         <View style={styles.contentSheet}>
           <View style={styles.actionsRow}>
             <QuickAction emoji="🍅" label={'История\nпокупок'} color="#FFF1D8" onPress={onHistory} />
-            <QuickAction emoji="⭐" label={'Оценка\nтоваров'} color="#FFF3C9" />
+            <QuickAction emoji="👋" label={'Пригласить\nдруга'} color="#FFF3C9" onPress={onInvite} />
             <QuickAction emoji="%" label={'Моя\nвыгода'} color="#FFE9E4" onPress={onPoints} />
           </View>
 
@@ -235,7 +242,7 @@ export function HomeView({ token, onPoints, onOpenAppi, onHistory }: HomeViewPro
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.saleBanner} activeOpacity={0.9}>
+          <TouchableOpacity style={styles.saleBanner} activeOpacity={0.9} onPress={onDiscounts}>
             <View style={styles.saleCopy}>
               <View style={styles.saleBadge}><Text style={styles.saleBadgeText}>До −40%</Text></View>
               <Text style={styles.saleTitle}>Скидки{'\n'}недели</Text>
@@ -360,12 +367,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  cashbackBlock: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    minWidth: 0,
+  },
   cashbackCircle: {
     width: 34, height: 34, borderRadius: 17, backgroundColor: '#9BDD42',
     alignItems: 'center', justifyContent: 'center',
   },
   cashbackArrow: { color: '#388625', fontSize: 23, lineHeight: 24, fontWeight: '900' },
-  cashbackCopy: { marginLeft: 7 },
+  cashbackCopy: { marginLeft: 7, flexShrink: 1 },
   cashbackLabel: { color: '#FFFFFF', fontSize: 10, fontWeight: '700' },
   cashbackValue: { color: '#FFFFFF', fontSize: 16, lineHeight: 17, fontWeight: '900' },
   chooseButton: {

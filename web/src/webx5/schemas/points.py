@@ -20,6 +20,7 @@ class TransactionOut(BaseModel):
     related_task_id: uuid.UUID | None = None
     related_receipt_id: uuid.UUID | None = None
     related_spin_id: uuid.UUID | None = None
+    related_referral_link_id: uuid.UUID | None = None
     rate_at_time: int | None = None
     created_at: datetime
 

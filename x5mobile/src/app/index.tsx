@@ -11,13 +11,15 @@ import { HomeView } from '@/components/screens/home-view';
 import { LoginView } from '@/components/screens/login-view';
 import { PointsView } from '@/components/screens/points-view';
 import { ReceiptDetailView } from '@/components/screens/receipt-detail-view';
+import { DiscountsView } from '@/components/screens/discounts-view';
+import { ReferralView } from '@/components/screens/referral-view';
 import { SavingsLeaderboardView } from '@/components/screens/savings-leaderboard-view';
 import { SavingsView } from '@/components/screens/savings-view';
 import { BrandColors } from '@/constants/theme';
 import { useBasket } from '@/hooks/useBasket';
 import { useEconomy } from '@/hooks/useEconomy';
 
-type Screen = 'home' | 'history' | 'catalog' | 'cart' | 'appi' | 'profile' | 'challenges' | 'receipt-detail' | 'points' | 'wheel' | 'leaderboard';
+type Screen = 'home' | 'history' | 'catalog' | 'cart' | 'appi' | 'profile' | 'challenges' | 'receipt-detail' | 'points' | 'wheel' | 'leaderboard' | 'referral' | 'discounts';
 
 function AppContent({ token }: { token: string }) {
   const [screen, setScreen] = useState<Screen>('home');
@@ -52,6 +54,8 @@ function AppContent({ token }: { token: string }) {
             onPoints={() => navigate('points')}
             onOpenAppi={() => navigate('appi')}
             onHistory={() => navigate('history')}
+            onInvite={() => navigate('referral')}
+            onDiscounts={() => navigate('discounts')}
           />
         )}
         {(screen === 'appi' || screen === 'leaderboard') && (
@@ -96,6 +100,16 @@ function AppContent({ token }: { token: string }) {
         )}
         {screen === 'wheel' && (
           <FortuneWheelView token={token} goBack={goBack} />
+        )}
+        {screen === 'referral' && (
+          <ReferralView
+            token={token}
+            goBack={goBack}
+            onOpenDiscounts={() => navigate('discounts')}
+          />
+        )}
+        {screen === 'discounts' && (
+          <DiscountsView token={token} goBack={goBack} />
         )}
         {screen === 'receipt-detail' && selectedReceiptId && (
           <ReceiptDetailView token={token} receiptId={selectedReceiptId} goBack={goBack} />

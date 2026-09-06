@@ -11,6 +11,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { FortuneWheel, type SpinRequest } from '@/components/screens/fortune-wheel';
+import type { CouponTxOut, CouponTxType } from '@/api/client';
 import {
   formatWinTime,
   prizeTypeLabel,
@@ -30,10 +31,32 @@ interface FortuneWheelViewProps {
   goBack: () => void;
 }
 
+const COUPON_TX_LABEL: Record<CouponTxType, string> = {
+  weekly_grant: 'Еженедельные купоны',
+  task_complete: 'За задание',
+  spin: 'Крутка колеса',
+  referral: 'За приглашение друга',
+};
+
+function CouponTxRow({ item }: { item: CouponTxOut }) {
+  const earn = item.amount > 0;
+  return (
+    <View style={styles.couponTxRow}>
+      <View style={styles.historyCopy}>
+        <Text style={styles.historyTitle}>{COUPON_TX_LABEL[item.type]}</Text>
+        <Text style={styles.historyMeta}>{formatWinTime(item.created_at)}</Text>
+      </View>
+      <Text style={[styles.couponTxAmount, earn ? styles.couponTxEarn : styles.couponTxSpend]}>
+        {earn ? `+${item.amount}` : item.amount}
+      </Text>
+    </View>
+  );
+}
+
 export function FortuneWheelView({ token, goBack }: FortuneWheelViewProps) {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const { state, prizes, history, loading, error, spin } = useFortuneWheel(token);
+  const { state, prizes, history, couponTx, loading, error, spin } = useFortuneWheel(token);
   const [spinRequest, setSpinRequest] = useState<SpinRequest | null>(null);
   const [animating, setAnimating] = useState(false);
   const [result, setResult] = useState<SpinResult | null>(null);
@@ -150,6 +173,13 @@ export function FortuneWheelView({ token, goBack }: FortuneWheelViewProps) {
           </View>
         ))}
 
+        <Text style={styles.sectionTitle}>История купонов</Text>
+        {couponTx.length === 0 ? (
+          <Text style={styles.empty}>Пока нет операций — купоны появятся за задания, реферал и в начале недели.</Text>
+        ) : couponTx.map((item) => (
+          <CouponTxRow key={item.id} item={item} />
+        ))}
+
         <Text style={styles.sectionTitle}>Последние крутки</Text>
         {history.length === 0 ? (
           <Text style={styles.empty}>Ещё не крутили — первая долька ждёт купон.</Text>
@@ -248,4 +278,15 @@ const styles = StyleSheet.create({
   historyTitle: { color: TEXT, fontSize: 14, fontWeight: '700' },
   historyMeta: { color: MUTED, fontSize: 11 },
   historyType: { color: DARK_GREEN, fontSize: 11, fontWeight: '700' },
+  couponTxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: BORDER,
+  },
+  couponTxAmount: { fontSize: 16, fontWeight: '800' },
+  couponTxEarn: { color: GREEN },
+  couponTxSpend: { color: '#C74335' },
 });

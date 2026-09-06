@@ -5,6 +5,7 @@ import {
   Modal,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -14,6 +15,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ApiError, apiLogin, apiRegister } from '@/api/client';
+import { INVITEE_STEPS } from '@/constants/referral';
 
 const GREEN = '#138F3E';
 const DARK_GREEN = '#164E2B';
@@ -56,8 +58,8 @@ function loginHint(error: unknown): string {
     if (error.status === 404 || error.status === 403) {
       return 'Этот номер ещё не зарегистрирован. Нажмите «Зарегистрироваться».';
     }
-    if (error.status === 422) {
-      return 'Проверьте номер телефона и попробуйте ещё раз.';
+    if (error.status === 409 || error.status === 422) {
+      return error.message;
     }
     return 'Не удалось войти. Попробуйте ещё раз — или зарегистрируйтесь, если аккаунта нет.';
   }
@@ -67,10 +69,13 @@ function loginHint(error: unknown): string {
 function registerHint(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.status === 409) {
-      return 'Этот номер уже есть. Нажмите «Войти».';
+      if (error.message.toLowerCase().includes('already registered')) {
+        return 'Этот номер уже есть. Нажмите «Войти».';
+      }
+      return error.message;
     }
     if (error.status === 422) {
-      return 'Проверьте номер телефона и попробуйте ещё раз.';
+      return error.message;
     }
     return 'Не удалось зарегистрироваться. Попробуйте ещё раз или войдите, если аккаунт уже есть.';
   }
@@ -307,10 +312,20 @@ export function LoginView({ onLogin }: LoginViewProps) {
         <Pressable style={styles.modalBackdrop} onPress={() => setReferralOpen(false)}>
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
             <Pressable style={[styles.modalCard, { paddingBottom: insets.bottom + 18 }]} onPress={() => {}}>
+              <ScrollView
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.modalScroll}>
               <Text style={styles.modalTitle}>Реферальный код</Text>
               <Text style={styles.modalSubtitle}>
-                6 символов: латинские буквы любого регистра или цифры. Код сохранится и уйдёт вместе со входом или регистрацией.
+                6 символов: латинские буквы любого регистра или цифры. Регистр важен. Код уйдёт вместе со входом или регистрацией.
               </Text>
+              <View style={styles.howTo}>
+                <Text style={styles.howToTitle}>Как получить бонусы</Text>
+                {INVITEE_STEPS.map((step) => (
+                  <Text key={step} style={styles.howToText}>• {step}</Text>
+                ))}
+              </View>
               <SegmentedDigits
                 groups={[1, 1, 1, 1, 1, 1]}
                 value={draftCode}
@@ -334,6 +349,7 @@ export function LoginView({ onLogin }: LoginViewProps) {
                   <Text style={styles.clearBtnText}>Отмена</Text>
                 </TouchableOpacity>
               )}
+              </ScrollView>
             </Pressable>
           </KeyboardAvoidingView>
         </Pressable>
@@ -407,9 +423,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingTop: 18,
     gap: 12,
+    maxHeight: '88%',
   },
+  modalScroll: { gap: 12 },
   modalTitle: { color: DARK_GREEN, fontSize: 20, fontWeight: '900' },
   modalSubtitle: { color: MUTED, fontSize: 13, lineHeight: 18 },
+  howTo: {
+    backgroundColor: '#F6F8F6',
+    borderRadius: 12,
+    padding: 12,
+    gap: 8,
+  },
+  howToTitle: { color: DARK_GREEN, fontSize: 14, fontWeight: '800' },
+  howToText: { color: TEXT, fontSize: 13, lineHeight: 18 },
   clearBtn: { alignItems: 'center', paddingVertical: 8 },
   clearBtnText: { color: MUTED, fontSize: 14, fontWeight: '700' },
 });

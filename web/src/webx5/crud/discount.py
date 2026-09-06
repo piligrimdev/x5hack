@@ -96,6 +96,25 @@ class DiscountRepository:
             stmt = stmt.join(Discount.link_type).where(DiscountLinkType.name == link_type_name)
         return list(session.scalars(stmt))
 
+    def list_available_for_user(self, session: Session, user_id: uuid.UUID) -> list[Discount]:
+        now = datetime.now(timezone.utc)
+        stmt = select(Discount).where(
+            and_(
+                or_(Discount.valid_from.is_(None), Discount.valid_from <= now),
+                or_(Discount.valid_to.is_(None), Discount.valid_to >= now),
+                or_(Discount.loyalty_card_id.is_(None), Discount.loyalty_card_id == user_id),
+            )
+        )
+        rows = list(session.scalars(stmt))
+        far = datetime(9999, 12, 31, tzinfo=timezone.utc)
+        rows.sort(
+            key=lambda d: (
+                0 if d.loyalty_card_id is not None else 1,
+                d.valid_to or far,
+            )
+        )
+        return rows
+
     def list_types(self, session: Session) -> list[DiscountType]:
         return list(session.scalars(select(DiscountType).order_by(DiscountType.name)))
 

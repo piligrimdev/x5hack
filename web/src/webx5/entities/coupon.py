@@ -48,7 +48,7 @@ class CouponTransaction(Base):
     __tablename__ = "coupon_transaction"
     __table_args__ = (
         CheckConstraint(
-            "type IN ('weekly_grant', 'task_complete', 'spin')",
+            "type IN ('weekly_grant', 'task_complete', 'spin', 'referral')",
             name="ck_coupon_tx_type",
         ),
         CheckConstraint("amount <> 0", name="ck_coupon_tx_amount_nonzero"),
@@ -72,6 +72,12 @@ class CouponTransaction(Base):
             unique=True,
             postgresql_where=text("type = 'spin'"),
         ),
+        Index(
+            "ux_coupon_tx_referral",
+            "related_referral_link_id",
+            unique=True,
+            postgresql_where=text("type = 'referral'"),
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
@@ -85,6 +91,9 @@ class CouponTransaction(Base):
     )
     related_spin_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("wheel_spin.id", ondelete="SET NULL"), nullable=True
+    )
+    related_referral_link_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("referral_link.id", ondelete="SET NULL"), nullable=True
     )
     week_start: Mapped[date | None] = mapped_column(Date, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
