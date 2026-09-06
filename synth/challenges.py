@@ -231,6 +231,21 @@ def pick_sku_in_category(config: SynthConfig, category: str, seed_key: str) -> S
     return skus[_hash_index(seed_key, len(skus))]
 
 
+def non_forbidden_category_names(config: SynthConfig) -> list[str]:
+    """Every catalog category name minus `forbidden_categories` — the exact
+    set of names the LLM is allowed to name in `target_categories` for
+    `llm_habit`/`llm_discovery`. Passed to `parse_and_validate_challenge` as
+    `allowed_categories` and spelled out in `build_personal_prompt`'s system
+    text, the same way `vibe`/`llm_basket` already constrain their own
+    prompts — without this, the LLM was free to invent near-miss category
+    names (e.g. "мясо, птица, рыба" instead of the real "мясо и птица" /
+    "рыба и морепродукты"), which passed this function's own forbidden-list
+    check but then failed DB category resolution downstream in
+    `ChallengeAdapter.resolve_criterion`."""
+    forbidden = set(config.forbidden_categories)
+    return [c.name for c in config.categories if c.name not in forbidden]
+
+
 def find_sku_id_for_item(config: SynthConfig, category: str, item: str) -> str | None:
     """Resolve a (category, item) text pair — already chosen by a
     deterministic builder (spend_threshold's favorite_item, category_expansion's
@@ -515,6 +530,7 @@ def build_personal_prompt(
 ) -> tuple[str, str]:
     summary = summarize_purchase_pattern(profile, config)
     forbidden = ", ".join(config.forbidden_categories)
+    allowed = ", ".join(non_forbidden_category_names(config))
 
     if focus == "discovery":
         focus_instruction = (
@@ -537,6 +553,9 @@ def build_personal_prompt(
         "именно его привычкам, которая подтолкнёт к повторной или "
         "дополнительной покупке.\n\n"
         f"{focus_instruction}\n\n"
+        f"target_categories обязаны быть строго из этого списка названий, "
+        f"дословно, без сокращений и без объединения нескольких категорий "
+        f"через запятую в одну строку: {allowed}\n"
         f"Никогда не предлагай в target_categories эти категории: {forbidden} "
         "— они запрещены для челленджей (регулируемые/чувствительные).\n"
         f"reward_rub не должен превышать {max_reward_rub:.0f} ₽ — это ограничение "
@@ -912,13 +931,20 @@ def generate_challenge_for_user(
         "model": None, "challenge_slot": "generic", **offer,
     })
 
+    # slots: llm_habit / llm_discovery — constrained to the catalog's real,
+    # non-forbidden category names (same mechanism `vibe`/`llm_basket` use
+    # for their own narrower allowed sets) so a hallucinated near-miss
+    # category name (e.g. "мясо, птица, рыба") is rejected here instead of
+    # failing DB category resolution later.
+    allowed_personal_categories = set(non_forbidden_category_names(config))
+
     # slot: llm_habit
     system, user_msg = build_personal_prompt(profile, config, max_reward, focus="habit")
-    _run_llm_slot("llm_habit", system, user_msg)
+    _run_llm_slot("llm_habit", system, user_msg, allowed_categories=allowed_personal_categories)
 
     # slot: llm_discovery
     system, user_msg = build_personal_prompt(profile, config, max_reward, focus="discovery")
-    _run_llm_slot("llm_discovery", system, user_msg)
+    _run_llm_slot("llm_discovery", system, user_msg, allowed_categories=allowed_personal_categories)
 
     # slot: llm_basket
     suggested_items = profile.get("suggested_basket_items") or []

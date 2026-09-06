@@ -21,6 +21,7 @@ from synth.challenges import (
     generate_challenge_for_user,
     item_action_description,
     load_profiles,
+    non_forbidden_category_names,
     parse_and_validate_challenge,
     pick_generic_challenge,
     pick_sku_in_category,
@@ -313,6 +314,25 @@ def test_build_personal_prompt_mentions_forbidden_categories_and_reward_ceiling(
     assert profile["chain"] in user
 
 
+def test_build_personal_prompt_spells_out_allowed_category_names():
+    """Without an explicit list of real category names in the prompt, the
+    LLM has invented near-miss names (e.g. "мясо, птица, рыба") that pass
+    parse_and_validate_challenge's forbidden-list check but then fail DB
+    category resolution downstream — spelling every valid name out here is
+    the same fix `build_vibe_prompt`/`build_basket_prompt` already apply to
+    their own narrower category sets."""
+    profile = _profile("promo_hunter", seed=1)
+    system, _ = build_personal_prompt(profile, _config, max_reward_rub=77.0)
+    for category in non_forbidden_category_names(_config):
+        assert category in system
+
+
+def test_non_forbidden_category_names_excludes_forbidden():
+    names = non_forbidden_category_names(_config)
+    assert not (set(names) & set(_config.forbidden_categories))
+    assert set(names) == {c.name for c in _config.categories} - set(_config.forbidden_categories)
+
+
 def test_build_personal_prompt_discovery_focus_differs_from_habit_focus():
     profile = _profile("promo_hunter", seed=1)
     habit_system, _ = build_personal_prompt(profile, _config, max_reward_rub=50.0, focus="habit")
@@ -477,6 +497,33 @@ def test_generate_challenge_for_user_llm_basket_falls_back_without_calling_llm_w
     results = generate_challenge_for_user(profile, _config, model="fake/model", api_key="fake-key")
     basket_result = _by_slot(results)["llm_basket"]
     assert basket_result["path"] == "generic_fallback"
+
+
+def test_generate_challenge_for_user_llm_habit_falls_back_on_hallucinated_category(monkeypatch):
+    """Regression test: before allowed_categories was threaded into
+    llm_habit/llm_discovery, the LLM was free to invent a near-miss
+    category name (e.g. "мясо, птица, рыба" instead of the real "мясо и
+    птица" / "рыба и морепродукты") — parse_and_validate_challenge accepted
+    it (it isn't in forbidden_categories), and the slot only failed much
+    later, downstream, at DB category resolution. It must now be rejected
+    right here and fall back to generic."""
+    profile = _profile("bakes_on_weekends", seed=4)
+
+    def fake_call(model, system, user, api_key=None, timeout=60.0, max_retries=3):
+        return json.dumps({
+            "challenge_title": "Попробуй мясо и рыбу",
+            "description": "desc",
+            "target_categories": ["мясо, птица, рыба"],
+            "mechanic": "скидка",
+            "reward_rub": 30,
+        })
+
+    monkeypatch.setattr("synth.challenges.call_openrouter", fake_call)
+    results = generate_challenge_for_user(profile, _config, model="fake/model", api_key="fake-key")
+    for slot in ("llm_habit", "llm_discovery"):
+        result = _by_slot(results)[slot]
+        assert result["path"] == "generic_fallback"
+        assert "outside allowed set" in result["error"]
 
 
 def test_build_category_expansion_challenge_targets_least_bought_category():

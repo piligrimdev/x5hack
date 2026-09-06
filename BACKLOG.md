@@ -288,3 +288,26 @@ LLM-слоты и `vibe`. На практике это оказалось хуж
 `rewrite_descriptions_for_tracked_item` (только для `path == "personal"` —
 `generic`/`generic_fallback`-записи всегда получают шаблон `generic`,
 даже если их `challenge_slot` называет слот, который они заменяют).
+
+### RESOLVED: llm_habit/llm_discovery галлюцинировали несуществующие названия категорий
+
+Найдено на реальном использовании 2026-09-05 (аккаунт +79006472484): LLM
+вернул `target_categories: ["мясо, птица, рыба"]` — склеенное near-miss
+название вместо двух реальных категорий каталога ("мясо и птица" и "рыба
+и морепродукты"). `parse_and_validate_challenge` это пропускал (категория
+не входит в `forbidden_categories`), и слот падал только позже, при
+резолве в БД (`ChallengeAdapter.resolve_criterion`: `Category not found in
+DB`). Причина: `build_personal_prompt` (используется для `llm_habit` и
+`llm_discovery`) не перечислял LLM реальные названия категорий и не
+передавал `allowed_categories` в валидацию — в отличие от `vibe`/
+`llm_basket`, которые уже ограничивают свой более узкий список категорий
+обоими способами.
+
+**Решение:** добавлена `non_forbidden_category_names(config)` —
+единственный источник разрешённого списка (все категории каталога минус
+`forbidden_categories`). Список теперь дословно перечисляется в
+system-промпте `build_personal_prompt`, и передаётся как
+`allowed_categories` в `parse_and_validate_challenge` для обоих слотов —
+как и раньше делают `vibe`/`llm_basket`. Галлюцинация теперь отклоняется
+здесь же, с понятной ошибкой `target_categories outside allowed set`, и
+слот аккуратно уходит в `generic_fallback`, а не проваливается позже.
