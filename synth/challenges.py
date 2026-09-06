@@ -14,6 +14,7 @@ import requests
 
 from synth.catalog import SKU, build_catalog, skus_by_category
 from synth.config import SynthConfig
+from synth.survival import SurvivalCurve
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 
@@ -531,6 +532,101 @@ def build_category_expansion_challenge(
         "novel_item": target_item,
         "target_sku_id": find_sku_id_for_item(config, target_category, target_item),
         "target_quantity": 1,
+    }
+
+
+_SURVIVAL_TITLE_TEMPLATES: dict[str, str] = {
+    "llm_habit": "Вернитесь к «{category}»",
+    "llm_discovery": "Не забывайте про «{category}»",
+    "generic": "Специально для вас: «{category}»",
+}
+
+
+def build_survival_risk_challenge(
+    profile: dict,
+    config: SynthConfig,
+    category_curves: dict[str, SurvivalCurve],
+    rank: int,
+    slot: str,
+    as_of: date | None = None,
+    discount_pct: float = 10.0,
+) -> dict | None:
+    """Deterministic, no-LLM-call challenge: rank every category the user
+    has ever bought (`profile["category_last_purchase"]`) by churn risk —
+    `1 - curve.survival_at(days_since_last_purchase)` on that category's
+    population Kaplan-Meier curve — and return a challenge on the
+    `rank`-th riskiest one (0 = riskiest).
+
+    Categories in `config.forbidden_categories`, or with no fitted curve
+    in `category_curves` (population never observed them — shouldn't
+    happen in practice, but not guaranteed), are excluded from ranking.
+
+    Returns None if the user has no purchase history at all, or if fewer
+    than `rank + 1` categories remain after the exclusions above — the
+    caller falls back to the pre-existing generic pool, same as any other
+    "can't build this challenge" case in this module.
+
+    `as_of` defaults to `date.today()`; callers needing reproducibility
+    (offline scoring against `config.temporal_split`) pass it explicitly.
+    """
+    last_purchase = profile.get("category_last_purchase") or {}
+    if not last_purchase:
+        return None
+
+    resolved_as_of = as_of if as_of is not None else date.today()  # noqa: DTZ011 — calendar date, not a timestamp
+    forbidden = set(config.forbidden_categories)
+
+    scored: list[tuple[float, str, int, SurvivalCurve]] = []
+    for category, last_date_iso in last_purchase.items():
+        if category in forbidden:
+            continue
+        curve = category_curves.get(category)
+        if curve is None:
+            continue
+        days = (resolved_as_of - date.fromisoformat(last_date_iso)).days
+        risk = 1.0 - curve.survival_at(days)
+        scored.append((risk, category, days, curve))
+
+    scored.sort(key=lambda entry: entry[0], reverse=True)
+    if rank >= len(scored):
+        return None
+
+    risk, category, days, curve = scored[rank]
+    econ_by_category = {e.category: e for e in config.category_economics}
+    base_price = econ_by_category[category].base_price_rub
+    max_reward = estimate_max_reward_rub(profile)
+    reward_rub = round(min(base_price * (discount_pct / 100), max_reward), 2)
+
+    median_days = curve.median_survival_days()
+    deadline_days = min(30, median_days) if median_days is not None else 14
+
+    quantity = SLOT_TARGET_QUANTITY.get(slot, PERSONAL_TARGET_QUANTITY)
+    sku = pick_sku_in_category(config, category, seed_key=f"{profile['user_id']}:sku:{slot}")
+
+    title_template = _SURVIVAL_TITLE_TEMPLATES.get(slot, _SURVIVAL_TITLE_TEMPLATES["generic"])
+    title = title_template.format(category=category)
+
+    if sku is not None:
+        description = item_action_description(sku.item, quantity, reward_rub, slot=slot)
+    else:
+        description = f"Специальное предложение в категории «{category}»."
+
+    median_text = str(median_days) if median_days is not None else "неизвестно"
+    reasoning = (
+        f"«{category}» — риск оттока {risk:.0%}: не покупали {days} дн., "
+        f"медианный цикл повторной покупки по популяции ~{median_text} дн. (ранг {rank + 1})."
+    )
+
+    return {
+        "challenge_title": title,
+        "description": description,
+        "target_categories": [category],
+        "mechanic": "survival-риск оттока",
+        "reward_rub": reward_rub,
+        "reasoning": reasoning,
+        "target_sku_id": sku.sku_id if sku else None,
+        "target_quantity": quantity,
+        "deadline_days": deadline_days,
     }
 
 

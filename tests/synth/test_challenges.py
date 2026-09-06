@@ -1,4 +1,5 @@
 import json
+from datetime import date
 
 import pytest
 
@@ -15,6 +16,7 @@ from synth.challenges import (
     build_category_expansion_challenge,
     build_personal_prompt,
     build_spend_threshold_challenge,
+    build_survival_risk_challenge,
     build_vibe_prompt,
     compute_frequency_saturation,
     compute_receptiveness,
@@ -33,6 +35,7 @@ from synth.challenges import (
 )
 from synth.config import load_config
 from synth.reference_profiles import default_class_list, reference_profiles
+from synth.survival import SurvivalCurve
 
 _config = load_config("config/synth_schema.yaml")
 
@@ -948,3 +951,98 @@ def test_rewrite_descriptions_for_tracked_item_leaves_item_specific_records_unto
     rewritten = rewrite_descriptions_for_tracked_item(records, _config)
     assert rewritten[0]["description"] == "Потрать от 500 ₽ и получи скидку"
     assert rewritten[1]["description"] == "n/a"
+
+
+def _curve(times, survival):
+    return SurvivalCurve(times=tuple(times), survival=tuple(survival))
+
+
+def test_build_survival_risk_challenge_picks_the_nth_riskiest_category():
+    profile = {
+        "user_id": "u1",
+        "receipts": [],
+        "category_last_purchase": {
+            "молочные продукты и яйца": "2026-08-01",  # 30 days ago -> high risk
+            "овощи": "2026-08-28",  # 3 days ago -> low risk
+        },
+    }
+    curves = {
+        "молочные продукты и яйца": _curve([5, 30], [0.9, 0.1]),
+        "овощи": _curve([5, 30], [0.9, 0.1]),
+    }
+    result = build_survival_risk_challenge(
+        profile, _config, curves, rank=0, slot="llm_habit", as_of=date(2026, 8, 31),
+    )
+    assert result is not None
+    assert result["target_categories"] == ["молочные продукты и яйца"]
+    assert result["target_quantity"] == SLOT_TARGET_QUANTITY["llm_habit"]
+    assert result["deadline_days"] is not None
+
+    second = build_survival_risk_challenge(
+        profile, _config, curves, rank=1, slot="llm_discovery", as_of=date(2026, 8, 31),
+    )
+    assert second["target_categories"] == ["овощи"]
+
+
+def test_build_survival_risk_challenge_returns_none_without_purchase_history():
+    profile = {"user_id": "u1", "receipts": [], "category_last_purchase": {}}
+    assert build_survival_risk_challenge(profile, _config, {}, rank=0, slot="llm_habit") is None
+
+
+def test_build_survival_risk_challenge_returns_none_when_rank_exceeds_available_categories():
+    profile = {
+        "user_id": "u1",
+        "receipts": [],
+        "category_last_purchase": {"овощи": "2026-08-01"},
+    }
+    curves = {"овощи": _curve([5], [0.5])}
+    assert build_survival_risk_challenge(profile, _config, curves, rank=1, slot="generic") is None
+
+
+def test_build_survival_risk_challenge_skips_forbidden_categories():
+    forbidden = _config.forbidden_categories[0]
+    profile = {
+        "user_id": "u1",
+        "receipts": [],
+        "category_last_purchase": {forbidden: "2026-08-01", "овощи": "2026-08-01"},
+    }
+    curves = {forbidden: _curve([5], [0.1]), "овощи": _curve([5], [0.9])}
+    result = build_survival_risk_challenge(profile, _config, curves, rank=0, slot="generic")
+    assert result["target_categories"] == ["овощи"]
+
+
+def test_build_survival_risk_challenge_skips_categories_without_a_fitted_curve():
+    profile = {
+        "user_id": "u1",
+        "receipts": [],
+        "category_last_purchase": {"овощи": "2026-08-01", "фрукты": "2026-08-01"},
+    }
+    # Only "овощи" has a curve — "фрукты" must be ignored, not crash.
+    curves = {"овощи": _curve([5], [0.5])}
+    result = build_survival_risk_challenge(profile, _config, curves, rank=0, slot="generic")
+    assert result["target_categories"] == ["овощи"]
+    assert build_survival_risk_challenge(profile, _config, curves, rank=1, slot="generic") is None
+
+
+def test_build_survival_risk_challenge_deadline_from_median_survival_capped_at_30():
+    profile = {
+        "user_id": "u1",
+        "receipts": [],
+        "category_last_purchase": {"овощи": "2026-08-01"},
+    }
+    curves = {"овощи": _curve([5, 60], [0.9, 0.1])}  # median never <= 0.5 within cap... see below
+    result = build_survival_risk_challenge(profile, _config, curves, rank=0, slot="generic")
+    # median_survival_days() -> None for this curve (never <= 0.5 at t=5 or 60... 0.1 IS <= 0.5)
+    # so median is 60 -> deadline caps at 30.
+    assert result["deadline_days"] == 30
+
+
+def test_build_survival_risk_challenge_deadline_defaults_when_no_median():
+    profile = {
+        "user_id": "u1",
+        "receipts": [],
+        "category_last_purchase": {"овощи": "2026-08-01"},
+    }
+    curves = {"овощи": _curve([5], [0.9])}  # never drops to 0.5 -> median is None
+    result = build_survival_risk_challenge(profile, _config, curves, rank=0, slot="generic")
+    assert result["deadline_days"] == 14
