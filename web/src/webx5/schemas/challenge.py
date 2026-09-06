@@ -15,6 +15,17 @@ class EmptyReason(str, Enum):
     no_history = "no_history"
 
 
+class TaskItemOut(BaseModel):
+    id: uuid.UUID
+    label: str | None
+    criterion_type: str
+    criterion_entity_id: uuid.UUID
+    quantity_target: int
+    quantity_current: int
+
+    model_config = {"from_attributes": True}
+
+
 class ChallengeItem(BaseModel):
     id: uuid.UUID
     title: str
@@ -27,6 +38,7 @@ class ChallengeItem(BaseModel):
     quantity_current: int = Field(ge=0)
     deadline: datetime
     status: str = "открыто"
+    items: list[TaskItemOut] = []
 
     model_config = {"from_attributes": True}
 

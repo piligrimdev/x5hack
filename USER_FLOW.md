@@ -356,6 +356,338 @@ Authorization: Bearer <jwt>
 
 ---
 
+---
+
+## Флоу «Вайб» (feature 008)
+
+### Участники
+
+- **Касса** — управляет каталогом типов вайба (`X-Terminal-Token`)
+- **Пользователь** — выбирает/меняет/сбрасывает свой вайб (`Bearer JWT`)
+- **Celery worker** — при генерации заданий читает вайб пользователя автоматически
+
+### Что такое вайб
+
+Вайб — направленность LLM-генерации заданий и рекомендаций корзины. Имеет:
+- `name` — название, видимое пользователю («Здоровье и лёгкость»)
+- `description` — короткое описание для UI
+- `llm_context` — произвольная строка, передаётся напрямую в промпт LLM как контекст категорий
+
+При удалении типа вайба у всех пользователей, у которых он был выбран, `vibe_type_id` сбрасывается в `NULL` автоматически (ON DELETE SET NULL).
+
+---
+
+### Фаза 1 — Касса: создание типа вайба
+
+```
+POST /vibes
+X-Terminal-Token: <secret>
+Content-Type: application/json
+
+{
+  "name": "Здоровье и лёгкость",
+  "description": "Фрукты, овощи, злаки — питание без лишнего",
+  "llm_context": "Фрукты, Овощи, Злаки, Молочные продукты. Фокус на лёгком и полезном питании."
+}
+
+→ 201 Created
+{
+  "id": "<vibe_uuid>",
+  "name": "Здоровье и лёгкость",
+  "description": "Фрукты, овощи, злаки — питание без лишнего"
+}
+```
+
+| Статус | Значение |
+|--------|----------|
+| **201** | Вайб создан |
+| **409** | Вайб с таким именем уже существует |
+| **401** | Отсутствует/неверный `X-Terminal-Token` |
+
+Другие операции кассы:
+```
+PUT  /vibes/{vibe_id}    X-Terminal-Token — обновить вайб (все поля опциональны)
+DELETE /vibes/{vibe_id}  X-Terminal-Token → 204; у пользователей vibe_id = null
+```
+
+---
+
+### Фаза 2 — Пользователь: просмотр и выбор вайба
+
+```
+GET /vibes   (публичный, без авторизации)
+
+→ 200 OK
+[
+  { "id": "<uuid>", "name": "Здоровье и лёгкость", "description": "..." },
+  { "id": "<uuid>", "name": "Сладкоежка",           "description": "..." }
+]
+```
+
+Пользователь выбирает вайб:
+
+```
+PUT /users/me/vibe
+Authorization: Bearer <jwt>
+Content-Type: application/json
+
+{ "vibe_id": "<vibe_uuid>" }
+
+→ 200 OK
+{ "vibe_id": "<vibe_uuid>" }
+```
+
+Сброс вайба:
+```
+PUT /users/me/vibe
+Authorization: Bearer <jwt>
+
+{ "vibe_id": null }
+
+→ 200 OK
+{ "vibe_id": null }
+```
+
+| Статус | Значение |
+|--------|----------|
+| **200** | Вайб выбран/сброшен |
+| **404** | `vibe_id` указан, но не найден в БД |
+| **401** | Нет/протух Bearer |
+
+---
+
+### Фаза 3 — Влияние на генерацию заданий
+
+Генерация запускается автоматически через Celery после первого чека пользователя. Вручную (для теста) — вызов задачи напрямую:
+
+```bash
+# Через celery cli (из web/ директории)
+poetry run celery -A webx5.core.celery_app call \
+  webx5.tasks.generation.generate_challenges \
+  --args='["<user_uuid>", 4]'
+```
+
+**Как вайб попадает в промпт LLM:**
+
+Один из 4 слотов генерации — `vibe`. Логика:
+- Если у пользователя выбран `vibe_type` → `llm_context` вайба передаётся в промпт как список категорий, `allowed_categories` парсится из него
+- Если вайб не выбран → детерминированный выбор из `VIBE_CATEGORIES` по `(user_id, month)` (старое поведение, обратная совместимость)
+
+Профиль для LLM при выбранном вайбе содержит:
+```json
+{
+  "vibe_category": "Здоровье и лёгкость",
+  "vibe_context": "Фрукты, Овощи, Злаки, Молочные продукты. Фокус на лёгком питании."
+}
+```
+
+После генерации — просмотр заданий с учётом вайба:
+```
+GET /challenges/current
+Authorization: Bearer <jwt>
+
+→ 200 OK
+{
+  "items": [
+    {
+      "id": "<task_uuid>",
+      "title": "Купи фрукты на неделю",
+      "mechanic": "Купи 3 фрукта в этой неделе",
+      "reward_rub": "45.00",
+      "quantity_target": 3,
+      "quantity_current": 0,
+      "deadline": "2026-09-13T12:00:00Z",
+      "items": [
+        {
+          "id": "<item_uuid>",
+          "label": null,
+          "criterion_type": "category",
+          "criterion_entity_id": "<category_uuid>",
+          "quantity_target": 3,
+          "quantity_current": 0
+        }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+### Фаза 4 — Влияние на корзину-ассистента
+
+Если у пользователя выбран вайб, `GET /basket/suggested` и `POST /basket/assistant` автоматически получают `vibe_context` в контексте — LLM учитывает тематику при рекомендациях. Никаких дополнительных вызовов не нужно.
+
+---
+
+## Флоу «Составные задания» (feature 008)
+
+### Что это такое
+
+Задание может содержать несколько `task_item` — независимых критериев с отдельным счётчиком прогресса. Задание считается выполненным только когда **все** пункты закрыты.
+
+**Важно:** LLM-генерация сейчас создаёт задания с 1 пунктом (одиночные). Составные задания (2+ пунктов) создаются только вручную — через seed-скрипты или прямой INSERT в БД. API полностью поддерживает отображение и трекинг составных заданий.
+
+### Структура ответа GET /challenges/current
+
+```json
+{
+  "items": [
+    {
+      "id": "<task_uuid>",
+      "title": "Собери всё для салата Цезарь",
+      "quantity_target": 2,
+      "quantity_current": 1,
+      "status": "открыто",
+      "items": [
+        {
+          "id": "<item1_uuid>",
+          "label": "Куриное филе",
+          "criterion_type": "product",
+          "criterion_entity_id": "<chicken_product_uuid>",
+          "quantity_target": 2,
+          "quantity_current": 2
+        },
+        {
+          "id": "<item2_uuid>",
+          "label": "Яйца",
+          "criterion_type": "product",
+          "criterion_entity_id": "<egg_product_uuid>",
+          "quantity_target": 1,
+          "quantity_current": 0
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Тест составного задания через curl
+
+```bash
+# Шаг 1: зарегистрироваться и получить токен
+curl -X POST http://localhost:8000/register \
+  -H "Content-Type: application/json" \
+  -d '{"phone": "+79001234567"}'
+# → {"access_token": "...", "refresh_token": "..."}
+
+USER_TOKEN="<access_token>"
+
+# Шаг 2: создать составное задание вручную (например, через psql)
+# INSERT INTO task ... (criterion_type='category', quantity_target=2, reward_type='discount')
+# INSERT INTO task_item (task_id, criterion_type='product', criterion_entity_id=<chicken_id>, quantity_target=2, label='Куриное филе')
+# INSERT INTO task_item (task_id, criterion_type='product', criterion_entity_id=<egg_id>,     quantity_target=1, label='Яйца')
+
+# Шаг 3: проверить задание — оба пункта с нулевым прогрессом
+curl http://localhost:8000/challenges/current \
+  -H "Authorization: Bearer $USER_TOKEN"
+
+# Шаг 4: оформить чек с куриным филе (через кассу)
+curl -X POST http://localhost:8000/receipts \
+  -H "X-Terminal-Token: $TERMINAL_TOKEN" \
+  -H "X-Idempotency-Key: $(uuidgen)" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"store_id\": \"<store_uuid>\",
+    \"loyalty_card_id\": \"<user_uuid>\",
+    \"channel\": \"offline\",
+    \"items\": [{\"product_id\": \"<chicken_uuid>\", \"quantity\": 2}]
+  }"
+
+# Шаг 5: проверить — куриное 2/2, яйца 0/1, задание НЕ выполнено
+curl http://localhost:8000/challenges/current \
+  -H "Authorization: Bearer $USER_TOKEN"
+
+# Шаг 6: оформить чек с яйцами
+curl -X POST http://localhost:8000/receipts \
+  -H "X-Terminal-Token: $TERMINAL_TOKEN" \
+  -H "X-Idempotency-Key: $(uuidgen)" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"store_id\": \"<store_uuid>\",
+    \"loyalty_card_id\": \"<user_uuid>\",
+    \"channel\": \"offline\",
+    \"items\": [{\"product_id\": \"<egg_uuid>\", \"quantity\": 1}]
+  }"
+
+# Шаг 7: задание перешло в выполнено
+curl http://localhost:8000/challenges/history \
+  -H "Authorization: Bearer $USER_TOKEN"
+```
+
+---
+
+## Флоу «Награда-подарок» (feature 008)
+
+### Что это такое
+
+Задание с `reward_type='gift'` при выполнении создаёт `gift_reward` вместо начисления баллов. Подарок применяется как скидка 100% на один товар при оформлении корзины или чека через кассу.
+
+**Важно:** LLM-генерация создаёт задания с `reward_type='discount'`. Для создания gift-задания нужен прямой UPDATE в БД или seed-скрипт, устанавливающий `reward_type='gift'`.
+
+### Полный путь через API
+
+```bash
+# Шаг 1: создать задание с reward_type='gift' вручную
+# UPDATE task SET reward_type='gift' WHERE id='<task_uuid>';
+# Или создать через seed, где reward_type передаётся явно.
+
+# Шаг 2: выполнить задание (оформить нужные чеки)
+# После последнего чека Celery автоматически создаёт gift_reward.
+
+# Шаг 3: посмотреть активные награды
+curl http://localhost:8000/rewards \
+  -H "Authorization: Bearer $USER_TOKEN"
+# → [{ "id": "<reward_uuid>", "reward_type": "gift", "criterion_type": "product",
+#       "criterion_entity_id": "<product_uuid>", "quantity": 1,
+#       "status": "active", "valid_to": "2026-09-13T12:00:00Z", "applicable": false }]
+
+PRODUCT_ID="<criterion_entity_id из ответа>"
+
+# Шаг 4: предпросмотр корзины — подарок применяется автоматически
+curl -X POST http://localhost:8000/basket/preview \
+  -H "Authorization: Bearer $USER_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d "{\"items\": [{\"product_id\": \"$PRODUCT_ID\", \"quantity\": 1}]}"
+# → {
+#     "total_base": "89.90", "total_paid": "0.00", "total_saved": "89.90",
+#     "gift_discounts": [
+#       { "gift_reward_id": "<reward_uuid>", "applied_to_product_id": "<product_uuid>",
+#         "discount_rub": "89.90" }
+#     ]
+#   }
+
+# Шаг 5: оформить заказ — gift_reward помечается как used
+curl -X POST http://localhost:8000/basket/checkout \
+  -H "Authorization: Bearer $USER_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d "{\"items\": [{\"product_id\": \"$PRODUCT_ID\", \"quantity\": 1}]}"
+# → 201, paid_price=0 для подарочного товара
+
+# Шаг 6: проверить статус награды
+curl http://localhost:8000/rewards \
+  -H "Authorization: Bearer $USER_TOKEN"
+# → [] (reward помечен 'used', не возвращается в активных)
+```
+
+Через терминал кассы (если товар есть в составе обычного чека):
+```bash
+# При оформлении чека через /receipts paid_price товара = 0,
+# если для пользователя есть активный gift_reward на этот product/category.
+curl -X POST http://localhost:8000/receipts \
+  -H "X-Terminal-Token: $TERMINAL_TOKEN" \
+  -H "X-Idempotency-Key: $(uuidgen)" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"store_id\": \"<store_uuid>\",
+    \"loyalty_card_id\": \"<user_uuid>\",
+    \"channel\": \"offline\",
+    \"items\": [{\"product_id\": \"$PRODUCT_ID\", \"quantity\": 1}]
+  }"
+```
+
+---
+
 ## Справочные эндпоинты (публичные)
 
 ```

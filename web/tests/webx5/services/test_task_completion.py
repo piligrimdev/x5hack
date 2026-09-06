@@ -107,7 +107,10 @@ def test_unknown_kind_is_never_completable_fr024_safety():
     task_repo.record_increment.return_value = True
     task_repo.get_task_criteria.return_value = [unknown_crit]
 
-    service = TaskCompletionService(task_repo=task_repo)
+    task_item_repo = MagicMock()
+    task_item_repo.get_items_for_task.return_value = []
+
+    service = TaskCompletionService(task_repo=task_repo, task_item_repo=task_item_repo)
     with patch(
         "webx5.services.task_completion.TaskCompletionService._count_matching_quantity",
         return_value=0,
@@ -121,7 +124,9 @@ def test_apply_receipt_idempotent_when_already_recorded():
     task_repo = MagicMock()
     task_repo.record_increment.return_value = False  # already recorded → skip
 
-    service = TaskCompletionService(task_repo=task_repo)
+    task_item_repo = MagicMock()
+
+    service = TaskCompletionService(task_repo=task_repo, task_item_repo=task_item_repo)
     assert service.apply_receipt(MagicMock(), task, _make_receipt()) is False
     task_repo.bump_progress.assert_not_called()
     task_repo.mark_completed.assert_not_called()

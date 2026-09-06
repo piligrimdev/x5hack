@@ -417,6 +417,14 @@ class BasketService:
             else None
         )
 
+        # Apply gift rewards to show applicable discounts in preview
+        from webx5.crud.reward import GiftRewardRepository
+        gift_repo = GiftRewardRepository()
+        active_gifts = gift_repo.get_active_for_user(session, user_id)
+        _updated_items, gift_discounts = self.discount_calc.apply_gift_rewards(
+            calculated, session, active_gifts
+        )
+
         return CalculateResponse(
             store_id=store.id,
             loyalty_card_id=user_id,
@@ -425,6 +433,7 @@ class BasketService:
             total_paid=total_paid,
             total_saved=(total_base - total_paid) + (cashback_block.cashback_rub if cashback_block else 0),
             cashback=cashback_block,
+            gift_discounts=gift_discounts,
         )
 
     def _apply_budget_basket(self, current, catalog_by_id, arguments, system, instruction, api_key, prices=None):
