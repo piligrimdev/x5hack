@@ -1,202 +1,107 @@
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SymbolView } from 'expo-symbols';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-export type TabScreen = 'home' | 'catalog' | 'cart' | 'appi' | 'profile';
+export type TabScreen = 'home' | 'catalog' | 'appi' | 'profile';
 
 interface CustomTabBarProps {
   activeScreen: TabScreen;
   onTabPress: (tab: TabScreen) => void;
 }
 
-const GREEN_ACTIVE = '#25A244';
-const INACTIVE = '#B4B3AF';
+const ACTIVE = '#292929';
+const INACTIVE = '#9A9D9A';
+const APPI_ORANGE = '#F56A00';
 
 function HomeIcon({ color }: { color: string }) {
-  // 4-leaf clover
   return (
-    <View style={iconS.clover}>
-      <View style={iconS.cloverRow}>
-        <View style={[iconS.cloverLeaf, { backgroundColor: color }]} />
-        <View style={[iconS.cloverLeaf, { backgroundColor: color }]} />
-      </View>
-      <View style={iconS.cloverRow}>
-        <View style={[iconS.cloverLeaf, { backgroundColor: color }]} />
-        <View style={[iconS.cloverLeaf, { backgroundColor: color }]} />
-      </View>
-    </View>
+    <SymbolView
+      name={{ ios: 'house.fill', android: 'home', web: 'home' }}
+      tintColor={color}
+      size={24}
+      weight="semibold"
+    />
   );
 }
 
 function CatalogIcon({ color }: { color: string }) {
   return (
-    <View style={iconS.catalog}>
-      <View style={[iconS.searchCircle, { borderColor: color }]}>
-        <View style={[iconS.searchLines, { gap: 2 }]}>
-          <View style={[iconS.line, { backgroundColor: color }]} />
-          <View style={[iconS.line, { backgroundColor: color, width: 10 }]} />
-        </View>
-      </View>
-    </View>
+    <SymbolView
+      name={{ ios: 'minus.circle.fill', android: 'do_not_disturb_on', web: 'do_not_disturb_on' }}
+      tintColor={color}
+      size={24}
+      weight="semibold"
+    />
   );
 }
 
-function CartIcon({ color }: { color: string }) {
+function AppiIcon({ active }: { color: string; active?: boolean }) {
   return (
-    <View style={iconS.cart}>
-      <View style={[iconS.cartBasket, { borderColor: color }]}>
-        <View style={iconS.cartHandleRow}>
-          <View style={[iconS.cartHandle, { borderColor: color }]} />
-        </View>
-      </View>
-    </View>
-  );
-}
-
-function AppiIcon({ color }: { color: string }) {
-  const isActive = color === GREEN_ACTIVE;
-  return (
-    <View style={[iconS.appiCircle, !isActive && iconS.appiCircleInactive]}>
-      <Image
-        source={require('../../assets/images/mascot.png')}
-        style={[iconS.appiImage, !isActive && iconS.appiImageInactive]}
-        resizeMode="contain"
-      />
+    <View style={[iconStyles.appi, !active && iconStyles.appiInactive]}>
+      <Text style={iconStyles.appiEmoji}>🍊</Text>
+      <View style={iconStyles.appiLeaf} />
     </View>
   );
 }
 
 function ProfileIcon({ color }: { color: string }) {
   return (
-    <View style={iconS.profile}>
-      <View style={[iconS.profileHead, { backgroundColor: color }]} />
-      <View style={[iconS.profileBody, { borderColor: color }]} />
-    </View>
+    <SymbolView
+      name={{ ios: 'person.fill', android: 'person', web: 'person' }}
+      tintColor={color}
+      size={24}
+      weight="semibold"
+    />
   );
 }
 
-const iconS = StyleSheet.create({
-  clover: {
-    width: 22,
-    height: 22,
-    gap: 2,
-  },
-  cloverRow: {
-    flex: 1,
-    flexDirection: 'row',
-    gap: 2,
-  },
-  cloverLeaf: {
-    flex: 1,
-    borderRadius: 6,
-  },
-  catalog: {
-    width: 22,
-    height: 22,
+const iconStyles = StyleSheet.create({
+  appi: {
+    width: 29,
+    height: 25,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  searchCircle: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  searchLines: {
-    width: 12,
-  },
-  line: {
-    height: 2,
-    width: 12,
-    borderRadius: 1,
-  },
-  cart: {
-    width: 24,
-    height: 22,
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-  },
-  cartBasket: {
-    width: 22,
-    height: 14,
-    borderRadius: 4,
-    borderWidth: 2,
-    borderTopWidth: 0,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    paddingTop: 0,
-    position: 'relative',
-  },
-  cartHandleRow: {
+  appiInactive: { opacity: 0.72 },
+  appiEmoji: { fontSize: 25, lineHeight: 27 },
+  appiLeaf: {
     position: 'absolute',
-    top: -10,
-    left: 0,
     right: 0,
-    alignItems: 'center',
-  },
-  cartHandle: {
-    width: 14,
-    height: 10,
-    borderTopLeftRadius: 7,
-    borderTopRightRadius: 7,
-    borderWidth: 2,
-    borderBottomWidth: 0,
-  },
-  appiCircle: {
-    width: 30,
-    height: 27,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  appiCircleInactive: { opacity: 0.55 },
-  appiImage: { width: 31, height: 31 },
-  appiImageInactive: { opacity: 0.65 },
-  profile: {
-    width: 22,
-    height: 22,
-    alignItems: 'center',
-    gap: 2,
-  },
-  profileHead: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-  profileBody: {
-    width: 18,
-    height: 9,
-    borderRadius: 9,
-    borderWidth: 2,
-    borderBottomWidth: 0,
+    top: 0,
+    width: 7,
+    height: 4,
+    borderRadius: 4,
+    backgroundColor: '#3B9A3B',
+    transform: [{ rotate: '-25deg' }],
   },
 });
 
 export function CustomTabBar({ activeScreen, onTabPress }: CustomTabBarProps) {
   const insets = useSafeAreaInsets();
-
-  const tabs: { key: TabScreen; label: string; Icon: React.ComponentType<{ color: string }> }[] = [
+  const tabs: {
+    key: TabScreen;
+    label: string;
+    Icon: React.ComponentType<{ color: string; active?: boolean }>;
+  }[] = [
     { key: 'home', label: 'Главная', Icon: HomeIcon },
     { key: 'catalog', label: 'Каталог', Icon: CatalogIcon },
-    { key: 'cart', label: 'Корзина', Icon: CartIcon },
     { key: 'appi', label: 'Аппи', Icon: AppiIcon },
     { key: 'profile', label: 'Профиль', Icon: ProfileIcon },
   ];
 
   return (
-    <View style={[styles.container, { paddingBottom: insets.bottom }]}>
+    <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 7) }]}>
       {tabs.map(tab => {
         const active = tab.key === activeScreen;
-        const color = active ? GREEN_ACTIVE : INACTIVE;
+        const color = tab.key === 'appi' && active ? APPI_ORANGE : active ? ACTIVE : INACTIVE;
         return (
           <TouchableOpacity
             key={tab.key}
             style={styles.tab}
             onPress={() => onTabPress(tab.key)}
-            activeOpacity={0.7}>
-            <tab.Icon color={color} />
-            <Text style={[styles.tabLabel, { color }]}>{tab.label}</Text>
+            activeOpacity={0.68}>
+            <tab.Icon color={color} active={active} />
+            <Text style={[styles.label, { color }]}>{tab.label}</Text>
           </TouchableOpacity>
         );
       })}
@@ -206,21 +111,20 @@ export function CustomTabBar({ activeScreen, onTabPress }: CustomTabBarProps) {
 
 const styles = StyleSheet.create({
   container: {
+    minHeight: 69,
     flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.07)',
+    alignItems: 'flex-start',
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#E3E4E3',
+    paddingTop: 9,
+    paddingHorizontal: 13,
   },
   tab: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 10,
-    paddingBottom: 6,
-    gap: 3,
+    justifyContent: 'flex-start',
+    gap: 4,
   },
-  tabLabel: {
-    fontSize: 10,
-    fontWeight: '500',
-  },
+  label: { fontSize: 10.5, fontWeight: '600' },
 });
