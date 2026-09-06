@@ -1,4 +1,4 @@
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export type TabScreen = 'home' | 'catalog' | 'cart' | 'appi' | 'profile';
@@ -55,8 +55,12 @@ function CartIcon({ color }: { color: string }) {
 function AppiIcon({ color }: { color: string }) {
   const isActive = color === GREEN_ACTIVE;
   return (
-    <View style={[iconS.appiCircle, { backgroundColor: isActive ? '#FF6D00' : '#E0E0E0' }]}>
-      <Text style={iconS.appiEmoji}>🙂</Text>
+    <View style={[iconS.appiCircle, !isActive && iconS.appiCircleInactive]}>
+      <Image
+        source={require('../../assets/images/mascot.png')}
+        style={[iconS.appiImage, !isActive && iconS.appiImageInactive]}
+        resizeMode="contain"
+      />
     </View>
   );
 }
@@ -140,16 +144,15 @@ const iconS = StyleSheet.create({
     borderBottomWidth: 0,
   },
   appiCircle: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+    width: 30,
+    height: 27,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
-  appiEmoji: {
-    fontSize: 16,
-    lineHeight: 20,
-  },
+  appiCircleInactive: { opacity: 0.55 },
+  appiImage: { width: 31, height: 31 },
+  appiImageInactive: { opacity: 0.65 },
   profile: {
     width: 22,
     height: 22,

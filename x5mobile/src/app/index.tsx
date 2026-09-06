@@ -4,6 +4,7 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 
 import { apiLogin, apiRegister } from '@/api/client';
 import { CustomTabBar, TabScreen } from '@/components/custom-tab-bar';
+import { AppiView } from '@/components/screens/appi-view';
 import { ChallengesView } from '@/components/screens/challenges-view';
 import { HistoryView } from '@/components/screens/history-view';
 import { HomeView } from '@/components/screens/home-view';
@@ -116,10 +117,18 @@ function AppContent({ token }: { token: string }) {
         {screen === 'home' && (
           <HomeView
             token={token}
-            onHistory={() => navigate('history')}
             onChallenges={() => navigate('challenges')}
             onPoints={() => navigate('points')}
+            onOpenAppi={() => navigate('appi')}
+            onHistory={() => navigate('history')}
+          />
+        )}
+        {screen === 'appi' && (
+          <AppiView
+            token={token}
+            basket={basket}
             onOpenBasket={() => navigate('savings')}
+            onChallenges={() => navigate('challenges')}
           />
         )}
         {screen === 'points' && (

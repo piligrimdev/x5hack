@@ -10,6 +10,7 @@ import uuid
 
 import structlog
 from sqlalchemy import select
+from sqlalchemy.orm import noload
 
 from webx5.core.celery_app import celery_app
 from webx5.entities.user import User
@@ -32,7 +33,10 @@ def generate_challenges(user_id: str, count: int = 4) -> dict:
         with session.begin():
             # Pessimistic user-level lock — sequential processing per user (FR-014).
             user = session.execute(
-                select(User).where(User.id == uid).with_for_update()
+                select(User)
+                .options(noload(User.vibe_type))
+                .where(User.id == uid)
+                .with_for_update()
             ).scalar_one_or_none()
             if user is None:
                 logger.warning("generate_challenges.user_not_found", user_id=user_id)

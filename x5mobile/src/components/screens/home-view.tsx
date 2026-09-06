@@ -1,449 +1,435 @@
 import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useEconomy } from '@/hooks/useEconomy';
-import { useMonthlyEconomy } from '@/hooks/useMonthlyEconomy';
+import { PersonalChallenges } from '@/components/screens/personal-sections';
 import { usePointsBalance } from '@/hooks/usePoints';
-import { useReceipts } from '@/hooks/useReceipts';
 
-const ORANGE = '#FF6D00';
-const GREEN_BANNER = '#1B5E35';
-const GREEN_BTN = '#2DB35E';
-const GREEN_ACTIVE = '#25A244';
+const GREEN = '#138F3E';
+const DARK_GREEN = '#075C2C';
+const ORANGE = '#F56A00';
+const TEXT = '#17211A';
+const MUTED = '#7E827F';
+const BORDER = '#E9EBE9';
 
-const RU_MONTHS = ['январе', 'феврале', 'марте', 'апреле', 'мае', 'июне', 'июле', 'августе', 'сентябре', 'октябре', 'ноябре', 'декабре'];
+const PERSONAL_OFFERS = [
+  {
+    id: 'cheese',
+    emoji: '🧀',
+    title: 'Сыр\nк завтраку',
+    benefit: '−15% по карте',
+    background: '#FFF8E3',
+  },
+  {
+    id: 'coffee',
+    emoji: '☕',
+    title: 'Ваш любимый\nкофе',
+    benefit: '+10% баллами',
+    background: '#F6F4EB',
+  },
+];
 
-function fmt(n: number) {
-  return Math.round(n).toLocaleString('ru-RU');
-}
+const QR_PATTERN = [
+  '11101011101',
+  '10111010001',
+  '11101110111',
+  '00011000100',
+  '10101110111',
+  '01110010100',
+  '11001101101',
+  '00110110010',
+  '11101011101',
+  '10011100101',
+  '11100111111',
+];
 
 interface HomeViewProps {
   token: string;
-  onHistory: () => void;
   onChallenges: () => void;
   onPoints?: () => void;
-  onOpenBasket: () => void;
+  onOpenAppi: () => void;
+  onHistory: () => void;
 }
 
-export function HomeView({ token, onHistory, onChallenges, onPoints, onOpenBasket }: HomeViewProps) {
+function ClubQr() {
+  return (
+    <View style={styles.qrCard}>
+      <View style={styles.qrGrid}>
+        {QR_PATTERN.join('').split('').map((cell, index) => (
+          <View
+            key={index}
+            style={[styles.qrCell, cell === '1' && styles.qrCellFilled]}
+          />
+        ))}
+      </View>
+    </View>
+  );
+}
+
+function WhiteMicrophoneIcon() {
+  return (
+    <View style={styles.whiteMicrophone}>
+      <View style={styles.whiteMicrophoneCapsule} />
+      <View style={styles.whiteMicrophoneStem} />
+      <View style={styles.whiteMicrophoneBase} />
+    </View>
+  );
+}
+
+export function HomeView({
+  token,
+  onChallenges,
+  onPoints,
+  onOpenAppi,
+  onHistory,
+}: HomeViewProps) {
   const insets = useSafeAreaInsets();
-  const { economy, loading: eLoading } = useEconomy(token);
-  const { receipts } = useReceipts(token);
-  const { balance: pointsBalance } = usePointsBalance(token);
-
-  const { monthlyEconomy } = useMonthlyEconomy(token);
-
-  const totalSaved = economy?.total_saved ?? 0;
-  const receiptsCount = economy?.receipts_count ?? 0;
-
-  const points = pointsBalance?.balance ?? 0;
-  const todayBenefit = receiptsCount > 0 ? Math.round(totalSaved / receiptsCount) : 0;
-
-  const months = monthlyEconomy?.months ?? [];
-  const currentMonthSaved = monthlyEconomy?.currentMonthSaved ?? 0;
-  const currentMonthBase = monthlyEconomy?.currentMonthBase ?? 0;
-  const streak = monthlyEconomy?.consecutiveGrowthMonths ?? 0;
-
-  const spentBonusesRub = monthlyEconomy?.currentMonthCashbackRub ?? 0;
-  const spentPct = currentMonthBase > 0 && spentBonusesRub > 0
-    ? Math.round((spentBonusesRub / currentMonthBase) * 100)
-    : 0;
-
-  const monthName = RU_MONTHS[new Date().getMonth()];
-
-  // Last receipt for "Заказывали" preview
-  const lastReceipt = receipts[0];
+  const { balance, loading: pointsLoading } = usePointsBalance(token);
 
   return (
     <View style={styles.root}>
-      {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <TouchableOpacity activeOpacity={0.7}>
+        <View>
           <View style={styles.addressRow}>
-            <Text style={styles.addressText}>Большая Пушкарская, 32</Text>
-            <Text style={styles.chevron}> ›</Text>
+            <Text style={styles.address}>Большая Пушкарская, 32</Text>
+            <Text style={styles.addressChevron}>⌄</Text>
           </View>
-          <Text style={styles.deliveryText}>Доставка от 30 минут</Text>
-        </TouchableOpacity>
-        <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.headerBtn} activeOpacity={0.7}>
-            <Text style={styles.headerBtnIcon}>💬</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.headerBtn} activeOpacity={0.7}>
-            <Text style={styles.headerBtnIcon}>🛒</Text>
-            <View style={styles.cartBadge}>
-              <Text style={styles.cartBadgeText}>1</Text>
-            </View>
-          </TouchableOpacity>
+          <Text style={styles.delivery}>Доставка от 30 минут</Text>
         </View>
+        <TouchableOpacity style={styles.cartButton} activeOpacity={0.75}>
+          <Text style={styles.cartIcon}>⌑</Text>
+          <View style={styles.cartBadge}><Text style={styles.cartBadgeText}>3</Text></View>
+        </TouchableOpacity>
       </View>
 
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}>
-
-        {/* X5 Клуб Banner */}
-        <View style={styles.banner}>
-          <View style={styles.bannerLeft}>
-            <View style={styles.x5LogoRow}>
-              <View style={styles.x5Shield}>
-                <Text style={styles.x5ShieldText}>X5</Text>
-              </View>
-              <Text style={styles.x5ClubText}>Клуб</Text>
+        <TouchableOpacity style={styles.clubCard} activeOpacity={0.9} onPress={onPoints}>
+          <View style={styles.clubInfo}>
+            <View style={styles.clubBrand}>
+              <Text style={styles.x5Mark}>X5</Text>
+              <Text style={styles.clubText}>Клуб</Text>
             </View>
-            {eLoading ? (
-              <ActivityIndicator color="#fff" style={{ marginVertical: 10 }} />
+            {pointsLoading ? (
+              <ActivityIndicator color="#FFFFFF" style={styles.pointsLoader} />
             ) : (
-              <>
-                <Text style={styles.bannerPoints}>{fmt(points)}</Text>
-                <Text style={styles.bannerPointsLabel}>баллов</Text>
-                <Text style={styles.bannerSavings}>
-                  Ваша выгода сегодня —{'\n'}
-                  <Text style={styles.bannerSavingsAmount}>{fmt(todayBenefit)} ₽</Text>
-                </Text>
-              </>
+              <View style={styles.balanceRow}>
+                <Text style={styles.balance}>{(balance?.balance ?? 0).toLocaleString('ru-RU')}</Text>
+                <Text style={styles.balanceUnit}>балла</Text>
+              </View>
             )}
-            <TouchableOpacity style={styles.openCardBtn} activeOpacity={0.8} onPress={onPoints}>
-              <Text style={styles.openCardBtnText}>Открыть карту</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.bannerRight}>
-            <View style={styles.speechBubble}>
-              <Text style={styles.speechBubbleText}>Нашёл{'\n'}цены ниже</Text>
+            <View style={styles.cardHint}>
+              <Text style={styles.cardHintIcon}>▣</Text>
+              <Text style={styles.cardHintText}>Карта для покупок</Text>
             </View>
-            <Image
-              source={require('../../../assets/images/mascot.png')}
-              style={styles.mascotImage}
-              resizeMode="contain"
-            />
           </View>
-        </View>
-
-        {/* Скажите, что хочется */}
-        <TouchableOpacity style={styles.askCard} activeOpacity={0.85} onPress={onOpenBasket}>
-          <View style={styles.askIcon}>
-            <Text style={styles.askIconEmoji}>🍊</Text>
-          </View>
-          <View style={styles.askText}>
-            <Text style={styles.askTitle}>Корзина на неделю</Text>
-            <Text style={styles.askSubtitle}>Аппи найдёт выгоднее{'\n'}и соберёт корзину</Text>
-          </View>
-          <View style={styles.askActions}>
-            <TouchableOpacity style={styles.findBtn} activeOpacity={0.8} onPress={onOpenBasket}>
-              <Text style={styles.findBtnText}>Собрать</Text>
-            </TouchableOpacity>
-          </View>
+          <ClubQr />
         </TouchableOpacity>
 
-        {/* Quick actions — 4 иконки */}
-        <View style={styles.quickRow}>
-          <TouchableOpacity style={styles.quickItem} activeOpacity={0.7} onPress={onHistory}>
-            <View style={styles.quickIconBox}>
-              <Text style={styles.quickIconChar}>⏱</Text>
-            </View>
-            <Text style={styles.quickLabel}>Заказывали</Text>
-            {lastReceipt && (
-              <Text style={styles.quickSub}>{fmt(lastReceipt.total_paid)} ₽</Text>
-            )}
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.quickItem} activeOpacity={0.7} onPress={onChallenges}>
-            <View style={styles.quickIconBox}>
-              <Text style={styles.quickIconChar}>📋</Text>
-            </View>
-            <Text style={styles.quickLabel}>Задания</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.quickItem} activeOpacity={0.7}>
-            <View style={styles.quickIconBox}>
-              <Text style={styles.quickIconChar}>♡</Text>
-            </View>
-            <Text style={styles.quickLabel}>Избранное</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.quickItem} activeOpacity={0.7}>
-            <View style={styles.quickIconBox}>
-              <Text style={styles.quickIconChar}>⊞</Text>
-            </View>
-            <Text style={styles.quickLabel}>Каталог</Text>
-          </TouchableOpacity>
+        <TouchableOpacity style={styles.historyButton} onPress={onHistory} activeOpacity={0.8}>
+          <View style={styles.historyIcon}>
+            <Text style={styles.historyEmoji}>🕐</Text>
+          </View>
+          <View style={styles.historyCopy}>
+            <Text style={styles.historyTitle}>История покупок</Text>
+            <Text style={styles.historySubtitle}>Чеки и сэкономленные рубли</Text>
+          </View>
+          <Text style={styles.historyChevron}>›</Text>
+        </TouchableOpacity>
+
+        <View style={styles.appiCard}>
+          <Image
+            source={require('../../../assets/images/mascot.png')}
+            style={styles.appiMascot}
+            resizeMode="contain"
+          />
+          <View style={styles.appiContent}>
+            <Text style={styles.appiQuestion}>Что собрать для вас?</Text>
+            <TouchableOpacity style={styles.appiInput} onPress={onOpenAppi} activeOpacity={0.8}>
+              <Text style={styles.appiPlaceholder}>Напишите или скажите Аппи</Text>
+              <View style={styles.micCircle}><WhiteMicrophoneIcon /></View>
+              <View style={styles.sendCircle}><Text style={styles.sendArrow}>→</Text></View>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.quickActions}>
+            <TouchableOpacity style={styles.quickButton} onPress={onOpenAppi} activeOpacity={0.75}>
+              <Text style={styles.quickIcon}>🍴</Text>
+              <Text style={styles.quickText}>Ужин до 700 ₽</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.quickButton} onPress={onOpenAppi} activeOpacity={0.75}>
+              <Text style={styles.repeatIcon}>↻</Text>
+              <Text style={styles.quickText}>Повторить покупки</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
-        {/* Ваша экономия растёт */}
-        <View style={styles.savingsCard}>
-          <Text style={styles.savingsTitle}>
-            Ваша экономия{streak >= 1 ? ' растёт' : ''}
-          </Text>
-
-          {eLoading ? (
-            <ActivityIndicator color={GREEN_ACTIVE} style={{ marginVertical: 12 }} />
-          ) : (
-            <>
-              <View style={styles.savingsAmountRow}>
-                <Text style={styles.savingsAmount}>{fmt(currentMonthSaved)}</Text>
-                <Text style={styles.savingsCurrency}> ₽</Text>
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Персональные акции</Text>
+            <Text style={styles.sectionChevron}>›</Text>
+          </View>
+          <View style={styles.offerRow}>
+            {PERSONAL_OFFERS.map(offer => (
+              <View key={offer.id} style={[styles.offerCard, { backgroundColor: offer.background }]}>
+                <Text style={styles.offerEmoji}>{offer.emoji}</Text>
+                <View style={styles.offerInfo}>
+                  <Text style={styles.offerTitle}>{offer.title}</Text>
+                  <Text style={styles.offerBenefit}>{offer.benefit}</Text>
+                  <TouchableOpacity style={styles.offerButton} activeOpacity={0.75}>
+                    <Text style={styles.offerButtonText}>Условия</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-              <Text style={styles.savingsMonth}>за {monthName}</Text>
-
-              {streak >= 2 && (
-                <View style={styles.growthBadge}>
-                  <Text style={styles.growthBadgeText}>▲ {streak}-й месяц подряд экономите больше</Text>
-                </View>
-              )}
-
-              {/* Bar chart */}
-              {months.length === 4 && (
-                <View style={styles.barChart}>
-                  {(() => {
-                    const maxSaved = Math.max(...months.map(m => m.saved), 1);
-                    const BAR_MAX = 72;
-                    return (
-                      <>
-                        <View style={styles.barsRow}>
-                          {months.map((m, idx) => {
-                            const h = Math.max(4, Math.round((m.saved / maxSaved) * BAR_MAX));
-                            const isCurrent = idx === 3;
-                            return (
-                              <View
-                                key={m.key}
-                                style={[
-                                  styles.bar,
-                                  { height: h, backgroundColor: isCurrent ? GREEN_ACTIVE : '#E8E8E8' },
-                                ]}
-                              />
-                            );
-                          })}
-                        </View>
-                        <View style={styles.barLabelsRow}>
-                          {months.map(m => (
-                            <Text key={m.key} style={styles.barLabel}>
-                              {m.saved > 0 ? `${fmt(m.saved)} ₽` : '—'}
-                            </Text>
-                          ))}
-                        </View>
-                      </>
-                    );
-                  })()}
-                </View>
-              )}
-
-              {spentBonusesRub > 0 && (
-                <View style={styles.challengesBlock}>
-                  <View style={styles.challengesRow}>
-                    <Text style={styles.challengesLabel}>Потрачено бонусов в этом месяце</Text>
-                    <Text style={styles.challengesAmount}>+{fmt(spentBonusesRub)} ₽</Text>
-                  </View>
-                  <Text style={styles.challengesHint}>
-                    Бонусы снизили стоимость покупок на {spentPct}% — продолжайте в том же темпе
-                  </Text>
-                </View>
-              )}
-
-              <TouchableOpacity onPress={onChallenges} activeOpacity={0.7}>
-                <Text style={styles.challengesLink}>Выполнить задание ›</Text>
-              </TouchableOpacity>
-            </>
-          )}
-        </View>
-
-        {/* Для вас сегодня */}
-        <Text style={styles.forYouTitle}>Для вас сегодня</Text>
-        <View style={styles.promoRow}>
-          {/* Позовите друга */}
-          <View style={[styles.promoCard, { backgroundColor: '#F9F0E8' }]}>
-            <Text style={styles.promoCardTitle}>Позовите друга</Text>
-            <Text style={styles.promoCardSub}>+500 баллов{'\n'}каждому</Text>
-            <Text style={styles.promoEmoji}>🤝</Text>
-            <TouchableOpacity style={styles.promoOrangeBtn} activeOpacity={0.8}>
-              <Text style={styles.promoOrangeBtnText}>Поделиться</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Соберите 3 в ряд */}
-          <View style={[styles.promoCard, { backgroundColor: '#F0F7F1' }]}>
-            <Text style={styles.promoCardTitle}>Соберите 3 в ряд</Text>
-            <Text style={styles.promoCardSub}>Откройте скидку{'\n'}на любимый кофе</Text>
-            <View style={styles.puzzleGrid}>
-              {['🍅','🥑','🧀','🧀','🍅','🥑','🥑','🧀','🍅'].map((e, i) => (
-                <Text key={i} style={styles.puzzleEmoji}>{e}</Text>
-              ))}
-            </View>
-            <TouchableOpacity style={styles.promoGreenBtn} activeOpacity={0.8}>
-              <Text style={styles.promoGreenBtnText}>Играть</Text>
-            </TouchableOpacity>
+            ))}
           </View>
         </View>
 
+        <PersonalChallenges token={token} onDetails={onChallenges} />
+
+        <View style={styles.partnerBanner}>
+          <View style={styles.partnerCopy}>
+            <Text style={styles.partnerTitle}>Выгода{'\n'}от партнёров</Text>
+            <TouchableOpacity style={styles.partnerButton} activeOpacity={0.8}>
+              <Text style={styles.partnerButtonText}>Подробнее</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.partnerProducts}>
+            <Text style={styles.partnerCoffee}>☕</Text>
+            <Text style={styles.partnerPizza}>🍕</Text>
+            <Text style={styles.partnerMilk}>🥛</Text>
+          </View>
+          <Text style={styles.adLabel}>Реклама</Text>
+        </View>
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#F5F5F2' },
-
+  root: { flex: 1, backgroundColor: '#FFFFFF' },
   header: {
+    paddingHorizontal: 22,
+    paddingBottom: 14,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  addressRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  address: { color: TEXT, fontSize: 18, fontWeight: '800' },
+  addressChevron: { color: TEXT, fontSize: 18, fontWeight: '700', marginTop: -5 },
+  delivery: { color: MUTED, fontSize: 13, marginTop: 3 },
+  cartButton: {
+    width: 47,
+    height: 47,
+    borderRadius: 13,
+    borderWidth: 1,
+    borderColor: BORDER,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cartIcon: { color: TEXT, fontSize: 29, lineHeight: 31, transform: [{ rotate: '180deg' }] },
+  cartBadge: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    width: 19,
+    height: 19,
+    borderRadius: 10,
+    backgroundColor: '#E52D35',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cartBadgeText: { color: '#FFFFFF', fontSize: 10, fontWeight: '800' },
+  scroll: { flex: 1 },
+  content: { paddingHorizontal: 16, paddingBottom: 26, gap: 18 },
+
+  clubCard: {
+    minHeight: 168,
+    borderRadius: 20,
+    backgroundColor: DARK_GREEN,
+    padding: 22,
+    flexDirection: 'row',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  clubInfo: { flex: 1, alignSelf: 'stretch', justifyContent: 'space-between' },
+  clubBrand: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  x5Mark: { color: '#FFFFFF', fontSize: 24, fontWeight: '900', fontStyle: 'italic' },
+  clubText: { color: '#FFFFFF', fontSize: 20, fontWeight: '600' },
+  pointsLoader: { alignSelf: 'flex-start' },
+  balanceRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
+  balance: { color: '#FFFFFF', fontSize: 46, lineHeight: 50, fontWeight: '800' },
+  balanceUnit: { color: '#FFFFFF', fontSize: 14, marginBottom: 7 },
+  cardHint: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(0,0,0,0.22)',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  cardHintIcon: { color: '#FFFFFF', fontSize: 16 },
+  cardHintText: { color: '#FFFFFF', fontSize: 12, fontWeight: '600' },
+  qrCard: { width: 126, height: 126, borderRadius: 12, backgroundColor: '#FFFFFF', padding: 10 },
+  qrGrid: { flex: 1, flexDirection: 'row', flexWrap: 'wrap' },
+  qrCell: { width: '9.09%', height: '9.09%', backgroundColor: '#FFFFFF' },
+  qrCellFilled: { backgroundColor: '#111111' },
+
+  historyButton: {
+    minHeight: 72,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: BORDER,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  historyIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: '#F2F8DF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  historyEmoji: { fontSize: 22 },
+  historyCopy: { flex: 1, gap: 2 },
+  historyTitle: { color: TEXT, fontSize: 15, fontWeight: '800' },
+  historySubtitle: { color: MUTED, fontSize: 12 },
+  historyChevron: { color: '#6F7570', fontSize: 28, lineHeight: 28 },
+
+  appiCard: {
+    borderWidth: 1,
+    borderColor: BORDER,
+    borderRadius: 18,
+    padding: 13,
+    paddingTop: 17,
+    minHeight: 168,
     flexDirection: 'row',
     alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-    backgroundColor: '#F5F5F2',
+    backgroundColor: '#FFFFFF',
   },
-  addressRow: { flexDirection: 'row', alignItems: 'center' },
-  addressText: { fontSize: 17, fontWeight: '800', color: '#17171A' },
-  chevron: { fontSize: 18, color: '#17171A', fontWeight: '700' },
-  deliveryText: { fontSize: 13, color: '#8A8A8E', marginTop: 2 },
-  headerActions: { flexDirection: 'row', gap: 8 },
-  headerBtn: {
-    width: 42, height: 42, borderRadius: 12,
-    backgroundColor: '#EBEBEB',
+  appiMascot: { width: 92, height: 94, marginLeft: -8, marginTop: -7 },
+  appiContent: { flex: 1, gap: 10 },
+  appiQuestion: { color: TEXT, fontSize: 16, fontWeight: '800' },
+  appiInput: {
+    height: 43,
+    borderRadius: 13,
+    borderWidth: 1,
+    borderColor: BORDER,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: 13,
+    gap: 7,
+  },
+  appiPlaceholder: { color: '#A1A4A1', fontSize: 11, flex: 1 },
+  micCircle: {
+    width: 34, height: 34, borderRadius: 17, backgroundColor: ORANGE,
     alignItems: 'center', justifyContent: 'center',
   },
-  headerBtnIcon: { fontSize: 18 },
-  cartBadge: {
-    position: 'absolute', top: -4, right: -4,
-    backgroundColor: ORANGE, borderRadius: 10,
-    width: 18, height: 18, alignItems: 'center', justifyContent: 'center',
+  whiteMicrophone: { width: 15, height: 20, alignItems: 'center' },
+  whiteMicrophoneCapsule: {
+    width: 8, height: 12, borderRadius: 4, borderWidth: 1.5, borderColor: '#FFFFFF',
   },
-  cartBadgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
+  whiteMicrophoneStem: { width: 1.5, height: 4, backgroundColor: '#FFFFFF' },
+  whiteMicrophoneBase: { width: 8, height: 1.5, borderRadius: 1, backgroundColor: '#FFFFFF' },
+  sendCircle: {
+    width: 34, height: 34, borderRadius: 17, backgroundColor: GREEN,
+    alignItems: 'center', justifyContent: 'center', marginRight: 4,
+  },
+  sendArrow: { color: '#FFFFFF', fontSize: 23, lineHeight: 25 },
+  quickActions: {
+    position: 'absolute',
+    left: 13,
+    right: 13,
+    bottom: 13,
+    flexDirection: 'row',
+    gap: 9,
+  },
+  quickButton: {
+    flex: 1,
+    height: 38,
+    borderRadius: 11,
+    borderWidth: 1,
+    borderColor: BORDER,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+    backgroundColor: '#FFFFFF',
+  },
+  quickIcon: { fontSize: 14 },
+  repeatIcon: { color: GREEN, fontSize: 18 },
+  quickText: { color: TEXT, fontSize: 11, fontWeight: '600' },
 
-  scroll: { flex: 1 },
-  scrollContent: { paddingHorizontal: 16, paddingBottom: 24, gap: 12 },
-
-  // Banner
-  banner: {
-    backgroundColor: GREEN_BANNER, borderRadius: 20,
-    padding: 20, paddingRight: 0,
-    flexDirection: 'row', overflow: 'hidden', minHeight: 190,
+  section: { gap: 10 },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 6 },
+  sectionTitle: { color: '#164E2B', fontSize: 19, fontWeight: '800' },
+  sectionChevron: { color: '#6F7570', fontSize: 29, lineHeight: 29 },
+  offerRow: { flexDirection: 'row', gap: 8 },
+  offerCard: {
+    flex: 1,
+    height: 145,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: BORDER,
+    padding: 10,
+    flexDirection: 'row',
+    overflow: 'hidden',
   },
-  bannerLeft: { flex: 1, gap: 2 },
-  x5LogoRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
-  x5Shield: {
-    backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 6,
-    paddingHorizontal: 7, paddingVertical: 3,
-  },
-  x5ShieldText: { color: '#fff', fontSize: 13, fontWeight: '800' },
-  x5ClubText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  bannerPoints: { color: '#fff', fontSize: 36, fontWeight: '800', lineHeight: 40 },
-  bannerPointsLabel: { color: 'rgba(255,255,255,0.75)', fontSize: 15, fontWeight: '500', marginTop: -2, marginBottom: 4 },
-  bannerSavings: { color: 'rgba(255,255,255,0.8)', fontSize: 13, fontWeight: '500', lineHeight: 18, marginBottom: 12 },
-  bannerSavingsAmount: { color: '#fff', fontSize: 18, fontWeight: '800' },
-  openCardBtn: {
-    backgroundColor: '#fff', borderRadius: 100,
-    paddingVertical: 10, paddingHorizontal: 18,
+  offerEmoji: { fontSize: 60, alignSelf: 'flex-end', marginLeft: -15, marginBottom: 15 },
+  offerInfo: { flex: 1, gap: 3, marginLeft: -1 },
+  offerTitle: { color: TEXT, fontSize: 13, lineHeight: 16, fontWeight: '800' },
+  offerBenefit: { color: GREEN, fontSize: 11, fontWeight: '700' },
+  offerButton: {
     alignSelf: 'flex-start',
+    backgroundColor: 'rgba(255,255,255,0.76)',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 8,
+    marginTop: 'auto',
   },
-  openCardBtnText: { color: '#17171A', fontSize: 14, fontWeight: '700' },
-  bannerRight: {
-    width: 140, alignItems: 'center',
-    justifyContent: 'flex-end', position: 'relative',
-  },
-  speechBubble: {
-    position: 'absolute', top: 0, right: 16,
-    backgroundColor: '#fff', borderRadius: 14,
-    paddingHorizontal: 12, paddingVertical: 8, zIndex: 1,
-  },
-  speechBubbleText: { fontSize: 13, fontWeight: '600', color: '#17171A', textAlign: 'center' },
-  mascotImage: { width: 140, height: 170 },
+  offerButtonText: { color: MUTED, fontSize: 10, fontWeight: '600' },
 
-  // Ask card
-  askCard: {
-    backgroundColor: '#fff', borderRadius: 16, padding: 14,
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    borderWidth: 1, borderColor: 'rgba(0,0,0,0.06)',
+  partnerBanner: {
+    minHeight: 130,
+    borderRadius: 17,
+    backgroundColor: ORANGE,
+    overflow: 'hidden',
+    flexDirection: 'row',
+    padding: 18,
   },
-  askIcon: {
-    width: 48, height: 48, borderRadius: 24,
-    backgroundColor: '#FFF3E0', alignItems: 'center', justifyContent: 'center',
+  partnerCopy: { zIndex: 2 },
+  partnerTitle: { color: '#FFFFFF', fontSize: 22, lineHeight: 26, fontWeight: '800' },
+  partnerButton: {
+    marginTop: 10,
+    alignSelf: 'flex-start',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 9,
+    paddingHorizontal: 15,
+    paddingVertical: 8,
   },
-  askIconEmoji: { fontSize: 26 },
-  askText: { flex: 1 },
-  askTitle: { fontSize: 15, fontWeight: '700', color: '#17171A' },
-  askSubtitle: { fontSize: 12, color: '#8A8A8E', lineHeight: 16, marginTop: 2 },
-  askActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  micBtn: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: '#F5F5F2', alignItems: 'center', justifyContent: 'center',
+  partnerButtonText: { color: '#386449', fontSize: 11, fontWeight: '800' },
+  partnerProducts: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: '58%',
+    backgroundColor: '#7FBE32',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  micIcon: { fontSize: 20 },
-  findBtn: {
-    backgroundColor: GREEN_BTN, borderRadius: 100,
-    paddingVertical: 10, paddingHorizontal: 16,
-  },
-  findBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
-
-  // Quick row
-  quickRow: {
-    backgroundColor: '#fff', borderRadius: 16,
-    flexDirection: 'row', paddingVertical: 14, paddingHorizontal: 8,
-    borderWidth: 1, borderColor: 'rgba(0,0,0,0.06)',
-  },
-  quickItem: { flex: 1, alignItems: 'center', gap: 5 },
-  quickIconBox: {
-    width: 44, height: 44, borderRadius: 22,
-    backgroundColor: '#F5F5F2', alignItems: 'center', justifyContent: 'center',
-  },
-  quickIconChar: { fontSize: 20, color: '#17171A', fontWeight: '600' },
-  quickLabel: { fontSize: 11.5, fontWeight: '500', color: '#17171A', textAlign: 'center' },
-  quickSub: { fontSize: 10, color: GREEN_ACTIVE, fontWeight: '600' },
-
-  // Savings
-  savingsCard: {
-    backgroundColor: '#fff', borderRadius: 16, padding: 16,
-    borderWidth: 1, borderColor: 'rgba(0,0,0,0.06)', gap: 8,
-  },
-  savingsTitle: { fontSize: 20, fontWeight: '800', color: '#17171A' },
-  savingsAmountRow: { flexDirection: 'row', alignItems: 'flex-end' },
-  savingsAmount: { fontSize: 36, fontWeight: '800', color: '#17171A', lineHeight: 42 },
-  savingsCurrency: { fontSize: 24, fontWeight: '800', color: '#17171A', marginBottom: 4 },
-  savingsMonth: { fontSize: 14, color: '#8A8A8E' },
-
-  growthBadge: {
-    backgroundColor: '#EAF7EE', borderRadius: 100,
-    paddingVertical: 5, paddingHorizontal: 12, alignSelf: 'flex-start',
-  },
-  growthBadgeText: { fontSize: 13, fontWeight: '600', color: GREEN_ACTIVE },
-
-  barChart: { gap: 4, marginTop: 4 },
-  barsRow: {
-    flexDirection: 'row', alignItems: 'flex-end', gap: 6, height: 72,
-  },
-  bar: { flex: 1, borderRadius: 6 },
-  barLabelsRow: { flexDirection: 'row', gap: 6 },
-  barLabel: { flex: 1, fontSize: 10, color: '#8A8A8E', textAlign: 'center' },
-
-  challengesBlock: {
-    backgroundColor: '#F6F4F1', borderRadius: 12, padding: 12, gap: 6,
-  },
-  challengesRow: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-  },
-  challengesLabel: { fontSize: 13, color: '#17171A', flex: 1 },
-  challengesAmount: { fontSize: 14, fontWeight: '700', color: GREEN_ACTIVE },
-  challengesHint: { fontSize: 12, color: '#8A8A8E', lineHeight: 17 },
-  challengesLink: { fontSize: 14, color: GREEN_ACTIVE, fontWeight: '600' },
-
-  // For you
-  forYouTitle: { fontSize: 20, fontWeight: '800', color: '#17171A' },
-  promoRow: { flexDirection: 'row', gap: 10 },
-  promoCard: {
-    flex: 1, borderRadius: 16, padding: 14, gap: 4, minHeight: 180,
-  },
-  promoCardTitle: { fontSize: 14, fontWeight: '800', color: '#17171A' },
-  promoCardSub: { fontSize: 12, color: '#8A8A8E', lineHeight: 16 },
-  promoEmoji: { fontSize: 48, textAlign: 'center', marginVertical: 6 },
-  promoOrangeBtn: {
-    backgroundColor: ORANGE, borderRadius: 100,
-    paddingVertical: 8, paddingHorizontal: 14, alignSelf: 'flex-start', marginTop: 4,
-  },
-  promoOrangeBtnText: { color: '#fff', fontSize: 13, fontWeight: '700' },
-  puzzleGrid: {
-    flexDirection: 'row', flexWrap: 'wrap', width: '100%', marginVertical: 6, gap: 2,
-  },
-  puzzleEmoji: { fontSize: 22, width: '30%', textAlign: 'center' },
-  promoGreenBtn: {
-    backgroundColor: GREEN_ACTIVE, borderRadius: 100,
-    paddingVertical: 8, paddingHorizontal: 14, alignSelf: 'flex-start', marginTop: 2,
-  },
-  promoGreenBtnText: { color: '#fff', fontSize: 13, fontWeight: '700' },
+  partnerCoffee: { fontSize: 48, transform: [{ rotate: '-8deg' }] },
+  partnerPizza: { fontSize: 58, marginLeft: -10, marginTop: -15 },
+  partnerMilk: { fontSize: 44, marginLeft: -12, marginTop: 30 },
+  adLabel: { position: 'absolute', right: 8, top: 5, color: 'rgba(255,255,255,0.8)', fontSize: 8 },
 });
