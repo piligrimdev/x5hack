@@ -1,6 +1,6 @@
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import { useChallenges } from '@/hooks/useChallenges';
+import { isBasketChallenge, useChallenges } from '@/hooks/useChallenges';
 import { useEconomy } from '@/hooks/useEconomy';
 import { useMonthlyEconomy } from '@/hooks/useMonthlyEconomy';
 
@@ -63,7 +63,9 @@ export function PersonalChallenges({
           visible.map((challenge, index) => {
             const taskItems = challenge.items ?? [];
             const firstItem = taskItems[0];
-            const currentValue = firstItem?.quantity_current ?? challenge.quantity_current;
+            const currentValue = isBasketChallenge(challenge)
+              ? 0
+              : firstItem?.quantity_current ?? challenge.quantity_current;
             const targetValue = firstItem?.quantity_target ?? challenge.quantity_target;
             const progress = taskItems.length > 1
               ? `${taskItems.filter(item => item.quantity_current >= item.quantity_target).length} из ${taskItems.length} пунктов`

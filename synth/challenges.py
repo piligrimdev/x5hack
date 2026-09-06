@@ -656,7 +656,7 @@ def build_basket_spend_challenge(
     prompt): buy your #1 usual weekly item AND spend at least a threshold
     in that same trip, for `cashback_pct`% of that threshold back as points.
 
-    threshold_rub = this user's own mean train-period receipt total,
+    threshold_rub = this user's own mean receipt total,
     marked up by `markup_pct`% and rounded to the nearest 100 ₽ — a
     stretch goal calibrated to their own typical basket, same idea as
     `build_spend_threshold_challenge`'s threshold but with this mechanic's
@@ -673,20 +673,25 @@ def build_basket_spend_challenge(
     through the user's suggested items on each replacement cycle, so a
     completed basket challenge does not produce the identical item forever.
 
-    Returns None if there are no suggested weekly-basket items (new user,
-    no purchase history) or no train-period receipts to compute a mean
-    receipt total from — the caller falls back to a generic offer.
+    Returns None only if there are no suggested weekly-basket items or no
+    receipts at all. For a newly created account all imported receipts can
+    be newer than the offline train split; those receipts are still valid
+    evidence for a live challenge and are used as a fallback for the
+    threshold instead of silently replacing the basket card with a generic
+    offer.
     """
     suggested_items = profile.get("suggested_basket_items") or []
     if not suggested_items:
         return None
 
     train_end = config.temporal_split.train_end.isoformat()
-    train_receipts = [r for r in profile["receipts"] if r["purchase_date"] <= train_end]
-    if not train_receipts:
+    all_receipts = profile.get("receipts") or []
+    train_receipts = [r for r in all_receipts if r["purchase_date"] <= train_end]
+    receipts_for_threshold = train_receipts or all_receipts
+    if not receipts_for_threshold:
         return None
 
-    mean_receipt_total = sum(r["total_rub"] for r in train_receipts) / len(train_receipts)
+    mean_receipt_total = sum(r["total_rub"] for r in receipts_for_threshold) / len(receipts_for_threshold)
     threshold_rub = max(100.0, round(mean_receipt_total * (1 + markup_pct / 100) / 100) * 100)
     reward_rub = round(threshold_rub * (cashback_pct / 100), 2)
     points = round(reward_rub * _POINTS_PER_RUB)
@@ -705,11 +710,68 @@ def build_basket_spend_challenge(
         "reward_rub": reward_rub,
         "reasoning": (
             f"Порог рассчитан от среднего чека пользователя ({mean_receipt_total:.0f} ₽) "
-            f"+ {markup_pct:.0f}%, округлён до сотен."
+            f"+ {markup_pct:.0f}%, округлён до сотен"
+            f" ({'train-период' if train_receipts else 'доступная история'})."
         ),
         "spend_threshold_rub": threshold_rub,
         "target_sku_id": target_sku_id,
         "target_quantity": 1,
+    }
+
+
+def build_vibe_fallback_challenge(
+    profile: dict,
+    config: SynthConfig,
+    vibe_category: str,
+    allowed_categories: set[str] | None = None,
+    cycle_index: int = 0,
+) -> dict | None:
+    """Build a visible, deterministic vibe card when the LLM is unavailable.
+
+    A failed/invalid LLM response must not turn the vibe slot into a generic
+    partner offer: that makes the card look duplicated and loses the selected
+    monthly theme. The fallback stays inside the configured vibe context and
+    uses the same catalog/progress fields as a normal personal challenge.
+    """
+    requested_categories = set(allowed_categories or VIBE_CATEGORIES.get(vibe_category, []))
+    configured_categories = {
+        category.name
+        for category in config.categories
+        if category.name not in config.forbidden_categories
+    }
+    candidates = sorted(requested_categories & configured_categories)
+    if not candidates:
+        return None
+
+    category = candidates[cycle_index % len(candidates)]
+    economics = next((item for item in config.category_economics if item.category == category), None)
+    if economics is None:
+        return None
+
+    quantity = SLOT_TARGET_QUANTITY["vibe"]
+    max_reward = estimate_max_reward_rub(profile)
+    reward_rub = round(min(economics.base_price_rub * 0.10, max_reward), 2)
+    sku = pick_sku_in_category(
+        config,
+        category,
+        seed_key=f"{profile['user_id']}:sku:vibe",
+        cycle_index=cycle_index,
+    )
+    description = (
+        item_action_description(sku.item, quantity, reward_rub, slot="vibe")
+        if sku is not None
+        else f"В тему месяца: попробуйте категорию «{category}»."
+    )
+
+    return {
+        "challenge_title": f"Вайб месяца: Попробуйте «{category}»",
+        "description": description,
+        "target_categories": [category],
+        "mechanic": "тематический кэшбэк",
+        "reward_rub": reward_rub,
+        "reasoning": f"Детерминированный fallback для вайба «{vibe_category}». Подбор ограничен тематическими категориями.",
+        "target_sku_id": sku.sku_id if sku is not None else None,
+        "target_quantity": quantity,
     }
 
 
@@ -1171,6 +1233,30 @@ def generate_challenge_for_user(
                 "response": raw,
             })
         except Exception as e:  # noqa: BLE001 — deliberately broad: any failure must fall back, not propagate
+            if slot == "vibe":
+                vibe_name = profile.get("vibe_category") or pick_vibe_category(
+                    profile["user_id"], vibe_month_key or date.today().strftime("%Y-%m")
+                )
+                vibe_fallback = build_vibe_fallback_challenge(
+                    profile,
+                    config,
+                    vibe_name,
+                    allowed_categories=allowed_categories,
+                    cycle_index=int((profile.get("challenge_cycle_indices") or {}).get("vibe", 0)),
+                )
+                if vibe_fallback is not None:
+                    results.append({
+                        "user_id": profile["user_id"],
+                        # The DB intentionally accepts only the existing
+                        # lifecycle paths; this is still a personal card,
+                        # just produced without a successful LLM response.
+                        "path": "personal",
+                        "model": model,
+                        "challenge_slot": slot,
+                        **vibe_fallback,
+                        "error": str(e),
+                    })
+                    return
             results.append(_generic(slot, "generic_fallback", error=str(e), model_attempted=model))
 
     # slot: generic — tries the survival-risk pick (rank 2, after llm_habit

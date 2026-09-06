@@ -97,8 +97,6 @@ export function useBasket(token: string | null, onOrderPlaced?: () => void) {
 
   const [storageKey, setStorageKey] = useState<string | null>(null);
   const busy = useRef(false);
-  // Share the login request across StrictMode effect replays.
-  const loginRequest = useRef<{ token: string; result: Promise<{ data?: SuggestedBasketResponse; error?: unknown }> } | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -113,14 +111,6 @@ export function useBasket(token: string | null, onOrderPlaced?: () => void) {
     (async () => {
       try {
         if (!token) return;
-        if (loginRequest.current?.token !== token) {
-          loginRequest.current = {
-            token,
-            result: apiFetch<SuggestedBasketResponse>('/basket/suggested', token)
-              .then(data => ({ data }), error => ({ error })),
-          };
-        }
-        const generation = loginRequest.current.result;
         const { user_id } = await apiFetch<{ user_id: string }>('/me', token);
         const key = `${STORAGE_KEY}/${user_id}`;
         // The old shared key has no owner, so never import it into an account.
@@ -135,16 +125,6 @@ export function useBasket(token: string | null, onOrderPlaced?: () => void) {
           }
         }
         setHydrated(true);
-        const result = await generation;
-        if (!active) return;
-        if (!result.data) {
-          setMessage('Аппи не удалось собрать корзину. Попробуйте собрать ещё раз.');
-          return;
-        }
-        await AsyncStorage.setItem(key, JSON.stringify(result.data.items)).catch(() => {});
-        if (!active) return;
-        setItems(result.data.items);
-        setHasCollected(true);
       } catch {
         if (active) setMessage('Не удалось загрузить корзину. Откройте приложение ещё раз.');
       } finally {

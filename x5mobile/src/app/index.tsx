@@ -84,6 +84,7 @@ function AppContent({ token }: { token: string }) {
           <SavingsView
             onOrderPlaced={refetchEconomy}
             basket={basket}
+            token={token}
           />
         )}
         {screen === 'history' && (
