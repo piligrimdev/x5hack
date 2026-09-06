@@ -1,11 +1,14 @@
 import { SymbolView } from 'expo-symbols';
+import { useState } from 'react';
 import type { ImageSourcePropType } from 'react-native';
 import {
   ActivityIndicator,
   Image,
+  Keyboard,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -13,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { resolvePresetRange, toQueryDate } from '@/constants/economy-period';
 import { BrandColors } from '@/constants/theme';
+import type { BasketState } from '@/hooks/useBasket';
 import { useEconomy } from '@/hooks/useEconomy';
 import { usePointsBalance } from '@/hooks/usePoints';
 
@@ -38,8 +42,10 @@ const QR_PATTERN = [
 
 interface HomeViewProps {
   token: string;
+  basket: BasketState;
   onPoints?: () => void;
   onOpenAppi: () => void;
+  onOpenBasket: () => void;
   onHistory: () => void;
   onInvite?: () => void;
   onDiscounts?: () => void;
@@ -103,8 +109,18 @@ function QuickAction({
   );
 }
 
-export function HomeView({ token, onPoints, onOpenAppi, onHistory, onInvite, onDiscounts }: HomeViewProps) {
+export function HomeView({
+  token,
+  basket,
+  onPoints,
+  onOpenAppi,
+  onOpenBasket,
+  onHistory,
+  onInvite,
+  onDiscounts,
+}: HomeViewProps) {
   const insets = useSafeAreaInsets();
+  const [basketQuery, setBasketQuery] = useState('');
   const { balance, loading: pointsLoading } = usePointsBalance(token);
   const monthRange = resolvePresetRange('month', 'current');
   const { economy } = useEconomy(token, {
@@ -124,11 +140,25 @@ export function HomeView({ token, onPoints, onOpenAppi, onHistory, onInvite, onD
     });
   }
 
+  async function submitHomeBasket() {
+    if (basket.loading || !basket.hydrated) return;
+    Keyboard.dismiss();
+    const request = basketQuery.trim();
+    const ok = request
+      ? await basket.sendInstruction(request)
+      : await basket.collectWeeklyBasket();
+    if (ok) {
+      setBasketQuery('');
+      onOpenBasket();
+    }
+  }
+
   return (
     <View style={styles.root}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}>
         <View style={[styles.sky, { paddingTop: insets.top + 7 }]}>
           <View style={styles.topBar}>
@@ -233,6 +263,37 @@ export function HomeView({ token, onPoints, onOpenAppi, onHistory, onInvite, onD
         </View>
 
         <View style={styles.contentSheet}>
+          <View style={styles.appiBasketCard}>
+            <Text style={styles.appiBasketTitle}>Собери корзину на неделю с Аппи</Text>
+            <View style={styles.appiBasketRow}>
+              <TextInput
+                value={basketQuery}
+                onChangeText={setBasketQuery}
+                placeholder="или напиши свой запрос, например: обед на 700 рублей"
+                placeholderTextColor="#8B8F8B"
+                style={styles.appiBasketInput}
+                returnKeyType="send"
+                editable={!basket.loading && basket.hydrated}
+                onSubmitEditing={() => { void submitHomeBasket(); }}
+              />
+              <TouchableOpacity
+                style={[
+                  styles.appiBasketButton,
+                  (basket.loading || !basket.hydrated) && styles.appiBasketButtonDisabled,
+                ]}
+                onPress={() => { void submitHomeBasket(); }}
+                activeOpacity={0.8}
+                disabled={basket.loading || !basket.hydrated}>
+                {basket.loading
+                  ? <ActivityIndicator color="#FFFFFF" size="small" />
+                  : <Text style={styles.appiBasketButtonText}>
+                      {basketQuery.trim() ? 'Отправить' : 'Собрать'}
+                    </Text>}
+              </TouchableOpacity>
+            </View>
+            {basket.message ? <Text style={styles.appiBasketMessage}>{basket.message}</Text> : null}
+          </View>
+
           <View style={styles.actionsRow}>
             <QuickAction emoji="🍅" label={'История\nпокупок'} color="#FFF1D8" onPress={onHistory} />
             <QuickAction emoji="👋" label={'Пригласить\nдруга'} color="#FFF3C9" onPress={onInvite} />
@@ -429,6 +490,48 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
     gap: 20,
   },
+  appiBasketCard: {
+    backgroundColor: '#FFF6EC',
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#F5C89A',
+    padding: 14,
+    gap: 10,
+  },
+  appiBasketTitle: {
+    color: '#C65300',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '900',
+  },
+  appiBasketRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  appiBasketInput: {
+    flex: 1,
+    minHeight: 48,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: '#F0D4B0',
+    paddingHorizontal: 14,
+    color: TEXT,
+    fontSize: 13,
+    backgroundColor: '#FFFFFF',
+  },
+  appiBasketButton: {
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: ORANGE,
+    paddingHorizontal: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 92,
+  },
+  appiBasketButtonDisabled: { opacity: 0.45 },
+  appiBasketButtonText: { color: '#FFFFFF', fontSize: 13, fontWeight: '800' },
+  appiBasketMessage: { color: '#8B5A2B', fontSize: 11, lineHeight: 15 },
   actionsRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',

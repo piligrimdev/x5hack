@@ -51,8 +51,10 @@ function AppContent({ token }: { token: string }) {
         {screen === 'home' && (
           <HomeView
             token={token}
+            basket={basket}
             onPoints={() => navigate('points')}
             onOpenAppi={() => navigate('appi')}
+            onOpenBasket={() => navigate('cart')}
             onHistory={() => navigate('history')}
             onInvite={() => navigate('referral')}
             onDiscounts={() => navigate('discounts')}

@@ -155,7 +155,7 @@ export function useBasket(token: string | null, onOrderPlaced?: () => void) {
   }, [token, items, spendPoints]);
 
   async function collectWeeklyBasket() {
-    if (!token || !hydrated || !storageKey || busy.current) return;
+    if (!token || !hydrated || !storageKey || busy.current) return false;
     busy.current = true;
     setLoading(true);
     try {
@@ -164,8 +164,10 @@ export function useBasket(token: string | null, onOrderPlaced?: () => void) {
       setMessage(null);
       setItems(data.items);
       setHasCollected(true);
+      return true;
     } catch (e: unknown) {
       setMessage(e instanceof Error ? e.message : 'Ошибка сбора корзины');
+      return false;
     } finally {
       busy.current = false;
       setLoading(false);
