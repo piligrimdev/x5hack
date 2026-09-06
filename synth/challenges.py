@@ -14,7 +14,11 @@ import requests
 
 from synth.catalog import SKU, build_catalog, skus_by_category
 from synth.config import SynthConfig
-from synth.survival import SurvivalCurve, fit_population_curves, purchase_dates_from_profiles
+from synth.survival import (
+    SurvivalCurve,
+    fit_population_curves,
+    purchase_dates_from_profiles,
+)
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 
@@ -1263,7 +1267,7 @@ def generate_challenges(
     delay_seconds: float = 0.0,
 ) -> list[dict]:
     category_curves = fit_population_curves(
-        purchase_dates_from_profiles(profiles), as_of=date.today()
+        purchase_dates_from_profiles(profiles), as_of=date.today()  # noqa: DTZ011 — calendar date, not a timestamp
     )
     results: list[dict] = []
     for i, profile in enumerate(profiles):
